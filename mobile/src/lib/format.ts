@@ -55,7 +55,7 @@ export const alertExplainer: Record<AlertType, string> = {
   unexpected_exit: 'The band lost the home signal. GPS is now on.',
   sos: 'The SOS button on the band was held down.',
   low_battery: 'Charge the band soon so tracking keeps working.',
-  device_offline: 'No heartbeat from the band for 20 seconds.',
+  device_offline: 'The band is disconnected.',
   // Honest wording: we have no skin sensor, so this is a guess from "no movement" (team file, known clashes).
   possible_removal: 'No movement for 30 minutes while away from home. The band may have been taken off — this is a guess.',
 };

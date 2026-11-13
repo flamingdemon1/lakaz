@@ -138,7 +138,7 @@ export default function PersonLocation() {
           icon={online ? 'wifi' : 'cloud-offline'}
           title="Band connection"
           value={device ? (online ? 'Online' : 'Offline') : 'No band'}
-          sub={device ? `Heartbeat ${timeAgo(device.last_seen, now)}` : 'Assign one first'}
+          sub={device ? device.device_id : 'Assign one first'}
           color={online ? statusStyles.Resolved.bg : statusStyles.Critical.bg}
         />
       </View>

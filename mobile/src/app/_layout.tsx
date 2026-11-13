@@ -24,7 +24,6 @@ import { PeopleProvider } from '@/data/people';
 import { LakazProvider } from '@/data/store';
 import { TrackingProvider } from '@/data/tracking';
 import { ZonesProvider } from '@/data/zones';
-import { ZoneToast } from '@/components/ZoneToast';
 import { NotificationBanner } from '@/components/NotificationBanner';
 import { NotifyProvider } from '@/data/notify';
 import { colors, fonts } from '@/theme';
@@ -87,8 +86,6 @@ export default function RootLayout() {
           {/* Alerts & notifications (section E). */}
           <Stack.Screen name="notifications" options={{ title: 'Notifications', headerBackTitle: 'Back' }} />
         </Stack>
-        {/* Arrival / departure / unexpected-exit banner, drawn above every screen. */}
-        <ZoneToast />
         {/* One banner for every notification category (src/data/notify.tsx), drawn above every screen. */}
         <NotificationBanner />
         </ZonesProvider>

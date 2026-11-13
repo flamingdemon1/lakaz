@@ -18,6 +18,8 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { MOCK_HOME } from '@/data/mock';
+import { useNotify } from '@/data/notify';
+import { usePeople } from '@/data/people';
 import { distanceM, inWindow, LatLng, lerp, minutesOf } from '@/lib/geo';
 
 export type ZoneType = 'home' | 'school' | 'grandparents' | 'other';
@@ -124,9 +126,6 @@ interface ZonesCtx {
   remove: (zoneId: string) => Promise<void>;
   /** Where the SAMPLE engine thinks the person is, and which zones they're inside. */
   status: (personId: string) => { pos: LatLng | null; inside: SafeZone[] };
-  /** Pending in-app notifications (oldest first). The toast shows [0]. */
-  notifications: ZoneEvent[];
-  dismiss: (eventId: string) => void;
   /** SAMPLE: walk from one zone towards another (or out to nowhere). `atTime` "HH:MM" pretends the clock says so. */
   simulateTrip: (personId: string, fromZoneId: string, toZoneId: string | null, atTime?: string) => void;
   tripRunning: boolean;
@@ -138,8 +137,14 @@ const Ctx = createContext<ZonesCtx | null>(null);
 export function ZonesProvider({ children }: { children: React.ReactNode }) {
   const [version, setVersion] = useState(0);
   const bump = () => setVersion((v) => v + 1);
-  const [notifications, setNotifications] = useState<ZoneEvent[]>([]);
   const [tripRunning, setTripRunning] = useState(false);
+  // Refs so the walk timer (created once) always uses the newest notifier and people list.
+  const { push } = useNotify();
+  const pushRef = useRef(push);
+  pushRef.current = push;
+  const people = usePeople();
+  const peopleRef = useRef(people);
+  peopleRef.current = people;
   const tripTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => () => {
@@ -184,7 +189,18 @@ export function ZonesProvider({ children }: { children: React.ReactNode }) {
         }
       }
     }
-    if (out.length) setNotifications((n) => [...n, ...out]);
+    // Hand every event to the shared notifier (one banner for all alert types, settings respected).
+    for (const ev of out) {
+      const name = peopleRef.current.get(ev.personId)?.name ?? 'Someone';
+      const verb = ev.kind === 'arrival' ? 'arrived at' : ev.kind === 'departure' ? 'left' : 'left unexpectedly:';
+      pushRef.current({
+        category: ev.kind === 'arrival' ? 'zone_arrival' : ev.kind === 'departure' ? 'zone_departure' : 'unexpected_exit',
+        title: `${name} ${verb} ${ev.zoneName}`,
+        body: ev.note,
+        href: { pathname: '/person/[id]/zones', params: { id: ev.personId } },
+        sample: true,
+      });
+    }
     return out;
   };
 
@@ -218,9 +234,6 @@ export function ZonesProvider({ children }: { children: React.ReactNode }) {
         return { pos: e.pos, inside: zones.filter((z) => e.inside.has(z.id)) };
       },
 
-      notifications,
-      dismiss: (eventId) => setNotifications((n) => n.filter((x) => x.id !== eventId)),
-
       simulateTrip: (personId, fromZoneId, toZoneId, atTime) => {
         const from = zones.find((z) => z.id === fromZoneId);
         if (!from) return;
@@ -250,7 +263,7 @@ export function ZonesProvider({ children }: { children: React.ReactNode }) {
       tripRunning,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [version, notifications, tripRunning],
+    [version, tripRunning],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -10,6 +10,7 @@
  * Every request sends the anon key + the carer's access token, so Supabase knows WHO is asking (auth.uid()).
  */
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from '@/config';
+import type { Lang } from '@/i18n';
 
 export interface SupaUser {
   id: string;
@@ -17,7 +18,13 @@ export interface SupaUser {
   phone?: string;
   email_confirmed_at?: string;
   phone_confirmed_at?: string;
-  user_metadata?: { name?: string; full_name?: string };
+  user_metadata?: { name?: string; full_name?: string; language?: Lang };
+}
+
+export interface CarerProfile {
+  name: string | null;
+  phone: string | null;
+  language: Lang;
 }
 
 interface TokenResponse {
@@ -135,13 +142,17 @@ async function ensureFresh() {
 
 /** Signs a carer in with email + password. Returns the Supabase user. */
 export async function signIn(email: string, password: string): Promise<SupaUser> {
-  const r = await call<TokenResponse>('/auth/v1/token?grant_type=password', {
+  const r = await passwordSession(email, password);
+  save(r);
+  return r.user;
+}
+
+function passwordSession(email: string, password: string) {
+  return call<TokenResponse>('/auth/v1/token?grant_type=password', {
     method: 'POST',
     auth: false,
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
   });
-  save(r);
-  return r.user;
 }
 
 function emailRequest<T>(path: string, email: string, fields?: Record<string, unknown>) {
@@ -152,8 +163,8 @@ function emailRequest<T>(path: string, email: string, fields?: Record<string, un
   });
 }
 
-export async function signUp(email: string, password: string, name: string): Promise<SupaUser | null> {
-  const result = await emailRequest<Partial<TokenResponse>>('signup', email, { password, data: { name } });
+export async function signUp(email: string, password: string, name: string, language: Lang): Promise<SupaUser | null> {
+  const result = await emailRequest<Partial<TokenResponse>>('signup', email, { password, data: { name, language } });
   // If the project has email confirmation disabled, Supabase returns a session immediately.
   if (result.access_token && result.refresh_token && result.expires_in && result.user) {
     save(result as TokenResponse);
@@ -185,6 +196,50 @@ export async function resetPassword(recoveryToken: string, password: string): Pr
     body: JSON.stringify({ password }),
   });
   await endSession(recoveryToken);
+}
+
+export async function changePassword(current: string, password: string): Promise<void> {
+  const user = session?.user;
+  if (!user?.email) throw new Error('Please sign in again.');
+  const fresh = await passwordSession(user.email, current);
+  let adopted = false;
+  try {
+    if (fresh.user.id !== user.id || session?.user.id !== user.id) throw new Error('Please sign in again.');
+    await call('/auth/v1/user', {
+      method: 'PUT',
+      auth: false,
+      headers: { Authorization: `Bearer ${fresh.access_token}` },
+      body: JSON.stringify({ password }),
+    });
+    if (session?.user.id === user.id) {
+      const previousToken = session.access_token;
+      save(fresh);
+      adopted = true;
+      await endSession(previousToken);
+    }
+  } finally {
+    if (!adopted) await endSession(fresh.access_token);
+  }
+}
+
+export async function signOutEverywhere(): Promise<void> {
+  if (!session) throw new Error('Please sign in again.');
+  await call('/auth/v1/logout?scope=global', { method: 'POST' });
+  session = null;
+}
+
+export async function getProfile(id: string): Promise<CarerProfile | null> {
+  const rows = await select<CarerProfile[]>(`profiles?id=eq.${encodeURIComponent(id)}&select=name,phone,language`);
+  return rows[0] ?? null;
+}
+
+export async function saveProfile(id: string, changes: Partial<CarerProfile>, createOnly = false): Promise<void> {
+  if (session?.user.id !== id) throw new Error('Please sign in again.');
+  await call('/rest/v1/profiles?on_conflict=id', {
+    method: 'POST',
+    headers: { Prefer: `resolution=${createOnly ? 'ignore' : 'merge'}-duplicates,missing=default,return=minimal` },
+    body: JSON.stringify({ id, ...changes }),
+  });
 }
 
 async function endSession(token: string): Promise<void> {

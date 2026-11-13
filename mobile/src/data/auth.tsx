@@ -51,7 +51,7 @@ function liveAccount(user: supa.SupaUser, lang: Lang, identifier: string): Accou
     phone: user.phone ? `+${user.phone.replace(/^\+/, '')}` : '',
     email_verified: !!user.email_confirmed_at,
     phone_verified: !!user.phone_confirmed_at,
-    lang,
+    lang: user.user_metadata?.language && Object.hasOwn(STRINGS, user.user_metadata.language) ? user.user_metadata.language : lang,
   };
 }
 
@@ -60,20 +60,18 @@ interface AuthCtx {
   /** Account waiting for its email/phone codes after sign-up or an unverified log in. */
   pending: Account | null;
   lang: Lang;
-  setLang: (l: Lang) => void;
+  setLang: (l: Lang) => Promise<void>;
   t: (k: TKey) => string;
   signUp: (p: { name: string; email: string; phone: string; password: string }) => Promise<'ok' | 'needs_verification'>;
   verifyAccount: (emailCode: string, phoneCode: string) => Promise<void>;
   resendCode: () => Promise<void>;
   beginEmailVerification: (email: string) => Promise<void>;
   login: (identifier: string, password: string) => Promise<'ok' | 'needs_verification'>;
-  requestOtp: (phone: string) => Promise<void>;
-  loginWithOtp: (phone: string, code: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   resetPassword: (email: string, code: string, newPassword: string) => Promise<void>;
   updateProfile: (p: { name: string; email: string; phone: string }) => Promise<void>;
   changePassword: (current: string, next: string) => Promise<void>;
-  logout: () => void;
+  logout: (everywhere?: boolean) => Promise<void>;
   /** TEMPORARY bypass: signs in as the demo caregiver without a password. Remove before the pitch. */
   bypass: () => void;
 }
@@ -98,6 +96,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [lakaz],
   );
 
+  const signInLive = useCallback(async (account: supa.SupaUser, language: Lang, email: string) => {
+    const fallback = liveAccount(account, language, email);
+    let profile: supa.CarerProfile | null = null;
+    try {
+      profile = await supa.getProfile(account.id);
+      if (!profile) {
+        const name = fallback.name.trim();
+        await supa.saveProfile(account.id, {
+          name: name.length >= 2 && name.length <= 100 ? name : null,
+          phone: normalisePhone(fallback.phone),
+          language: fallback.lang,
+        }, true);
+      }
+    } catch {
+      // Profile loading must never block access to help alerts.
+    }
+    if (supa.currentUser()?.id !== account.id) return;
+    signIn(profile ? {
+      ...fallback,
+      name: profile.name ?? fallback.name,
+      phone: profile.phone ?? '',
+      phone_verified: false,
+      lang: profile.language,
+    } : fallback);
+  }, [signIn]);
+
   const value = useMemo<AuthCtx>(() => {
     /** Finds a stored account by email or phone (any format). */
     const find = (identifier: string) => {
@@ -112,13 +136,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       pending,
       lang,
-      setLang: (l) => {
-        setLangState(l);
-        // Remember the choice on the account too (SWAP FOR SUPABASE: update the profile row).
-        if (user) {
+      setLang: async (l) => {
+        if (SUPABASE_ENABLED && user) {
+          await supa.saveProfile(user.id, { language: l });
+          if (supa.currentUser()?.id !== user.id) return;
+        } else if (user) {
           accounts = accounts.map((a) => (a.id === user.id ? { ...a, lang: l } : a));
-          setUser({ ...user, lang: l });
         }
+        setLangState(l);
+        setUser((account) => account && account.id === user?.id ? { ...account, lang: l } : account);
       },
       t: (k) => STRINGS[lang][k] ?? STRINGS.en[k],
 
@@ -128,9 +154,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       signUp: async ({ name, email, phone, password }) => {
         if (SUPABASE_ENABLED) {
-          const signedIn = await supa.signUp(email, password, name.trim());
+          const signedIn = await supa.signUp(email, password, name.trim(), lang);
           if (signedIn) {
-            signIn(liveAccount(signedIn, lang, email));
+            await signInLive(signedIn, lang, email);
             return 'ok';
           }
           setPending({ id: '', name: name.trim(), email: email.trim().toLowerCase(), phone: '', email_verified: false, phone_verified: false, lang });
@@ -150,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!pending) throw new Error('Nothing to verify. Please log in again.');
         if (SUPABASE_ENABLED) {
           const verified = await supa.verifyEmail(pending.email, emailCode);
-          signIn(liveAccount(verified, lang, pending.email));
+          await signInLive(verified, lang, pending.email);
           return;
         }
         await wait();
@@ -173,7 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (SUPABASE_ENABLED) {
           if (!identifier.includes('@')) throw new Error('Use the email of your carer account.');
           const u = await supa.signIn(identifier, password);
-          signIn(liveAccount(u, lang, identifier));
+          await signInLive(u, lang, identifier);
           return 'ok';
         }
         // SAMPLE accounts below.
@@ -187,21 +213,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         signIn(publicAccount(acc));
         return 'ok';
-      },
-
-      // SWAP FOR SUPABASE: supabase.auth.signInWithOtp({ phone })
-      requestOtp: async (phone) => {
-        await wait();
-        // Same reply whether or not the number exists (account security).
-        if (!normalisePhone(phone)) throw new Error('Use a Mauritian mobile number: 8 digits starting with 5.');
-      },
-
-      // SWAP FOR SUPABASE: supabase.auth.verifyOtp({ phone, token, type: 'sms' })
-      loginWithOtp: async (phone, code) => {
-        await wait();
-        const acc = find(phone);
-        if (!acc || code !== SAMPLE_CODE) throw new Error('That code is not right or has expired. Send a new one.');
-        signIn(publicAccount({ ...acc, phone_verified: true }));
       },
 
       requestPasswordReset: async (email) => {
@@ -219,10 +230,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         acc.password = newPassword;
       },
 
-      // SWAP FOR SUPABASE: update the profile row; auth.updateUser for email/phone (re-verification)
       updateProfile: async ({ name, email, phone }) => {
-        await wait();
         if (!user) throw new Error('Please log in again.');
+        if (SUPABASE_ENABLED) {
+          const contact = normalisePhone(phone);
+          if (phone.trim() && !contact) throw new Error('Enter a valid Mauritian mobile number.');
+          const displayName = name.trim();
+          await supa.saveProfile(user.id, { name: displayName, phone: contact });
+          setUser((account) => account?.id === user.id
+            ? { ...account, name: displayName, phone: contact ?? '', phone_verified: false }
+            : account);
+          return;
+        }
+        await wait();
         const p = normalisePhone(phone)!;
         const other = accounts.find((a) => a.id !== user.id && (a.email === email.toLowerCase() || a.phone === p));
         if (other) throw new Error('That email or phone is already used by another account.');
@@ -239,8 +259,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(next);
       },
 
-      // SWAP FOR SUPABASE: re-authenticate, then auth.updateUser({ password })
       changePassword: async (current, next) => {
+        if (SUPABASE_ENABLED) {
+          await supa.changePassword(current, next);
+          return;
+        }
         await wait();
         const acc = accounts.find((a) => a.id === user?.id);
         if (!acc || acc.password !== current) throw new Error('Your current password is not right.');
@@ -248,8 +271,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
 
       // Also ends the live session for this device.
-      logout: () => {
-        if (SUPABASE_ENABLED) void supa.signOut();
+      logout: async (everywhere = false) => {
+        if (SUPABASE_ENABLED && everywhere) await supa.signOutEverywhere();
+        else if (SUPABASE_ENABLED) void supa.signOut();
         setUser(null);
         setPending(null);
         lakaz.logout();
@@ -258,7 +282,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       bypass: () => signIn(publicAccount(accounts[0])),
       // Guardians / trusted caregivers moved to src/data/people.tsx (they belong to each person).
     };
-  }, [user, pending, lang, signIn, lakaz]);
+  }, [user, pending, lang, signIn, signInLive, lakaz]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

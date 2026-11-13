@@ -22,6 +22,12 @@ The app uses Supabase Auth for email signup, confirmation, sign-in and password 
    Before linking, confirm that the account sees no band alerts. After linking, trigger a fresh event, acknowledge it from the main **Alerts** tab, then refresh and open the receipt. The same timestamp should appear in **Help alerts**.
 5. Reopen the app and log in again with the signup password. Use **Forgot password**, enter the emailed recovery code and set a new password. Check that the old password is rejected and the new one works.
 
+### Carer profile and security
+
+Apply [the carer profiles migration](supabase/migrations/20261114010000_create_carer_profiles.sql) before distributing a build with profile editing. It creates a private profile per carer with display name, optional Mauritian contact number and language. The app initialises a missing profile at sign-in. The contact number is separate from Supabase Auth, and sign-in stays email-based.
+
+For a live check, edit the name and phone, select a different language, and sign out and back in. Confirm all three values are restored. Check with a second account that it cannot read or update the first account's profile. In **Security**, check that a wrong current password is rejected, then change the password and verify the new login. With the same account signed into two browsers, use **Log out of all devices** and check that the second browser cannot refresh its session after its access token expires.
+
 ## Interface to agree before coding
 
 - **Device intake:** Proposed `POST /functions/v1/device-event` over HTTPS. The device sends a unique `event_id` and `kind: "help_requested"`. The function validates a dedicated device credential, resolves the device server-side and records server time. Retrying the same device/event pair must return the existing event without creating another.

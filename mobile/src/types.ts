@@ -12,7 +12,9 @@ export type AlertStatus = 'Critical' | 'Active' | 'Acknowledged' | 'Resolved';
  * Dropped by team decision (13 Nov): `low_battery` (the band can't measure its battery yet) and
  * `possible_removal` (was never in the contract). Add them back only if the band really reports them.
  */
-export type AlertType = 'unexpected_exit' | 'sos' | 'device_offline';
+export type AlertType = 'unexpected_exit' | 'sos' | 'device_offline' | 'help_requested';
+// `help_requested` = the REAL band's help button (Supabase public.alerts, kind 'help_requested').
+// The other three are still SIMULATED (sample mode only) — the band can't detect them yet.
 
 /** Escalation level: 0 band only · 1 primary · 2 secondary + tracking · 3 community. */
 export type AlertLevel = 0 | 1 | 2 | 3;
@@ -37,6 +39,10 @@ export interface Alert {
   last_location: LastLocation | null;
   /** true = last fix is less than 60 s old (computed by the backend). */
   location_fresh: boolean;
+  /** Server times from Supabase (live help alerts only; used for the real incident timeline). */
+  acknowledged_at?: string | null;
+  resolved_at?: string | null;
+  resolved_by?: string | null;
 }
 
 /** GET /api/devices/:id/status → { status, person_name, since, level } (section 7.3). */

@@ -16,6 +16,7 @@ import { USE_MOCK } from '@/config';
 import { TimelineEntry, useEscalation } from '@/data/escalation';
 import { usePeople } from '@/data/people';
 import { useLakaz } from '@/data/store';
+import { useAlertTimeline } from '@/lib/useAlertTimeline';
 import { alertTitle, clock } from '@/lib/format';
 import { colors, space, statusStyles } from '@/theme';
 import type { Alert } from '@/types';
@@ -72,10 +73,11 @@ function reportText(a: Alert, tl: TimelineEntry[], personName: string) {
 export default function IncidentReport() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { alerts } = useLakaz();
-  const { timeline } = useEscalation();
   const { get } = usePeople();
   const [msg, setMsg] = useState<string | null>(null);
   const a = alerts.find((x) => x.alert_id === id);
+  // Live help alerts: built from Supabase's own timestamps; sample alerts: the in-memory timeline.
+  const tl = useAlertTimeline(a);
 
   if (!a) {
     return (
@@ -84,7 +86,6 @@ export default function IncidentReport() {
       </Screen>
     );
   }
-  const tl = timeline(a.alert_id);
   const name = get(a.person_id)?.name ?? 'Unknown';
   const f = facts(a, tl, name);
 

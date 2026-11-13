@@ -35,9 +35,12 @@ export function PersonHero({ status }: { status: DeviceStatus | null }) {
   // Same rule as the alert itself (statusStyles): Active = amber while the ladder climbs,
   // Critical = red at step 3 (community). Keeps Home and the takeover in agreement.
   const since = status ? duration(status.since, now) : '';
-  const out = words.tone === 'alert';
+  // LIVE states (from real Supabase help alerts — see liveStatus in data/store.tsx). The band can't report
+  // "at home / left home" yet, so in live mode the card says what we actually know.
+  const live = status?.status === 'NEEDS_HELP' || status?.status === 'HELP_COMING' || status?.status === 'ALL_CLEAR' ? status.status : null;
+  const out = live ? live === 'NEEDS_HELP' : words.tone === 'alert';
   const critical = out && (status?.level ?? 0) >= 3;
-  const tone =
+  let tone: { fg: string; soft: string; label: string; big: string; pill: string; icon: IconName } =
     words.tone === 'calm'
       ? { fg: colors.safe, soft: colors.safeSoft, label: t('heroLabelSafe'), big: t('heroAtHome'), pill: fill(t('heroSafeFor'), { t: since }), icon: 'home' as IconName }
       : out
@@ -51,12 +54,24 @@ export function PersonHero({ status }: { status: DeviceStatus | null }) {
           }
         : { fg: colors.offline, soft: colors.muted, label: t('heroLabelUnknown'), big: t('heroWaiting'), pill: t('heroNoStatus'), icon: 'help-circle' as IconName };
 
-  const sub =
+  let sub =
     words.tone === 'calm'
       ? t('heroSubSafe')
       : out
         ? `${status?.level != null ? fill(t('heroStep'), { n: status.level }) + ' ' : ''}${t('heroSubOut')}`
         : fill(t('heroSubWaiting'), { name: first });
+
+  // Colour code: RED = someone pressed for help, BLUE = a carer is handling it, GREEN = nothing open.
+  if (live === 'NEEDS_HELP') {
+    tone = { fg: colors.danger, soft: colors.dangerSoft, label: t('heroLabelNeeds'), big: t('heroNeedsHelp'), pill: fill(t('heroWaitingFor'), { t: since }), icon: 'megaphone' as IconName };
+    sub = fill(t('heroSubNeeds'), { name: first });
+  } else if (live === 'HELP_COMING') {
+    tone = { fg: colors.info, soft: colors.infoSoft, label: t('heroLabelComing'), big: t('heroHelpComing'), pill: fill(t('heroHandledFor'), { t: since }), icon: 'person-circle' as IconName };
+    sub = fill(t('heroSubComing'), { name: first });
+  } else if (live === 'ALL_CLEAR') {
+    tone = { fg: colors.safe, soft: colors.safeSoft, label: t('heroLabelClear'), big: t('heroAllClear'), pill: t('heroPillLive'), icon: 'shield-checkmark' as IconName };
+    sub = t('heroSubClear');
+  }
 
   return (
     <View style={styles.wrap}>
@@ -79,7 +94,7 @@ export function PersonHero({ status }: { status: DeviceStatus | null }) {
           {/* Initials avatar tile — never a real photo in the demo (fictional person). */}
           <View style={styles.avatarWrap}>
             {out ? <PulseRings color={tone.fg} size={56} /> : null}
-            <Breathe active={words.tone === 'calm'}>
+            <Breathe active={live ? live === 'ALL_CLEAR' : words.tone === 'calm'}>
               <View style={styles.avatar}>
                 <AppText variant="heading" color={colors.white}>
                   MC
@@ -106,7 +121,7 @@ export function PersonHero({ status }: { status: DeviceStatus | null }) {
             {tone.big}
           </AppText>
           <View style={[styles.pill, { backgroundColor: tone.fg }]}>
-            <Ionicons name={words.tone === 'calm' ? 'checkmark' : tone.icon} size={14} color={colors.white} />
+            <Ionicons name={live === 'ALL_CLEAR' || (!live && words.tone === 'calm') ? 'checkmark' : tone.icon} size={14} color={colors.white} />
             <AppText variant="smallBold" color={colors.white}>
               {tone.pill}
             </AppText>

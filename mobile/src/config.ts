@@ -15,13 +15,6 @@
  */
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.43.20:3000';
 
-/**
- * true = use the built-in SIMULATED data (no backend needed).
- * Default is mock so the UI can be built before the backend is ready.
- * Set EXPO_PUBLIC_USE_MOCK=false once Shihad's server runs.
- */
-export const USE_MOCK = (process.env.EXPO_PUBLIC_USE_MOCK ?? 'true') !== 'false';
-
 /** The one band in the demo (section 7.5). */
 export const DEMO_DEVICE_ID = 'band-01';
 
@@ -47,6 +40,14 @@ export const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? LA
 
 export const SUPABASE_ENABLED =
   SUPABASE_URL.startsWith('https://') && SUPABASE_ANON_KEY.length > 20 && !SUPABASE_ANON_KEY.includes('PASTE');
+
+/**
+ * true = SIMULATED sample data (purple tags, demo buttons). false = real Supabase data.
+ * Rule (14 Nov): sample mode ONLY when Supabase isn't configured — set both EXPO_PUBLIC_SUPABASE_* to empty
+ * strings to rehearse offline. Why not a separate EXPO_PUBLIC_USE_MOCK switch any more: the APK is built
+ * without a .env, so that switch silently defaulted to "fake" and the phone build showed simulated alerts.
+ */
+export const USE_MOCK = !SUPABASE_ENABLED;
 
 /** How often to check for new help alerts while the app is open (agreed with Shihad: polling first). */
 export const POLL_MS = 5000;

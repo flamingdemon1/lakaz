@@ -18,6 +18,7 @@ import type { Alert } from '@/types';
 
 const typeIcon: Record<Alert['type'], IconName> = {
   unexpected_exit: 'walk',
+  help_requested: 'megaphone',
   sos: 'megaphone',
   device_offline: 'cloud-offline',
 };
@@ -48,7 +49,9 @@ export function AlertCard({ alert, personName = 'Marie-Claire' }: { alert: Alert
         </View>
         {/* Name on the second line so the alert type is never cut off next to the status pill. */}
         <AppText variant="small" color={colors.textMuted}>
-          {personName} · {clock(alert.created_at)} · {timeAgo(alert.created_at, now)} · {fill(t('stepN'), { n: alert.level })}
+          {personName} · {clock(alert.created_at)} · {timeAgo(alert.created_at, now)}
+          {/* Real help alerts have no ladder step (the backend has no escalation yet). */}
+          {alert.type === 'help_requested' ? '' : ` · ${fill(t('stepN'), { n: alert.level })}`}
         </AppText>
       </View>
       <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />

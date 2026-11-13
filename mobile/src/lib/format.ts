@@ -55,6 +55,7 @@ export const alertTitle: Record<AlertType, string> = {
   unexpected_exit: 'Left home',
   sos: 'SOS pressed',
   device_offline: 'Band disconnected',
+  help_requested: 'Help requested',
 };
 
 /** One-line explanation for each alert type. */
@@ -62,6 +63,7 @@ export const alertExplainer: Record<AlertType, string> = {
   unexpected_exit: 'The band lost the home signal. GPS is now on.',
   sos: 'The SOS button on the band was held down.',
   device_offline: 'The band is disconnected.',
+  help_requested: 'The help button on the band was pressed.',
   // Honest wording: we have no skin sensor, so this is a guess from "no movement" (team file, known clashes).
 };
 
@@ -70,6 +72,7 @@ export const alertAdvice: Record<AlertType, string> = {
   unexpected_exit: 'Call them, then check the map. Tap "I\'ve got it" so others know you are handling it.',
   sos: 'Call them now. If you cannot reach them, call 999.',
   device_offline: 'Check the band is charged and near the home Wi-Fi/hotspot. Call them if they are out.',
+  help_requested: "Call them now. Tap \"I've got it\" so the other carers know you are handling it. If you cannot reach them, call 999.",
 };
 
 /** Only these alert types climb the escalation ladder (section 9). */

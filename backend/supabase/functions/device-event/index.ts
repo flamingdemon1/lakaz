@@ -11,23 +11,20 @@ Deno.serve(createDeviceEventHandler(async (token, event) => {
     byte.toString(16).padStart(2, "0")
   ).join("");
 
-  // Refresh last_seen for both event kinds. Invalid tokens never create alerts.
-  const heartbeat = await fetch(new URL("/rest/v1/rpc/submit_heartbeat", url), {
-    method: "POST",
-    headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ p_token_hash: tokenHash }),
-    signal: AbortSignal.timeout(5000),
-  });
-  if (!heartbeat.ok) {
-    // Keep the deployed help path working until Shihad applies the migration.
-    const problem = await heartbeat.json().catch(() => ({}));
-    if (event.kind === "heartbeat" || !["PGRST202", "42883"].includes(problem.code)) {
-      throw new Error("Heartbeat RPC failed");
-    }
-  } else {
-    if (await heartbeat.json() !== true) return null;
-    if (event.kind === "heartbeat") return { ok: true as const };
+  /** Takes no inputs. Updates the authenticated band's timestamp, returning token validity. */
+  async function heartbeat(): Promise<boolean> {
+    const response = await fetch(new URL("/rest/v1/rpc/submit_heartbeat", url), {
+      method: "POST",
+      headers: { apikey: key!, Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_token_hash: tokenHash }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) throw new Error("Heartbeat RPC failed");
+    return await response.json() === true;
   }
+
+  // Standalone heartbeats validate the token through SQL and never call alert intake.
+  if (event.kind === "heartbeat") return await heartbeat() ? { ok: true as const } : null;
 
   const response = await fetch(new URL("/rest/v1/rpc/submit_device_event", url), {
     method: "POST",
@@ -57,6 +54,12 @@ Deno.serve(createDeviceEventHandler(async (token, event) => {
       row.kind !== event.kind || typeof row.received_at !== "string" ||
       !(row.acknowledged_at === null || typeof row.acknowledged_at === "string")) {
     throw new Error("Unexpected alert RPC response");
+  }
+  // The alert is already saved and validated. Timestamp failures must not hide that success.
+  try {
+    await heartbeat();
+  } catch {
+    console.warn("Help request saved; last_seen refresh failed");
   }
   return {
     device_id: row.device_id,

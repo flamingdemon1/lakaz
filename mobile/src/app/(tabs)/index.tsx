@@ -16,9 +16,10 @@ import { DemoControls } from '@/components/DemoControls';
 import { LocationCard } from '@/components/LocationCard';
 import { FadeIn } from '@/components/motion';
 import { PersonHero } from '@/components/PersonHero';
-import { AppText, Card, IconName, Screen, SectionTitle } from '@/components/ui';
+import { AppText, Button, Card, IconName, Screen, SectionTitle } from '@/components/ui';
 import { USE_MOCK } from '@/config';
 import { useAuth } from '@/data/auth';
+import { useBand } from '@/data/bands';
 import { isOpen, useLakaz } from '@/data/store';
 import { ALERT_KEY, fill, STATUS_KEY } from '@/i18n';
 import { clock, isOnline } from '@/lib/format';
@@ -30,6 +31,10 @@ import type { Alert } from '@/types';
 export default function Home() {
   const { status, alerts, device, loading } = useLakaz();
   const { t } = useAuth(); // every label follows the language chosen in Profile
+  // LIVE: does this carer have a band at all? (Fahim's useBand — RLS returns only linked bands.)
+  // Without one, "All clear" / "while she is home" would be untrue, so Home asks them to link a band instead.
+  const { band, loading: bandLoading, error: bandError } = useBand();
+  const noBand = !USE_MOCK && !bandLoading && !bandError && !band && alerts.length === 0;
   const now = useNow();
   const open = alerts.filter(isOpen);
   const main = open[0];
@@ -52,9 +57,7 @@ export default function Home() {
         </View>
       ) : (
         <>
-          <FadeIn>
-            <PersonHero status={status} />
-          </FadeIn>
+          <FadeIn>{noBand ? <NoBandCard /> : <PersonHero status={status} />}</FadeIn>
 
           {/* Three round shortcuts (white circles on black, like the reference). Each opens a real screen. */}
           <FadeIn delay={motion.stagger} style={styles.actions}>
@@ -93,7 +96,7 @@ export default function Home() {
                 ))}
               </View>
             </FadeIn>
-          ) : main ? null : (
+          ) : main || noBand ? null : (
             <FadeIn delay={motion.stagger * 2}>
               <Card style={styles.calm}>
                 <Ionicons name="shield-checkmark" size={28} color={statusStyles.Resolved.bg} />
@@ -136,6 +139,31 @@ export default function Home() {
         </>
       )}
     </Screen>
+  );
+}
+
+/**
+ * Shown instead of the status card when the signed-in carer has no linked band yet (live mode only).
+ * One clear next step: link the band with the code printed on it (RPC claim_device, PR #22).
+ */
+function NoBandCard() {
+  const { t } = useAuth();
+  return (
+    <View style={styles.group}>
+      <AppText variant="heading" color={colors.text}>
+        LAKAZ
+      </AppText>
+      <Card style={styles.noBand}>
+        <View style={styles.noBandIcon}>
+          <Ionicons name="link" size={28} color={colors.link} />
+        </View>
+        <AppText variant="title" accessibilityRole="header">
+          {t('noBandTitle')}
+        </AppText>
+        <AppText color={colors.textMuted}>{t('noBandBody')}</AppText>
+        <Button label={t('linkBand')} icon="link" onPress={() => router.push('/link-band')} />
+      </Card>
+    </View>
   );
 }
 
@@ -213,6 +241,8 @@ const styles = StyleSheet.create({
   deckIcon: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   timePill: { borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.75)', borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 4 },
   calm: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  noBand: { gap: space.md },
+  noBandIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
   bandRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1 },
 });

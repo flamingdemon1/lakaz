@@ -23,6 +23,8 @@ import { AuthProvider } from '@/data/auth';
 import { PeopleProvider } from '@/data/people';
 import { LakazProvider } from '@/data/store';
 import { TrackingProvider } from '@/data/tracking';
+import { ZonesProvider } from '@/data/zones';
+import { ZoneToast } from '@/components/ZoneToast';
 import { colors, fonts } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -45,6 +47,7 @@ export default function RootLayout() {
         <AuthProvider>
         <PeopleProvider>
         <TrackingProvider>
+        <ZonesProvider>
         <StatusBar style="dark" />
         <Stack
           screenOptions={{
@@ -74,7 +77,13 @@ export default function RootLayout() {
           <Stack.Screen name="person/[id]/guardians" options={{ title: 'Guardians', headerBackTitle: 'Back' }} />
           {/* Live location tracking (section C, SAMPLE data in src/data/tracking.tsx). */}
           <Stack.Screen name="person/[id]/location" options={{ title: 'Location', headerBackTitle: 'Back' }} />
+          {/* Safe zones & geofencing (section D, SAMPLE data in src/data/zones.tsx). */}
+          <Stack.Screen name="person/[id]/zones" options={{ title: 'Safe zones', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="person/[id]/zone-edit" options={{ title: 'Safe zone', headerBackTitle: 'Back' }} />
         </Stack>
+        {/* Arrival / departure / unexpected-exit banner, drawn above every screen. */}
+        <ZoneToast />
+        </ZonesProvider>
         </TrackingProvider>
         </PeopleProvider>
         </AuthProvider>

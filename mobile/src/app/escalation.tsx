@@ -1,7 +1,7 @@
 /**
  * app/escalation.tsx — ESCALATION SETTINGS: demo vs real timers, community-alert rules, automatic
  * live tracking at level 2, and who the primary / secondary contacts are.
- * Owner: Person 3/4 (Zuhayr). Data: src/data/escalation.tsx (+ guardians in src/data/people.tsx).
+ * Owner: Person 3/4 (Fahim, Zuhayr). Data: src/data/escalation.tsx (+ guardians in src/data/people.tsx).
  */
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -40,6 +40,9 @@ export default function EscalationSettings() {
 
   return (
     <Screen edges={['bottom']}>
+      {/* Sample stores stay sample even when Supabase authentication is live. */}
+      <SimulatedTag text="SAMPLE DATA" />
+      <AppText variant="small" color={colors.textMuted}>Sample screen: not connected to the band yet.</AppText>
       <View style={styles.top}>
         <AppText variant="title" style={styles.flex}>
           Escalation for {p?.name ?? '—'}

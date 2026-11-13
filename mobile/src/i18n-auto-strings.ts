@@ -4,6 +4,9 @@
  * ⚠️ FR/Kreol FIRST DRAFT — check with a native speaker before the pitch.
  */
 export const AUTO_STRINGS: Record<string, { fr: string; mfe: string }> = {
+  "SAMPLE DATA": { fr: "DONNÉES DE DÉMONSTRATION", mfe: "DONE LEXANP" },
+  "Sample screen: not connected to the band yet.": { fr: "Écran de démonstration : pas encore connecté au bracelet.", mfe: "Lekran lexanp: pankor konekte ar brasle." },
+
   "Alerts": { fr: "Alertes", mfe: "Alert" },
   "Notifications": { fr: "Notifications", mfe: "Notifikasion" },
   "Settings": { fr: "Réglages", mfe: "Paramet" },

@@ -1,7 +1,7 @@
 /**
  * app/person/[id]/zones.tsx — SAFE ZONES for one person: map of all zones, where they are now,
  * each zone's rules, add buttons (home / school / grandparents), and SAMPLE walks to demo the geofence.
- * Owner: Person 3/4 (Zuhayr). Data + rules: src/data/zones.tsx.
+ * Owner: Person 3/4 (Fahim, Zuhayr). Data + rules: src/data/zones.tsx.
  */
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -26,6 +26,9 @@ export default function Zones() {
   if (!p) {
     return (
       <Screen edges={['bottom']}>
+        {/* Sample stores stay sample even when Supabase authentication is live. */}
+        <SimulatedTag text="SAMPLE DATA" />
+        <AppText variant="small" color={colors.textMuted}>Sample screen: not connected to the band yet.</AppText>
         <EmptyState icon="help-circle" title="Person not found" />
       </Screen>
     );
@@ -41,6 +44,9 @@ export default function Zones() {
 
   return (
     <Screen edges={['bottom']}>
+      {/* Sample stores stay sample even when Supabase authentication is live. */}
+      <SimulatedTag text="SAMPLE DATA" />
+      <AppText variant="small" color={colors.textMuted}>Sample screen: not connected to the band yet.</AppText>
       <View style={styles.statusCard}>
         <Ionicons
           name={st.inside.length ? 'shield-checkmark' : st.pos ? 'walk' : 'help-circle'}

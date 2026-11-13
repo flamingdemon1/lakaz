@@ -1,6 +1,6 @@
 /**
  * app/person/[id]/guardians.tsx — AUTHORISED GUARDIANS & CAREGIVERS for one person, in alert order.
- * Owner: Person 3/4 (Zuhayr). Exactly one PRIMARY (first alert, level 1); the rest SECONDARY (level 2).
+ * Owner: Person 3/4 (Fahim, Zuhayr). Exactly one PRIMARY (first alert, level 1); the rest SECONDARY (level 2).
  * SAMPLE: nobody is invited or messaged. Fictional people only.
  */
 import { Ionicons } from '@expo/vector-icons';
@@ -29,6 +29,9 @@ export default function Guardians() {
   if (!p) {
     return (
       <Screen edges={['bottom']}>
+        {/* Sample stores stay sample even when Supabase authentication is live. */}
+        <SimulatedTag text="SAMPLE DATA" />
+        <AppText variant="small" color={colors.textMuted}>Sample screen: not connected to the band yet.</AppText>
         <EmptyState icon="help-circle" title="Person not found" />
       </Screen>
     );
@@ -64,6 +67,9 @@ export default function Guardians() {
 
   return (
     <Screen edges={['bottom']}>
+      {/* Sample stores stay sample even when Supabase authentication is live. */}
+      <SimulatedTag text="SAMPLE DATA" />
+      <AppText variant="small" color={colors.textMuted}>Sample screen: not connected to the band yet.</AppText>
       <View style={styles.top}>
         <SimulatedTag text="SAMPLE" />
         <AppText color={colors.textMuted} style={styles.flex}>

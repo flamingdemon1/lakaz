@@ -1,7 +1,7 @@
 /**
  * app/person/[id]/index.tsx — PERSON PAGE: profile, device connection, location link, emergency contact,
  * medical & safety notes, guardians, edit / remove.
- * Owner: Person 3/4 (Zuhayr). SAMPLE data.
+ * Owner: Person 3/4 (Fahim, Zuhayr). SAMPLE data.
  */
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -10,7 +10,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { FormError } from '@/components/forms';
 import { Avatar, DeviceConnection, ProfileChip } from '@/components/person';
-import { AppText, Button, Card, EmptyState, InfoRow, Screen, SectionTitle } from '@/components/ui';
+import { AppText, Button, Card, EmptyState, InfoRow, Screen, SectionTitle, SimulatedTag } from '@/components/ui';
 import { usePeople } from '@/data/people';
 import { useTracking } from '@/data/tracking';
 import { useZones } from '@/data/zones';
@@ -32,6 +32,9 @@ export default function PersonPage() {
   if (!p) {
     return (
       <Screen edges={['bottom']}>
+        {/* Sample stores stay sample even when Supabase authentication is live. */}
+        <SimulatedTag text="SAMPLE DATA" />
+        <AppText variant="small" color={colors.textMuted}>Sample screen: not connected to the band yet.</AppText>
         <EmptyState icon="help-circle" title="Person not found" body="They may have been removed." />
       </Screen>
     );
@@ -59,6 +62,9 @@ export default function PersonPage() {
 
   return (
     <Screen edges={['bottom']}>
+      {/* Sample stores stay sample even when Supabase authentication is live. */}
+      <SimulatedTag text="SAMPLE DATA" />
+      <AppText variant="small" color={colors.textMuted}>Sample screen: not connected to the band yet.</AppText>
       <View style={styles.head}>
         <Avatar name={p.name} color={p.avatarColor} size={72} />
         <View style={[styles.flex, styles.gapSm]}>

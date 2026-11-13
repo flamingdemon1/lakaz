@@ -50,7 +50,7 @@ function facts(a: Alert, tl: TimelineEntry[], personName: string) {
   };
 }
 
-/** Plain-text version for sharing (WhatsApp, email, notes…). */
+/** Plain-text version for sharing through the phone's share sheet (messages, email, notes…). */
 function reportText(a: Alert, tl: TimelineEntry[], personName: string) {
   const f = facts(a, tl, personName);
   return [
@@ -97,7 +97,7 @@ export default function IncidentReport() {
     try {
       if (Platform.OS === 'web' && !(navigator as Navigator & { share?: unknown }).share) {
         await navigator.clipboard.writeText(text);
-        setMsg('Copied to the clipboard — paste it into WhatsApp or an email.');
+        setMsg('Copied to the clipboard — paste it into a message or an email.');
         return;
       }
       await Share.share({ message: text, title: 'LAKAZ incident report' });

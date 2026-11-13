@@ -125,7 +125,7 @@ export default function EscalationSettings() {
       <Card style={styles.note}>
         <Ionicons name="information-circle" size={20} color={colors.primary} />
         <AppText variant="small" style={styles.flex}>
-          In the real system the server runs this ladder and sends WhatsApp messages; this app shows it and lets you act.
+          In the real system the server runs this ladder; this app shows it, alerts each person in the app, and lets you act.
         </AppText>
       </Card>
     </Screen>

@@ -3,7 +3,7 @@
  * Owner: Person 3/4 (Zuhayr).
  *
  * Why not push notifications: remote push does not work in Expo Go, so the in-app alert
- * (this) + WhatsApp are our notification channels. Alerts only appear while the app is open.
+ * (this) is our notification channel — no WhatsApp/SMS (team decision, 13 Nov). Alerts only appear while the app is open.
  */
 import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';

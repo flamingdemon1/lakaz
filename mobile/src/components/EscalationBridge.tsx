@@ -55,7 +55,7 @@ export function EscalationBridge() {
         // Each new level reached.
         for (let lvl = before.level + 1; lvl <= a.level; lvl++) {
           if (lvl === 1) {
-            esc.addTimeline(a.alert_id, `Step 1 · Primary caregiver alerted: ${primary?.name ?? 'not set'} (in-app; WhatsApp is sent by the server)`, 'level');
+            esc.addTimeline(a.alert_id, `Step 1 · Primary caregiver alerted: ${primary?.name ?? 'not set'} (in-app alert)`, 'level');
           } else if (lvl === 2) {
             esc.addTimeline(a.alert_id, `Step 2 · Secondary caregiver(s) alerted: ${secondary.map((g) => g.name).join(', ') || 'none set'}`, 'level');
             if (emergency && esc.settings.autoTracking && primary && !tracking.get(a.person_id).session) {

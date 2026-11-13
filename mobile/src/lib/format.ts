@@ -69,7 +69,7 @@ export const ESCALATING: AlertType[] = ['unexpected_exit', 'sos'];
 /** Escalation ladder steps (section 9). Labels used by the ladder component. */
 export const ladderSteps: { level: AlertLevel; title: string; detail: string; demo: string; real: string }[] = [
   { level: 0, title: 'Band buzzes', detail: 'Kreol voice prompt plays', demo: '0 s', real: '0 min' },
-  { level: 1, title: 'Primary caregiver', detail: 'WhatsApp + in-app alert', demo: '10 s', real: '2 min' },
+  { level: 1, title: 'Primary caregiver', detail: 'In-app alert + sound', demo: '10 s', real: '2 min' },
   { level: 2, title: 'Secondary caregiver', detail: 'Live tracking opens', demo: '25 s', real: '7 min' },
   { level: 3, title: 'Community alert', detail: 'Verified nearby responders', demo: '45 s', real: '15 min' },
 ];

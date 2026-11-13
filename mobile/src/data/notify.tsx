@@ -3,7 +3,7 @@
  * notification settings. Owner: Person 3/4 (Zuhayr).
  *
  * Why in-app: remote push does NOT work in Expo Go (locked team decision). While the app is open,
- * this banner + sound + vibration is the notification; WhatsApp is the "phone in pocket" channel.
+ * this banner + sound + vibration is the notification (no WhatsApp/SMS — team decision, 13 Nov).
  * In the production app the same categories become real push notifications.
  *
  * Safety rule: SOS and unexpected-exit alerts can't be switched off (a caregiver must never miss them).

@@ -54,9 +54,7 @@ interface LakazActions {
     sos: () => void;
     backHome: () => void;
     reset: () => void;
-    lowBattery: () => void;
     deviceOffline: () => void;
-    possibleRemoval: () => void;
   };
 }
 
@@ -97,7 +95,7 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
   /**
    * Routes a new alert to the right kind of notification:
    * SOS / unexpected exit → full-screen takeover (IncomingAlert); everything else → banner.
-   * Why: a low battery is important but not an emergency — it must not take over the screen.
+   * Why: a disconnected band is important but not an emergency — it must not take over the screen.
    */
   const announce = useCallback((a: Alert, sample: boolean) => {
     if (isTakeover(a)) {
@@ -106,12 +104,8 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
     }
     const href = { pathname: '/alert/[id]', params: { id: a.alert_id } };
     const name = 'Marie-Claire';
-    if (a.type === 'low_battery') {
-      pushRef.current({ category: 'low_battery', title: `${name}'s band battery is low`, body: 'Charge it soon so tracking keeps working', href, sample });
-    } else if (a.type === 'device_offline') {
+    if (a.type === 'device_offline') {
       pushRef.current({ category: 'device_offline', title: `${name}'s band is disconnected`, body: 'No signal for 20 s — check it is charged and in range', href, sample });
-    } else if (a.type === 'possible_removal') {
-      pushRef.current({ category: 'possible_removal', title: `${name} may have taken the band off`, body: 'No movement for 30 min while away from home (a guess)', href, sample });
     }
   }, []);
 
@@ -266,25 +260,10 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
     setIncoming(null);
   }, []);
 
-  /** SIMULATED: battery drops to 15 % → low_battery alert (banner, no escalation ladder). */
-  const lowBattery = useCallback(() => {
-    const a = mockNewAlert('low_battery');
-    setAlerts((l) => upsert(l, a));
-    setDevice((d) => (d ? { ...d, battery_pct: 15 } : d));
-    announce(a, true);
-  }, [announce]);
-
   /** SIMULATED: heartbeat stops → device_offline alert; the band shows "Offline" after 20 s. */
   const deviceOffline = useCallback(() => {
     heartbeatPaused.current = true;
     const a = mockNewAlert('device_offline');
-    setAlerts((l) => upsert(l, a));
-    announce(a, true);
-  }, [announce]);
-
-  /** SIMULATED: no movement for a long time while away → POSSIBLE removal (a guess, no skin sensor). */
-  const possibleRemoval = useCallback(() => {
-    const a = mockNewAlert('possible_removal');
     setAlerts((l) => upsert(l, a));
     announce(a, true);
   }, [announce]);
@@ -335,9 +314,9 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
       login: () => setMe({ id: ME.id, name: ME.name }),
       logout: () => setMe(null),
       escalateNow,
-      sim: { leaveHome, sos, backHome, reset, lowBattery, deviceOffline, possibleRemoval },
+      sim: { leaveHome, sos, backHome, reset, deviceOffline },
     }),
-    [alerts, status, device, mode, loading, error, incoming, me, acknowledge, resolve, refresh, escalateNow, leaveHome, sos, backHome, reset, lowBattery, deviceOffline, possibleRemoval],
+    [alerts, status, device, mode, loading, error, incoming, me, acknowledge, resolve, refresh, escalateNow, leaveHome, sos, backHome, reset, deviceOffline],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -115,7 +115,7 @@ export function mockLevelFor(
   if (a.status === 'Acknowledged' || a.status === 'Resolved') return { level: a.level, status: a.status };
   // SOS = notify everyone now (section 9). Without community permission it stops at level 2, still Critical.
   if (a.type === 'sos') return { level: communityAllowed ? 3 : 2, status: 'Critical' };
-  // Why only exits climb the ladder: a low battery or lost signal is a warning for the caregiver,
+  // Why only exits climb the ladder: a lost signal is a warning for the caregiver,
   // not a reason to wake up neighbours (section 9 ladder is for the person being missing).
   if (a.type !== 'unexpected_exit') return { level: a.level, status: a.status };
   let level: Alert['level'] = 0;

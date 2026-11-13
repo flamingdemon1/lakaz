@@ -8,11 +8,11 @@
 export type AlertStatus = 'Critical' | 'Active' | 'Acknowledged' | 'Resolved';
 
 /**
- * Alert types (section 7.2). `fall` is TBD, so it is not listed.
- * ⚠️ `possible_removal` is NOT in the shared contract yet — app-side SAMPLE only. It must be proposed to the
- * whole team (section 13: contract changes are announced + logged) before the backend sends it.
+ * Alert types the app shows (section 7.2). `fall` is TBD, so it is not listed.
+ * Dropped by team decision (13 Nov): `low_battery` (the band can't measure its battery yet) and
+ * `possible_removal` (was never in the contract). Add them back only if the band really reports them.
  */
-export type AlertType = 'unexpected_exit' | 'sos' | 'low_battery' | 'device_offline' | 'possible_removal';
+export type AlertType = 'unexpected_exit' | 'sos' | 'device_offline';
 
 /** Escalation level: 0 band only · 1 primary · 2 secondary + tracking · 3 community. */
 export type AlertLevel = 0 | 1 | 2 | 3;

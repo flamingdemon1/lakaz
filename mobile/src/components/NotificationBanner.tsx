@@ -4,7 +4,7 @@
  *
  * Behaviour by tone:
  *  - critical (SOS, unexpected exit): red, STAYS until tapped/dismissed.
- *  - warning (battery, disconnected, possible removal): amber, stays 10 s.
+ *  - warning (band disconnected): amber, stays 10 s.
  *  - good / info (safe return, arrivals, departures): green / teal, stays 6 s.
  * Sound and vibration follow the caregiver's settings (critical ones always on).
  */

@@ -30,7 +30,7 @@ export default function NotificationSettings() {
           <AppText variant="bodyBold">Push notifications</AppText>
           <AppText variant="small" color={colors.textMuted}>
             This test version can only alert you while the app is open (Expo Go can't receive push). The real app will
-            alert you even when it's closed. Until then, WhatsApp messages are the backup.
+            alert you even when it's closed. Until then, keep the app open during the demo.
           </AppText>
         </View>
       </Card>

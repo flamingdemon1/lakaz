@@ -6,7 +6,7 @@
  * Design direction ("warm home", chosen from the UI previews): cream paper + dark ink, quiet when
  * nothing is wrong, loud only when something is. The colour CODE is strict so a glance is enough:
  *   RED    = danger / emergency only (critical alerts, SOS, 999). Never used for decoration or branding.
- *   AMBER  = warning, needs attention soon (active alert, low battery).
+ *   AMBER  = warning, needs attention soon (active alert, band disconnected).
  *   BLUE   = someone is handling it (acknowledged).
  *   GREEN  = she is safe / done ✓ (at home, inside a safe zone, resolved, saved). NOT for "device online".
  *   INK    = everything else (brand, buttons, links, band online, GPS fix, live) — neutral, never a status.

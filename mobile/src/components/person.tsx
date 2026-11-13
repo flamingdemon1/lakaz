@@ -19,7 +19,7 @@ import {
   usePeople,
   WearableDevice,
 } from '@/data/people';
-import { isOnline, timeAgo } from '@/lib/format';
+import { isOnline } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
 import { checkName, checkPhone } from '@/lib/validate';
 import { colors, radius, space, statusStyles, TOUCH } from '@/theme';
@@ -161,7 +161,7 @@ export function DevicePicker({
 }
 
 /**
- * Device connection card: online/offline (20 s rule), battery, last heartbeat.
+ * Device connection card: online/offline status.
  * Bluetooth and cellular status are TBD in scope (section 4), so they are NOT shown.
  */
 export function DeviceConnection({ person }: { person: CaredPerson }) {
@@ -179,7 +179,6 @@ export function DeviceConnection({ person }: { person: CaredPerson }) {
     );
   }
   const online = isOnline({ device_id: d.device_id, battery_pct: d.battery_pct, last_seen: d.last_seen, gps_fix: null }, now);
-  const low = d.battery_pct != null && d.battery_pct < 20;
   return (
     <Card style={styles.gapSm}>
       <View style={styles.rowCard}>
@@ -190,21 +189,12 @@ export function DeviceConnection({ person }: { person: CaredPerson }) {
           <AppText variant="bodyBold">
             {d.device_id} · {online ? 'Online' : 'Offline'}
           </AppText>
-          <AppText variant="small" color={colors.textMuted}>
-            Last heartbeat {timeAgo(d.last_seen, now)}
-          </AppText>
         </View>
         <SimulatedTag text="SAMPLE" />
       </View>
-      <View style={styles.rowCard}>
-        <Ionicons name={low ? 'battery-dead' : 'battery-half'} size={22} color={low ? statusStyles.Critical.bg : colors.textMuted} />
-        <AppText color={low ? statusStyles.Critical.bg : colors.text}>
-          Battery {d.battery_pct != null ? `${d.battery_pct}%` : 'unknown'}
-        </AppText>
-      </View>
       {!online ? (
         <AppText variant="small" color={colors.textMuted}>
-          Offline = no heartbeat for 20 s. Check the band is charged and near the home Wi-Fi/hotspot.
+          Check the band is charged and near the home Wi-Fi/hotspot.
         </AppText>
       ) : null}
     </Card>

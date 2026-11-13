@@ -15,7 +15,7 @@ import { LocationCard } from '@/components/LocationCard';
 import { PersonHero } from '@/components/PersonHero';
 import { AppText, Button, Card, Screen, SectionTitle } from '@/components/ui';
 import { isOpen, useLakaz } from '@/data/store';
-import { isOnline, timeAgo } from '@/lib/format';
+import { isOnline } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
 import { colors, space, statusStyles } from '@/theme';
 
@@ -74,10 +74,6 @@ export default function Home() {
             <Ionicons name="watch" size={26} color={online ? statusStyles.Resolved.bg : colors.offline} />
             <View style={styles.flex}>
               <AppText variant="bodyBold">{online ? 'Band online' : 'Band offline'}</AppText>
-              <AppText variant="small" color={colors.textMuted}>
-                Last heartbeat {timeAgo(device?.last_seen, now)}
-                {device?.battery_pct != null ? ` · battery ${device.battery_pct}%` : ''}
-              </AppText>
             </View>
             <AppText variant="smallBold" color={colors.primary} onPress={() => router.push('/device')}>
               Details

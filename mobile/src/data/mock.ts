@@ -101,18 +101,29 @@ export function mockWalk(a: Alert): Alert {
 }
 
 /**
- * Works out which escalation level an alert should be at, given seconds since the exit.
- * Uses the DEMO timers (10 s / 25 s / 45 s), exactly like the backend's DEMO_MODE (section 9).
- * Acknowledged / resolved alerts stop escalating.
+ * Works out which escalation level an alert should be at, given seconds since the exit (section 9).
+ * Inputs: the alert, seconds since it started, the timers (demo 10/25/45 s or real 2/7/15 min),
+ * and whether the community rules allow level 3. Acknowledged / resolved alerts stop escalating.
+ * Never goes DOWN: "Escalate now" can push a level early and the timer must not undo it.
  */
-export function mockLevelFor(a: Alert, secondsSinceExit: number): Pick<Alert, 'level' | 'status'> {
+export function mockLevelFor(
+  a: Alert,
+  secondsSinceExit: number,
+  timers: { l1: number; l2: number; l3: number } = DEMO_LADDER_S,
+  communityAllowed = true,
+): Pick<Alert, 'level' | 'status'> {
   if (a.status === 'Acknowledged' || a.status === 'Resolved') return { level: a.level, status: a.status };
-  if (a.type === 'sos') return { level: 3, status: 'Critical' };
+  // SOS = notify everyone now (section 9). Without community permission it stops at level 2, still Critical.
+  if (a.type === 'sos') return { level: communityAllowed ? 3 : 2, status: 'Critical' };
   // Why only exits climb the ladder: a low battery or lost signal is a warning for the caregiver,
   // not a reason to wake up neighbours (section 9 ladder is for the person being missing).
   if (a.type !== 'unexpected_exit') return { level: a.level, status: a.status };
-  if (secondsSinceExit >= DEMO_LADDER_S.l3) return { level: 3, status: 'Critical' };
-  if (secondsSinceExit >= DEMO_LADDER_S.l2) return { level: 2, status: 'Active' };
-  if (secondsSinceExit >= DEMO_LADDER_S.l1) return { level: 1, status: 'Active' };
-  return { level: 0, status: 'Active' };
+  let level: Alert['level'] = 0;
+  if (secondsSinceExit >= timers.l1) level = 1;
+  if (secondsSinceExit >= timers.l2) level = 2;
+  if (secondsSinceExit >= timers.l3) level = communityAllowed ? 3 : 2;
+  level = Math.max(level, a.level) as Alert['level'];
+  // Critical once it has gone past the secondary caregiver without anyone answering.
+  const critical = level === 3 || (level === 2 && secondsSinceExit >= timers.l3);
+  return { level, status: critical ? 'Critical' : 'Active' };
 }

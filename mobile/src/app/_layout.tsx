@@ -26,6 +26,7 @@ import { TrackingProvider } from '@/data/tracking';
 import { ZonesProvider } from '@/data/zones';
 import { NotificationBanner } from '@/components/NotificationBanner';
 import { NotifyProvider } from '@/data/notify';
+import { EscalationProvider } from '@/data/escalation';
 import { colors, fonts } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -45,6 +46,8 @@ export default function RootLayout() {
     <SafeAreaProvider>
       {/* NotifyProvider is outermost so every store below can raise a notification. */}
       <NotifyProvider>
+      {/* EscalationProvider sits above LakazProvider: the sample ladder in the store reads its timers/rules. */}
+      <EscalationProvider>
       <LakazProvider>
         {/* AuthProvider sits inside LakazProvider because logging in/out opens/closes the caregiver tabs. */}
         <AuthProvider>
@@ -85,6 +88,8 @@ export default function RootLayout() {
           <Stack.Screen name="person/[id]/zone-edit" options={{ title: 'Safe zone', headerBackTitle: 'Back' }} />
           {/* Alerts & notifications (section E). */}
           <Stack.Screen name="notifications" options={{ title: 'Notifications', headerBackTitle: 'Back' }} />
+          {/* Emergency escalation (section F). */}
+          <Stack.Screen name="escalation" options={{ title: 'Escalation', headerBackTitle: 'Back' }} />
         </Stack>
         {/* One banner for every notification category (src/data/notify.tsx), drawn above every screen. */}
         <NotificationBanner />
@@ -93,6 +98,7 @@ export default function RootLayout() {
         </PeopleProvider>
         </AuthProvider>
       </LakazProvider>
+      </EscalationProvider>
       </NotifyProvider>
     </SafeAreaProvider>
   );

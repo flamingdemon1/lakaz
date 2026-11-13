@@ -98,7 +98,7 @@ export default function PersonLocation() {
           <>
             <LocationMap lat={fix!.lat} lng={fix!.lng} fresh={live} height={240} home={p.id === 'p-01' ? MOCK_HOME : undefined} />
             <View style={styles.row}>
-              <View style={[styles.dot, { backgroundColor: live ? statusStyles.Resolved.bg : colors.offline }]} />
+              <View style={[styles.dot, { backgroundColor: live ? colors.primary : colors.offline }]} />
               <AppText variant="bodyBold" style={styles.flex}>
                 {live ? 'Live position' : 'Last known location — not live'}
               </AppText>
@@ -132,14 +132,14 @@ export default function PersonLocation() {
           title="GPS"
           value={t.gps === 'fix' ? 'Fix' : t.gps === 'searching' ? 'Searching…' : 'Idle'}
           sub={t.gps === 'idle' ? 'Off to save battery' : t.gps === 'searching' ? 'Needs open sky' : 'Getting positions'}
-          color={t.gps === 'fix' ? statusStyles.Resolved.bg : t.gps === 'searching' ? statusStyles.Active.bg : colors.textMuted}
+          color={t.gps === 'fix' ? colors.primary : t.gps === 'searching' ? statusStyles.Active.bg : colors.textMuted}
         />
         <StatusTile
           icon={online ? 'wifi' : 'cloud-offline'}
           title="Band connection"
           value={device ? (online ? 'Online' : 'Offline') : 'No band'}
           sub={device ? device.device_id : 'Assign one first'}
-          color={online ? statusStyles.Resolved.bg : statusStyles.Critical.bg}
+          color={online ? colors.primary : colors.offline}
         />
       </View>
 
@@ -193,7 +193,7 @@ function countdown(endIso: string, now: number) {
 
 /** Coloured strip at the top saying exactly what the user is looking at. */
 function StatusBanner({ tone, title, body }: { tone: 'live' | 'stale' | 'blocked' | 'off'; title: string; body: string }) {
-  const bg = { live: statusStyles.Resolved.bg, stale: statusStyles.Active.bg, blocked: colors.offline, off: colors.primary }[tone];
+  const bg = { live: colors.primary, stale: statusStyles.Active.bg, blocked: colors.offline, off: colors.primary }[tone];
   const icon: IconName = { live: 'radio', stale: 'time', blocked: 'eye-off', off: 'pause-circle' }[tone] as IconName;
   return (
     <View style={[styles.banner, { backgroundColor: bg }]} accessibilityRole="summary" accessibilityLiveRegion="polite">

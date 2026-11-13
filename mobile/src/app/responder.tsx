@@ -62,8 +62,8 @@ export default function Responder() {
         <Button label="Tap to turn on alert sound" icon="volume-high" size="lg" onPress={unlock} />
       ) : (
         <View style={styles.soundOn}>
-          <Ionicons name="volume-high" size={18} color={statusStyles.Resolved.bg} />
-          <AppText variant="smallBold" color={statusStyles.Resolved.bg}>
+          <Ionicons name="volume-high" size={18} color={colors.primary} />
+          <AppText variant="smallBold" color={colors.primary}>
             Sound on — keep this page open
           </AppText>
         </View>

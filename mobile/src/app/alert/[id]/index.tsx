@@ -175,7 +175,7 @@ export default function AlertDetail() {
               <AppText variant="smallBold" style={styles.tlTime}>
                 {clock(e.at)}
               </AppText>
-              <Ionicons name={TL_ICON[e.kind]} size={16} color={e.kind === 'ack' || e.kind === 'resolve' ? statusStyles.Resolved.bg : colors.primary} />
+              <Ionicons name={TL_ICON[e.kind]} size={16} color={e.kind === 'resolve' ? statusStyles.Resolved.bg : e.kind === 'ack' ? statusStyles.Acknowledged.bg : colors.primary} />
               <AppText variant="small" style={styles.flex}>
                 {e.text}
               </AppText>

@@ -3,9 +3,10 @@
  * Owner: Person 3/4 (Fahim, Zuhayr). Change the look here once, and every screen follows.
  */
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -105,9 +106,16 @@ export function Button({
     ghost: { bg: 'transparent', fg: colors.primary, border: 'transparent' },
   }[tone];
   const inactive = disabled || loading;
+  // Springy press: shrinks a little under the finger and bounces back — feels physical, not a flat flash.
+  const scale = useRef(new Animated.Value(1)).current;
+  const springTo = (v: number) =>
+    Animated.spring(scale, { toValue: v, speed: 40, bounciness: v === 1 ? 8 : 0, useNativeDriver: Platform.OS !== 'web' }).start();
   return (
+    <Animated.View style={{ transform: [{ scale }] }}>
     <Pressable
       onPress={onPress}
+      onPressIn={() => !inactive && springTo(0.96)}
+      onPressOut={() => springTo(1)}
       disabled={inactive}
       accessibilityRole="button"
       accessibilityLabel={label}
@@ -131,6 +139,7 @@ export function Button({
         </>
       )}
     </Pressable>
+    </Animated.View>
   );
 }
 
@@ -246,7 +255,7 @@ const styles = StyleSheet.create({
     gap: space.sm,
   },
   buttonLg: { minHeight: 60, borderRadius: radius.lg },
-  pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
+  pressed: { opacity: 0.9 }, // scale is animated in Button (springTo)
   disabled: { opacity: 0.5 },
   pill: {
     flexDirection: 'row',

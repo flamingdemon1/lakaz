@@ -12,14 +12,21 @@ import { AlertCard } from '@/components/AlertCard';
 import { ConnectionBanner } from '@/components/ConnectionBanner';
 import { DemoControls } from '@/components/DemoControls';
 import { LocationCard } from '@/components/LocationCard';
+import { FadeIn } from '@/components/motion';
 import { PersonHero } from '@/components/PersonHero';
 import { AppText, Button, Card, Screen, SectionTitle } from '@/components/ui';
 import { isOpen, useLakaz } from '@/data/store';
 import { isOnline } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
-import { colors, space, statusStyles } from '@/theme';
+import { colors, motion, space, statusStyles } from '@/theme';
 
-/** Home screen. */
+/** "Good morning / afternoon / evening" from the phone's clock — feels written by a person, not a template. */
+function greeting(d: Date): string {
+  const h = d.getHours();
+  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+}
+
+/** Home screen. Sections fade up one after another (FadeIn + motion.stagger) on first open. */
 export default function Home() {
   const { status, alerts, device, loading } = useLakaz();
   const now = useNow();
@@ -29,10 +36,12 @@ export default function Home() {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <AppText variant="title">Good day</AppText>
-        <AppText color={colors.textMuted}>Here is how Marie-Claire is doing.</AppText>
-      </View>
+      <FadeIn style={styles.header}>
+        <AppText variant="small" color={colors.textMuted}>
+          {new Date(now).toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}
+        </AppText>
+        <AppText variant="title">{greeting(new Date(now))}</AppText>
+      </FadeIn>
 
       <ConnectionBanner />
 
@@ -43,20 +52,27 @@ export default function Home() {
         </View>
       ) : (
         <>
-          <PersonHero status={status} />
+          <FadeIn delay={motion.stagger}>
+            <PersonHero status={status} />
+          </FadeIn>
 
           {/* Shortcut to the checkpoint flow agreed with the backend: help alert + acknowledge. */}
-          <Button label="Help alerts (sample)" icon="megaphone" tone="secondary" onPress={() => router.push('/help-alert')} />
+          <FadeIn delay={motion.stagger * 2}>
+            <Button label="Help alerts (sample)" icon="megaphone" tone="secondary" onPress={() => router.push('/help-alert')} />
+          </FadeIn>
 
           {main ? (
             <>
               <SectionTitle>{open.length > 1 ? `Open alerts (${open.length})` : 'Open alert'}</SectionTitle>
-              {open.map((a) => (
-                <AlertCard key={a.alert_id} alert={a} />
+              {open.map((a, i) => (
+                <FadeIn key={a.alert_id} delay={i * motion.stagger}>
+                  <AlertCard alert={a} />
+                </FadeIn>
               ))}
               <LocationCard alert={main} />
             </>
           ) : (
+            <FadeIn delay={motion.stagger * 3}>
             <Card style={styles.calm}>
               <Ionicons name="shield-checkmark" size={28} color={statusStyles.Resolved.bg} />
               <View style={styles.flex}>
@@ -67,11 +83,13 @@ export default function Home() {
                 </AppText>
               </View>
             </Card>
+            </FadeIn>
           )}
 
+          <FadeIn delay={motion.stagger * 4} style={styles.group}>
           <SectionTitle>Band</SectionTitle>
           <Card style={styles.bandRow}>
-            <Ionicons name="watch" size={26} color={online ? statusStyles.Resolved.bg : colors.offline} />
+            <Ionicons name="watch" size={26} color={online ? colors.primary : colors.offline} />
             <View style={styles.flex}>
               <AppText variant="bodyBold">{online ? 'Band online' : 'Band offline'}</AppText>
             </View>
@@ -79,6 +97,7 @@ export default function Home() {
               Details
             </AppText>
           </Card>
+          </FadeIn>
 
           <DemoControls />
         </>
@@ -89,6 +108,7 @@ export default function Home() {
 
 const styles = StyleSheet.create({
   header: { gap: 2, marginTop: space.sm },
+  group: { gap: space.lg },
   loading: { alignItems: 'center', gap: space.md, paddingVertical: space.xxxl },
   calm: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   bandRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },

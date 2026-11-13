@@ -70,8 +70,8 @@ export interface WearableDevice {
   last_seen: string | null;
 }
 
-/** Avatar colours to choose from (all pass 4.5:1 with white initials). */
-export const AVATAR_COLORS = ['#0E7490', '#7C3AED', '#B45309', '#047857', '#BE185D', '#1D4ED8'];
+/** Avatar colours (all pass 4.5:1 with white initials). Earthy only: red/amber/green/blue mean status. */
+export const AVATAR_COLORS = ['#23394B', '#6D4C7D', '#8A5A3B', '#3E5F6B', '#7A4E62', '#55557A'];
 
 // ---------------- SAMPLE data (fictional) ----------------
 const now = () => new Date().toISOString();

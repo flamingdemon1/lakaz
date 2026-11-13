@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Modal, StyleSheet, View } from 'react-native';
 
+import { SlideToConfirm } from '@/components/motion';
 import { AppText, Button, SimulatedTag } from '@/components/ui';
 import { acknowledgeAlert, fetchHelpEvents, HelpEvent, IS_SAMPLE, onHelpEventsChanged } from '@/data/helpAlert';
 import { clock, timeAgo } from '@/lib/format';
@@ -125,13 +126,12 @@ export function HelpAlertTakeover() {
             </AppText>
           ) : null}
           <View style={styles.actions}>
-            <Button
-              label={err ? 'Try again' : "I've got it"}
-              icon="hand-left"
-              tone="danger"
-              size="lg"
+            {/* Slide, not tap — same as the wandering takeover, so a pocket tap can't acknowledge. */}
+            <SlideToConfirm
+              label={err ? 'Slide to try again' : "Slide — I've got it"}
+              color={tone.bg}
               loading={busy}
-              onPress={onAck}
+              onConfirm={onAck}
               accessibilityHint="Tells the other carers you are handling this help request"
             />
             <Button label="See all help alerts" icon="list" tone="secondary" onPress={onSeeAll} />

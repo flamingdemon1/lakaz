@@ -22,6 +22,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '@/data/auth';
 import { PeopleProvider } from '@/data/people';
 import { LakazProvider } from '@/data/store';
+import { TrackingProvider } from '@/data/tracking';
 import { colors, fonts } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -43,6 +44,7 @@ export default function RootLayout() {
         {/* AuthProvider sits inside LakazProvider because logging in/out opens/closes the caregiver tabs. */}
         <AuthProvider>
         <PeopleProvider>
+        <TrackingProvider>
         <StatusBar style="dark" />
         <Stack
           screenOptions={{
@@ -70,7 +72,10 @@ export default function RootLayout() {
           <Stack.Screen name="person/[id]/index" options={{ title: 'Person', headerBackTitle: 'Back' }} />
           <Stack.Screen name="person/[id]/edit" options={{ title: 'Edit person', headerBackTitle: 'Back' }} />
           <Stack.Screen name="person/[id]/guardians" options={{ title: 'Guardians', headerBackTitle: 'Back' }} />
+          {/* Live location tracking (section C, SAMPLE data in src/data/tracking.tsx). */}
+          <Stack.Screen name="person/[id]/location" options={{ title: 'Location', headerBackTitle: 'Back' }} />
         </Stack>
+        </TrackingProvider>
         </PeopleProvider>
         </AuthProvider>
       </LakazProvider>

@@ -50,7 +50,7 @@ Never commit Wi-Fi credentials, device tokens, privileged Supabase keys, real we
 
 | Tool used | What it was used for |
 |---|---|
-| OpenAI ChatGPT / Codex | Drafted the kick-off README, collaboration instructions, proposed interface and submission checklist. |
+| OpenAI ChatGPT / Codex | Drafted the kick-off README, collaboration instructions, proposed interface and submission checklist; implemented and tested ESP32 request validation with sample events. |
 | Anthropic Claude | Team tool; specific uses to be recorded by its users. |
 | Google Gemini | Team tool; specific uses to be recorded by its users. |
 

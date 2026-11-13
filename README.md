@@ -43,7 +43,7 @@ The backend and frontend files are starters for their owners to complete as impl
 The app uses simulated sample data only when both `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` are set to empty strings in the local environment. There is no `USE_MOCK` switch. Restart Expo after changing environment variables.
 
 3. Backend: apply the committed SQL migrations to the team’s Supabase project in order and configure the device endpoint and server-side secrets. Use a dedicated test wearer and carer. Backend owners must replace this line with the exact migration and deployment steps after the first successful run.
-4. Firmware: open the committed sketch, select the team’s actual ESP32 board and serial port, set Wi-Fi and device credentials locally, upload and open Serial Monitor. Press the button and verify that the event appears in the app, then acknowledge and refresh.
+4. Firmware: use `firmware/band/band.ino` and `firmware/anchor/anchor.ino`. In each folder, copy `secrets.example.h` to a local `secrets.h`, fill the required values privately, and never commit `secrets.h`. Select the correct ESP32 board and serial port, upload each sketch and open Serial Monitor. Check help press, departure and return events with Kavish. Then acknowledge and refresh in the app.
 5. Before submitting, update these steps with actual paths, board settings, and a tested APK or Expo/test link. Verify on a second phone/account.
 
 Never commit Wi-Fi credentials, device tokens, privileged Supabase keys, real wearer data or private location history. The app uses only public client configuration with access rules enforced in Supabase.
@@ -52,7 +52,7 @@ Never commit Wi-Fi credentials, device tokens, privileged Supabase keys, real we
 
 | Tool used | What it was used for |
 |---|---|
-| OpenAI ChatGPT / Codex | Drafted the kick-off README, collaboration instructions, proposed interface and submission checklist. Also converted and checked the facilities CSV, integrated email accounts with Supabase Auth, connected the Alerts tab to live help alerts, set up local runs against the shared project, and implemented carer profiles and account security. Added wearer fallback, translation corrections, and the decision log and README updates. Also implemented the backend for band departures and returns. |
+| OpenAI ChatGPT / Codex | Drafted the kick-off README, collaboration instructions, proposed interface and submission checklist. Also converted and checked the facilities CSV, integrated email accounts with Supabase Auth, connected the Alerts tab to live help alerts, set up local runs against the shared project, and implemented carer profiles and account security. Added wearer fallback, translation corrections, event-based band status, honest sample labels, live call filtering, and demo documentation. Also implemented the backend for band departures and returns. |
 | Anthropic Claude | Claude Code (desktop app): Night glow dark UI and animations, EN/FR/Kreol translation system, acknowledgement receipt (surprise card), live alert lifecycle (Home and Incident from Supabase, She is safe), who acknowledged, band names, Link a band, SQL migrations 20261114013000 and 20261114020000 (reviewed and applied by Shihad). Owners reviewed every change. |
 | Google Gemini | Team tool; drafted, verified and committed database schema migration with RLS policies, acknowledge_alert and submit_device_event RPCs on feat/backend-db. |
 
@@ -68,10 +68,11 @@ Judges see it under **Help alerts → View acknowledgement receipt**. Prove pers
 
 | Mode | Features |
 |---|---|
-| Live through Supabase | Accounts and profile, help alerts, acknowledge, receipt, She is safe, incident timeline, who acknowledged, band name, Link a band, wearer details, band online/offline through heartbeat, facility lookup |
-| Simulated and labelled | Location and live tracking, safe zones, escalation ladder and community alerts, push notifications while the app is closed, several people and medical notes |
+| Live through Supabase | Accounts and profile, help alerts, acknowledge, receipt, She is safe, incident timeline, who acknowledged, band name, Link a band, wearer details, band last heard + home/away, Left home / back home (BLE home beacon on the band), facility lookup |
+| Demo stand-in | Location and live tracking use a phone's GPS carried with the band, because the band has no GPS yet. We tell the judges. |
+| Simulated/sample and labelled | Escalation ladder and community alerts, push while the app is closed (roadmap), People list, emergency contacts and medical notes, notification/escalation settings kept on the phone, responder page, and safe zones unless fed by phone GPS |
 
-Live means the app has Supabase integration. Wearer and heartbeat data require Shihad’s migration and deployed device endpoint, with Kavish’s band sending heartbeats. A physical online/offline check is still required. Closed-app push is roadmap only.
+Live means Supabase integration is implemented and depends on Shihad’s applied migrations and deployed device endpoint. Band status updates from real events, without a continuous heartbeat. The phone GPS stand-in is the team’s demo decision; verify that integration on a phone before presenting it as working. Closed-app push remains roadmap only.
 
 
 

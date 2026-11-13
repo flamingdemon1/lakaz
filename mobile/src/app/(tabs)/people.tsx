@@ -1,6 +1,6 @@
 /**
  * app/(tabs)/people.tsx — PEOPLE I CARE FOR: everyone registered under this account.
- * Owner: Person 3/4 (Zuhayr). SAMPLE data (src/data/people.tsx).
+ * Owner: Person 3/4 (Fahim, Zuhayr). SAMPLE data (src/data/people.tsx).
  */
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -21,6 +21,9 @@ export default function People() {
 
   return (
     <Screen>
+      {/* Sample stores stay sample even when Supabase authentication is live. */}
+      <SimulatedTag text="SAMPLE DATA" />
+      <AppText variant="small" color={colors.textMuted}>Sample screen: not connected to the band yet.</AppText>
       <View style={styles.title}>
         <AppText variant="title" accessibilityRole="header" style={styles.flex}>
           People I care for

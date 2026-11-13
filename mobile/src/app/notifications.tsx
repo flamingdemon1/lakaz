@@ -1,7 +1,7 @@
 /**
  * app/notifications.tsx — NOTIFICATION SETTINGS: what the caregiver is told about, and how
  * (banner / sound / vibration). Honest note about push notifications in Expo Go.
- * Owner: Person 3/4 (Zuhayr). Data: src/data/notify.tsx.
+ * Owner: Person 3/4 (Fahim, Zuhayr). Data: src/data/notify.tsx.
  */
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
@@ -24,6 +24,9 @@ export default function NotificationSettings() {
 
   return (
     <Screen edges={['bottom']}>
+      {/* Sample stores stay sample even when Supabase authentication is live. */}
+      <SimulatedTag text="SAMPLE DATA" />
+      <AppText variant="small" color={colors.textMuted}>Sample screen: not connected to the band yet.</AppText>
       <Card style={styles.push}>
         <Ionicons name="phone-portrait" size={24} color={colors.link} />
         <View style={styles.flex}>

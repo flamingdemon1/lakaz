@@ -1,7 +1,7 @@
 /**
  * app/person/[id]/zone-edit.tsx — CREATE / EDIT A SAFE ZONE: type, name, centre (tap the map or use a
  * preset), radius, which notifications, allowed departure time, expected arrival time. Delete.
- * Owner: Person 3/4 (Zuhayr). Params: ?type=home|school|grandparents (new) or ?zoneId=… (edit).
+ * Owner: Person 3/4 (Fahim, Zuhayr). Params: ?type=home|school|grandparents (new) or ?zoneId=… (edit).
  */
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -48,6 +48,9 @@ export default function ZoneEdit() {
   if (!p || (params.zoneId && !existing)) {
     return (
       <Screen edges={['bottom']}>
+        {/* Sample stores stay sample even when Supabase authentication is live. */}
+        <SimulatedTag text="SAMPLE DATA" />
+        <AppText variant="small" color={colors.textMuted}>Sample screen: not connected to the band yet.</AppText>
         <EmptyState icon="help-circle" title="Not found" />
       </Screen>
     );
@@ -97,6 +100,9 @@ export default function ZoneEdit() {
 
   return (
     <Screen edges={['bottom']}>
+      {/* Sample stores stay sample even when Supabase authentication is live. */}
+      <SimulatedTag text="SAMPLE DATA" />
+      <AppText variant="small" color={colors.textMuted}>Sample screen: not connected to the band yet.</AppText>
       <View style={styles.top}>
         <Ionicons name={info.icon} size={26} color={colors.link} />
         <AppText variant="title" style={styles.flex}>

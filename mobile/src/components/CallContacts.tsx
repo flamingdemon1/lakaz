@@ -14,6 +14,7 @@ import React, { useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, IconName } from '@/components/ui';
+import { SUPABASE_ENABLED } from '@/config';
 import { useEscalation } from '@/data/escalation';
 import { usePeople } from '@/data/people';
 import { colors, radius, space, statusStyles, TOUCH } from '@/theme';
@@ -43,19 +44,22 @@ export function CallContacts({ personId, alertId }: { personId: string; alertId:
     return () => clearTimeout(t);
   }, [armed]);
 
-  if (!p) return null;
-  const primary = p.guardians.find((g) => g.role === 'primary');
-  const secondaries = p.guardians.filter((g) => g.role === 'secondary');
-  const contacts: Contact[] = [
+  if (!p && !SUPABASE_ENABLED) return null;
+  const primary = p?.guardians.find((g) => g.role === 'primary');
+  const secondaries = p?.guardians.filter((g) => g.role === 'secondary') ?? [];
+  const allContacts: Contact[] = [
     ...(primary ? [{ key: primary.id, label: primary.name, sub: `Primary · ${primary.relationship}`, number: primary.phone, icon: 'person' as IconName, real: false }] : []),
     ...secondaries.map((g) => ({ key: g.id, label: g.name, sub: `Secondary · ${g.relationship}`, number: g.phone, icon: 'people' as IconName, real: false })),
     // The person's emergency contact, unless it's already one of the guardians.
-    ...(p.emergency.phone && !p.guardians.some((g) => g.phone === p.emergency.phone)
+    ...(p?.emergency.phone && !p.guardians.some((g) => g.phone === p.emergency.phone)
       ? [{ key: 'emergency', label: p.emergency.name, sub: `Emergency contact · ${p.emergency.relationship}`, number: p.emergency.phone, icon: 'call' as IconName, real: false }]
       : []),
     { key: '999', label: 'Police', sub: 'Mauritius emergency', number: '999', icon: 'shield', real: true },
     { key: '114', label: 'SAMU ambulance', sub: 'Mauritius medical emergency', number: '114', icon: 'medkit', real: true },
   ];
+
+  // Sample caregivers are unrelated to the real linked band; live incidents list public services only.
+  const contacts = SUPABASE_ENABLED ? allContacts.filter((contact) => contact.real) : allContacts;
 
   /** Handles a tap: sample → explain, real → arm then dial on the 2nd tap. */
   const onCall = async (c: Contact) => {

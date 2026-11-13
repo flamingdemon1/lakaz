@@ -45,6 +45,9 @@ export default function Responder() {
 
   return (
     <Screen edges={['top', 'bottom']}>
+      {/* Sample stores stay sample even when Supabase authentication is live. */}
+      <SimulatedTag text="SAMPLE DATA" />
+      <AppText variant="small" color={colors.textMuted}>Sample screen: not connected to the band yet.</AppText>
       <View style={styles.header}>
         <View style={styles.logo}>
           <Ionicons name="people" size={22} color={colors.white} />

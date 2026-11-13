@@ -1,6 +1,6 @@
 /**
  * auth.tsx — SAMPLE account system: sign-up, verification, log in (password or one-time code),
- * forgot password, profile, language, security, trusted family & caregivers.
+ * forgot password, profile, language, security. (Guardians per person live in src/data/people.tsx.)
  * Owner: Person 3/4 (Zuhayr). Real auth = Supabase Auth (Person 2: Shihad, Inshiraah).
  *
  * NOTHING HERE IS REAL: accounts live in memory (reset when the app reloads), no email or SMS is sent,
@@ -27,16 +27,6 @@ export interface Account {
   lang: Lang;
 }
 
-export interface TrustedPerson {
-  id: string;
-  name: string;
-  phone: string;
-  relationship: string;
-  role: 'primary' | 'secondary';
-  /** true = this row is the signed-in user. */
-  isMe?: boolean;
-}
-
 // ---------------- SAMPLE "database" (fictional) ----------------
 // Demo sign-in for rehearsals — fictional caregiver c-01. Also listed in mobile/README.md.
 const seedAccounts: (Account & { password: string })[] = [
@@ -52,11 +42,6 @@ const seedAccounts: (Account & { password: string })[] = [
   },
 ];
 let accounts = seedAccounts.map((a) => ({ ...a }));
-
-let trusted: TrustedPerson[] = [
-  { id: 't-1', name: 'Demo Caregiver', phone: '+23057000001', relationship: 'Daughter', role: 'primary', isMe: true },
-  { id: 't-2', name: 'Demo Neighbour', phone: '+23057000002', relationship: 'Neighbour', role: 'secondary' },
-];
 
 /** Simulated network delay so loading states are visible. */
 const wait = (ms = 600) => new Promise((r) => setTimeout(r, ms));
@@ -83,10 +68,6 @@ interface AuthCtx {
   logout: () => void;
   /** TEMPORARY bypass: signs in as the demo caregiver without a password. Remove before the pitch. */
   bypass: () => void;
-  trusted: TrustedPerson[];
-  addTrusted: (p: Omit<TrustedPerson, 'id' | 'role' | 'isMe'>) => Promise<void>;
-  removeTrusted: (id: string) => Promise<void>;
-  makePrimary: (id: string) => Promise<void>;
 }
 
 const Ctx = createContext<AuthCtx | null>(null);
@@ -97,7 +78,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<Account | null>(null);
   const [pending, setPending] = useState<Account | null>(null);
   const [lang, setLangState] = useState<Lang>('en');
-  const [trustedList, setTrustedList] = useState<TrustedPerson[]>(trusted);
 
   /** Signs a verified account in and opens the caregiver tabs. */
   const signIn = useCallback(
@@ -236,32 +216,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
 
       bypass: () => signIn(publicAccount(accounts[0])),
-
-      trusted: trustedList,
-      // SWAP FOR SUPABASE: insert into the caregiver-link table (backend decides how invites work)
-      addTrusted: async ({ name, phone, relationship }) => {
-        await wait(400);
-        const p = normalisePhone(phone)!;
-        if (trusted.some((x) => x.phone === p)) throw new Error('This number is already in the list.');
-        trusted = [...trusted, { id: `t-${Date.now()}`, name: name.trim(), phone: p, relationship: relationship.trim(), role: 'secondary' }];
-        setTrustedList(trusted);
-      },
-      removeTrusted: async (id) => {
-        await wait(400);
-        const row = trusted.find((x) => x.id === id);
-        if (row && user && row.phone === user.phone) throw new Error('You cannot remove yourself.');
-        if (row?.role === 'primary') throw new Error('Make someone else primary first.');
-        trusted = trusted.filter((x) => x.id !== id);
-        setTrustedList(trusted);
-      },
-      makePrimary: async (id) => {
-        await wait(400);
-        // Exactly one primary: they get the first alert (escalation level 1).
-        trusted = trusted.map((x) => ({ ...x, role: x.id === id ? 'primary' : 'secondary' }));
-        setTrustedList(trusted);
-      },
+      // Guardians / trusted caregivers moved to src/data/people.tsx (they belong to each person).
     };
-  }, [user, pending, lang, trustedList, signIn, lakaz]);
+  }, [user, pending, lang, signIn, lakaz]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -20,6 +20,7 @@ import React, { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from '@/data/auth';
+import { PeopleProvider } from '@/data/people';
 import { LakazProvider } from '@/data/store';
 import { colors, fonts } from '@/theme';
 
@@ -41,6 +42,7 @@ export default function RootLayout() {
       <LakazProvider>
         {/* AuthProvider sits inside LakazProvider because logging in/out opens/closes the caregiver tabs. */}
         <AuthProvider>
+        <PeopleProvider>
         <StatusBar style="dark" />
         <Stack
           screenOptions={{
@@ -63,7 +65,13 @@ export default function RootLayout() {
           <Stack.Screen name="forgot-password" options={{ title: '', headerBackTitle: 'Back' }} />
           <Stack.Screen name="security" options={{ title: 'Account security', headerBackTitle: 'Back' }} />
           <Stack.Screen name="trusted" options={{ title: 'Trusted circle', headerBackTitle: 'Back' }} />
+          {/* Person management (section B, SAMPLE data in src/data/people.tsx). */}
+          <Stack.Screen name="person/new" options={{ title: 'Add a person', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="person/[id]/index" options={{ title: 'Person', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="person/[id]/edit" options={{ title: 'Edit person', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="person/[id]/guardians" options={{ title: 'Guardians', headerBackTitle: 'Back' }} />
         </Stack>
+        </PeopleProvider>
         </AuthProvider>
       </LakazProvider>
     </SafeAreaProvider>

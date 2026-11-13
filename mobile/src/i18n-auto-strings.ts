@@ -221,4 +221,11 @@ export const AUTO_STRINGS: Record<string, { fr: string; mfe: string }> = {
   "Device": { fr: "Appareil", mfe: "Aparey" },
   "· radius": { fr: "· rayon", mfe: "· rayon" },
   "Help alerts": { fr: "Alertes d'aide", mfe: "Alert sekour" },
+  "Checking band…": { fr: "Vérification du bracelet…", mfe: "Pe verifie brasle…" },
+  "Connection unknown": { fr: "Connexion inconnue", mfe: "Koneksion pa koni" },
+  "No linked band": { fr: "Aucun bracelet lié", mfe: "Okenn brasle lie" },
+  "Offline": { fr: "Hors ligne", mfe: "Dekonekte" },
+  "Wearer details and alerts from Supabase · no GPS on the band": { fr: "Infos du porteur et alertes depuis Supabase · pas de GPS sur le bracelet", mfe: "Detay dimounn ek alert depi Supabase · pena GPS lor brasle" },
+  "Wearer details unavailable": { fr: "Infos du porteur indisponibles", mfe: "Detay dimounn pa disponib" },
+  "Area unavailable": { fr: "Zone indisponible", mfe: "Landrwa pa disponib" },
 };

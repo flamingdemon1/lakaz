@@ -1,12 +1,12 @@
 // Request boundary for the device-event Edge Function. The entrypoint will
 // supply a database-backed submit function once the shared SQL is ready.
-type DeviceEvent = { event_id: string; kind: "help_requested" };
+type DeviceEvent = { event_id: string; kind: "help_requested" | "heartbeat" };
 type StoredAlert = DeviceEvent & {
   device_id: string;
   received_at: string;
   acknowledged_at: string | null;
 };
-type SubmitEvent = (token: string, event: DeviceEvent) => Promise<StoredAlert | null>;
+type SubmitEvent = (token: string, event: DeviceEvent) => Promise<StoredAlert | { ok: true } | null>;
 
 const maxBytes = 1024;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -58,7 +58,7 @@ export function createDeviceEventHandler(submit: SubmitEvent) {
     }
     const { event_id, kind } = payload as Record<string, unknown>;
     if (Object.keys(payload).length !== 2 || typeof event_id !== "string" ||
-        !uuid.test(event_id) || kind !== "help_requested") {
+        !uuid.test(event_id) || (kind !== "help_requested" && kind !== "heartbeat")) {
       return error(400, "invalid_event");
     }
 

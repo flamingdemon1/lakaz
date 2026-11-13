@@ -17,6 +17,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Breathe, PulseRings } from '@/components/motion';
 import { AppText, IconName } from '@/components/ui';
 import { useAuth } from '@/data/auth';
+import { useBand } from '@/data/bands';
+import { SUPABASE_ENABLED } from '@/config';
 import { MOCK_PERSON } from '@/data/mock';
 import { fill } from '@/i18n';
 import { duration, homeStatusWords } from '@/lib/format';
@@ -27,9 +29,10 @@ import type { DeviceStatus } from '@/types';
 /** Input: device status from GET /api/devices/:id/status or `status:update`. */
 export function PersonHero({ status }: { status: DeviceStatus | null }) {
   const now = useNow();
+  const { band } = useBand();
   const { t } = useAuth();
   const words = homeStatusWords(status?.status);
-  const name = status?.person_name ?? MOCK_PERSON.name;
+  const name = SUPABASE_ENABLED ? (band?.wearer_name ?? 'Wearer details unavailable') : (status?.person_name ?? MOCK_PERSON.name);
   const first = name.split(' ')[0];
 
   // Same rule as the alert itself (statusStyles): Active = amber while the ladder climbs,
@@ -60,6 +63,7 @@ export function PersonHero({ status }: { status: DeviceStatus | null }) {
 
   return (
     <View style={styles.wrap}>
+      {SUPABASE_ENABLED && <AppText variant="small">Wearer details from Supabase · home/GPS status simulated</AppText>}
       {/* Brand line + two shortcuts above the card. */}
       <View style={styles.top}>
         <AppText variant="heading" color={colors.text}>
@@ -82,7 +86,7 @@ export function PersonHero({ status }: { status: DeviceStatus | null }) {
             <Breathe active={words.tone === 'calm'}>
               <View style={styles.avatar}>
                 <AppText variant="heading" color={colors.white}>
-                  MC
+                  {name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2)}
                 </AppText>
               </View>
             </Breathe>
@@ -95,7 +99,7 @@ export function PersonHero({ status }: { status: DeviceStatus | null }) {
               </AppText>
             </View>
             <AppText variant="small" color={colors.textMuted}>
-              {name}, {MOCK_PERSON.age} · {MOCK_PERSON.area}
+              {name}{SUPABASE_ENABLED ? (band?.wearer_age != null ? ', ' + band.wearer_age : '') : ', ' + MOCK_PERSON.age} · {SUPABASE_ENABLED ? (band?.wearer_area ?? 'Area unavailable') : MOCK_PERSON.area}
             </AppText>
           </View>
         </View>

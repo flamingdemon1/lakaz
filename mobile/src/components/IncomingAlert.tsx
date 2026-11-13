@@ -139,7 +139,8 @@ export function IncomingAlert() {
             Marie-Claire · {t(ALERT_KEY[alert.type].title)}
           </AppText>
           <AppText color={colors.textMuted} style={styles.center}>
-            {t(ALERT_KEY[alert.type].explain)}
+            {/* Live exits come from the band's home beacon — there is no GPS, so never say "GPS is now on". */}
+            {alert.live && alert.type === 'unexpected_exit' ? t('explain_left_home_live') : t(ALERT_KEY[alert.type].explain)}
           </AppText>
           <LadderBars level={alert.level} color={tone.bg} />
           <View style={[styles.stepBox, { backgroundColor: tone.soft }]}>

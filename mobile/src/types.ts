@@ -39,7 +39,12 @@ export interface Alert {
   last_location: LastLocation | null;
   /** true = last fix is less than 60 s old (computed by the backend). */
   location_fresh: boolean;
-  /** Server times from Supabase (live help alerts only; used for the real incident timeline). */
+  /**
+   * true = a REAL alert read from Supabase (help button or the band's left-home event). Screens use it to
+   * hide what the real system doesn't have yet: the escalation ladder, the map (no GPS) and "Step n".
+   */
+  live?: boolean;
+  /** Server times from Supabase (live alerts only; used for the real incident timeline). */
   acknowledged_at?: string | null;
   /** Closed time. For a left-home alert (Kavish, #29) this is when the band was heard at home again. */
   resolved_at?: string | null;

@@ -2,7 +2,7 @@
  * useAlertTimeline.ts — the timeline of one incident, for the Incident screen and the incident report.
  * Owner: Person 3 (Zuhayr).
  *
- * LIVE help alerts: built from the SERVER's own timestamps in Supabase (received_at, acknowledged_at,
+ * LIVE alerts (help presses and the band's left-home events): built from the SERVER's own timestamps in Supabase (received_at, acknowledged_at,
  * resolved_at) — so the timeline is true even after a refresh or on another carer's phone.
  * SAMPLE alerts: the app's in-memory timeline (data/escalation.tsx), as before.
  */
@@ -26,10 +26,17 @@ export function useAlertTimeline(alert: Alert | undefined): TimelineEntry[] {
   const { t } = useAuth();
   const nameOf = useCarerName();
   if (!alert) return [];
-  if (alert.type !== 'help_requested') return timeline(alert.alert_id);
+  if (!alert.live) return timeline(alert.alert_id);
 
-  const out: TimelineEntry[] = [{ at: alert.created_at, kind: 'start', text: t('tlPressed') }];
+  const exit = alert.type === 'unexpected_exit';
+  const out: TimelineEntry[] = [{ at: alert.created_at, kind: 'start', text: t(exit ? 'tlLeftHome' : 'tlPressed') }];
   if (alert.acknowledged_at) out.push({ at: alert.acknowledged_at, kind: 'ack', text: fill(t('tlAcked'), { who: nameOf(alert.acknowledged_by) }) });
-  if (alert.resolved_at) out.push({ at: alert.resolved_at, kind: 'resolve', text: fill(t('tlResolved'), { who: nameOf(alert.resolved_by) }) });
+  // Closed by the band itself (resolved_by empty) = it heard the home beacon again; otherwise a carer closed it.
+  if (alert.resolved_at)
+    out.push({
+      at: alert.resolved_at,
+      kind: 'resolve',
+      text: exit && !alert.resolved_by ? t('tlBackHome') : fill(t('tlResolved'), { who: nameOf(alert.resolved_by) }),
+    });
   return out;
 }

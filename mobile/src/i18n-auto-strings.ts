@@ -229,4 +229,6 @@ export const AUTO_STRINGS: Record<string, { fr: string; mfe: string }> = {
   // CHECK: Kreol wearer terminology should be confirmed by a native speaker.
   "Wearer details unavailable": { fr: "Infos du porteur indisponibles", mfe: "Detay dimounn pa disponib" },
   "Area unavailable": { fr: "Zone indisponible", mfe: "Landrwa pa disponib" },
+  "Marie-Claire is back home": { fr: "Marie-Claire est de retour à la maison", mfe: "Marie-Claire finn retourn lakaz" },
+  "The band heard the home beacon again. The alert closed by itself.": { fr: "Le bracelet capte à nouveau la balise de la maison. L'alerte s'est fermée toute seule.", mfe: "Brasle-la finn tann balis lakaz ankor. Lalert finn ferme tousel." },
 };

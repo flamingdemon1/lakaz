@@ -4,8 +4,11 @@
  *
  * Why this file: the store's old "live mode" expected a Node REST + Socket.IO server that was never built
  * (the team chose Supabase). This turns Supabase rows into the app's Alert shape so every screen that reads
- * useLakaz() shows real data. Only the band's help button exists for real, so every live alert is
- * type 'help_requested' — exits / SOS / offline stay SIMULATED (sample mode only).
+ * useLakaz() shows real data. Two kinds are real:
+ *  - 'help_requested' — the band's help button (double click)            → app type 'help_requested' (red)
+ *  - 'left_home'      — the band lost the home anchor's signal (Kavish)    → app type 'unexpected_exit' (amber);
+ *                       closed by the band itself when it hears the anchor again ('back_home', resolved_by = null).
+ * SOS long-press, offline alerts, GPS and the ladder stay SIMULATED (sample mode only).
  *
  * Safe rollout: each newer column is optional. If Supabase doesn't have it yet, we drop it from the query and
  * work out the status from the timestamps instead, so the app never breaks before Shihad applies a migration.
@@ -38,13 +41,16 @@ let optional = ['acknowledged_by', 'status', 'resolved_at', 'resolved_by'];
  */
 export function toAlert(r: AlertRow): Alert {
   const resolved = r.status === 'resolved' || !!r.resolved_at;
+  const exit = r.kind === 'left_home';
   return {
     alert_id: r.event_id,
     person_id: 'p-01', // one wearer in the demo; the wearer's real details come from devices (Fahim's migration)
     device_id: r.device_id || DEMO_DEVICE_ID,
-    type: 'help_requested',
+    type: exit ? 'unexpected_exit' : 'help_requested',
     level: 1, // the real backend has no ladder yet: every linked carer sees the alert at once
-    status: resolved ? 'Resolved' : r.acknowledged_at ? 'Acknowledged' : 'Critical',
+    // Colour code: a help press is an emergency (red); leaving home needs attention soon (amber).
+    status: resolved ? 'Resolved' : r.acknowledged_at ? 'Acknowledged' : exit ? 'Active' : 'Critical',
+    live: true,
     created_at: r.received_at,
     acknowledged_by: r.acknowledged_by ?? null,
     acknowledged_at: r.acknowledged_at,
@@ -73,6 +79,33 @@ export async function fetchLiveAlerts(): Promise<Alert[]> {
       if (!missing) throw e;
       optional = optional.filter((c) => c !== missing);
     }
+  }
+}
+
+/** Where the band says she is right now (devices.home_state / home_since, from the band's anchor). */
+export interface HomeState {
+  state: 'home' | 'away';
+  since: string | null;
+}
+
+let hasHomeState = true;
+
+/**
+ * Reads the band's home/away state. Never throws: returns null until migration 20261114030000 is applied
+ * (Shihad) or when the band hasn't reported yet — Home then falls back to the alert-only states.
+ */
+export async function fetchHomeState(deviceId?: string): Promise<HomeState | null> {
+  if (!hasHomeState || !supa.isSignedIn()) return null;
+  try {
+    const rows = await supa.select<{ id: string; home_state: 'home' | 'away' | null; home_since: string | null }[]>(
+      'devices?select=id,home_state,home_since',
+    );
+    const row = (deviceId ? rows.find((r) => r.id === deviceId) : undefined) ?? rows.find((r) => r.home_state) ?? null;
+    return row?.home_state ? { state: row.home_state, since: row.home_since } : null;
+  } catch (e) {
+    // Missing columns = migration not applied yet: stop asking (one failed request, not one every 5 s).
+    if (/home_state|home_since/i.test((e as Error).message)) hasHomeState = false;
+    return null;
   }
 }
 

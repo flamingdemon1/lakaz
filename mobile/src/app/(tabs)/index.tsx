@@ -75,7 +75,7 @@ export default function Home() {
                 </FadeIn>
               ))}
               {/* No map for real help alerts: the band has no GPS (never show a fake position as real). */}
-              {main.type === 'help_requested' ? null : <LocationCard alert={main} />}
+              {main.live ? null : <LocationCard alert={main} />}
             </>
           ) : null}
 

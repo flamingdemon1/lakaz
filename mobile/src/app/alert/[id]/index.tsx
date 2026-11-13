@@ -53,7 +53,9 @@ export default function AlertDetail() {
   const top = communityBlockedReason(alert, escSettings) === null ? 3 : 2;
   const canEscalate = canAck && alert.level < top && USE_MOCK;
   // Real help alerts: the name comes from Supabase (linked_carer_names) or "You"; sample: the demo carers.
-  const live = alert.type === 'help_requested';
+  // Real alert from Supabase (help press or the band's left-home event): no ladder, no map, real timeline.
+  const live = !!alert.live;
+  const liveExit = live && alert.type === 'unexpected_exit';
   const ackName = alert.acknowledged_by
     ? live
       ? nameOf(alert.acknowledged_by)
@@ -83,7 +85,7 @@ export default function AlertDetail() {
           {USE_MOCK ? <SimulatedTag /> : null}
         </View>
         <AppText variant="title">Marie-Claire · {alertTitle[alert.type]}</AppText>
-        <AppText color={colors.text}>{alertExplainer[alert.type]}</AppText>
+        <AppText color={colors.text}>{liveExit ? t('explain_left_home_live') : alertExplainer[alert.type]}</AppText>
         <AppText variant="small" color={colors.textMuted}>
           Started {clock(alert.created_at)} ({timeAgo(alert.created_at, now)}) · {alert.alert_id}
         </AppText>
@@ -143,11 +145,12 @@ export default function AlertDetail() {
       <SectionTitle>What to do</SectionTitle>
       <Card style={styles.advice}>
         <Ionicons name="bulb" size={20} color={colors.link} />
-        <AppText style={styles.flex}>{alertAdvice[alert.type]}</AppText>
+        <AppText style={styles.flex}>{live ? t(liveExit ? 'advice_left_home_live' : 'advice_help') : alertAdvice[alert.type]}</AppText>
       </Card>
 
       {/* Only emergencies climb the ladder; device warnings go to the primary caregiver only. */}
-      {ESCALATING.includes(alert.type) ? (
+      {/* The ladder is SIMULATED (no server escalation yet), so it only appears on sample alerts. */}
+      {ESCALATING.includes(alert.type) && !live ? (
         <>
           <SectionTitle right={<AppText variant="smallBold" color={colors.link} onPress={() => router.push('/escalation')}>Settings</AppText>}>
             Escalation

@@ -7,8 +7,12 @@
 /** Alert statuses (section 7.2). */
 export type AlertStatus = 'Critical' | 'Active' | 'Acknowledged' | 'Resolved';
 
-/** Alert types (section 7.2). `fall` is TBD, so it is not listed. */
-export type AlertType = 'unexpected_exit' | 'sos' | 'low_battery' | 'device_offline';
+/**
+ * Alert types (section 7.2). `fall` is TBD, so it is not listed.
+ * ⚠️ `possible_removal` is NOT in the shared contract yet — app-side SAMPLE only. It must be proposed to the
+ * whole team (section 13: contract changes are announced + logged) before the backend sends it.
+ */
+export type AlertType = 'unexpected_exit' | 'sos' | 'low_battery' | 'device_offline' | 'possible_removal';
 
 /** Escalation level: 0 band only · 1 primary · 2 secondary + tracking · 3 community. */
 export type AlertLevel = 0 | 1 | 2 | 3;

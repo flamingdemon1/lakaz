@@ -25,21 +25,30 @@ export function useAlertFeedback() {
     setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
   }, []);
 
-  /** Plays the chime and vibrates. Never throws — a missing sound must not break the alert screen. */
-  const play = useCallback(() => {
-    try {
-      player.seekTo(0);
-      player.play();
-    } catch {
-      /* ignore — sound is a bonus, the visual alert is what matters */
-    }
-    if (Platform.OS === 'android') Vibration.vibrate([0, 400, 150, 400]);
-    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-  }, [player]);
+  /**
+   * Plays the chime and vibrates. Never throws — a missing sound must not break the alert screen.
+   * Input (optional): { sound, vibrate } from the caregiver's notification settings (both default true).
+   */
+  const play = useCallback(
+    (opts?: { sound?: boolean; vibrate?: boolean }) => {
+      if (opts?.sound !== false) {
+        try {
+          player.seekTo(0);
+          player.play();
+        } catch {
+          /* ignore — sound is a bonus, the visual alert is what matters */
+        }
+      }
+      if (opts?.vibrate === false) return;
+      if (Platform.OS === 'android') Vibration.vibrate([0, 400, 150, 400]);
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+    },
+    [player],
+  );
 
   /** Call from a button press on web: plays once (quietly allowed now) and marks sound as enabled. */
   const unlock = useCallback(() => {
-    play();
+    play({ vibrate: false });
     setNeedsTap(false);
   }, [play]);
 

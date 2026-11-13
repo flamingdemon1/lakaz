@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleProp,
@@ -49,13 +51,20 @@ export function Screen({
   const inner = <View style={styles.inner}>{children}</View>;
   return (
     <SafeAreaView style={styles.screen} edges={edges}>
-      {scroll ? (
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {inner}
-        </ScrollView>
-      ) : (
-        inner
-      )}
+      {/* Why: on iPhone the keyboard would otherwise cover the form fields at the bottom. */}
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        {scroll ? (
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            // Why "handled": the first tap on a button works even while the keyboard is open.
+            keyboardShouldPersistTaps="handled">
+            {inner}
+          </ScrollView>
+        ) : (
+          inner
+        )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

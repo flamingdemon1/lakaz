@@ -10,12 +10,14 @@ import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { AlertCard } from '@/components/AlertCard';
+import { BandStatus } from '@/components/BandStatus';
 import { ConnectionBanner } from '@/components/ConnectionBanner';
 import { DemoControls } from '@/components/DemoControls';
 import { LocationCard } from '@/components/LocationCard';
 import { FadeIn } from '@/components/motion';
 import { PersonHero } from '@/components/PersonHero';
 import { AppText, Card, IconName, Screen, SectionTitle } from '@/components/ui';
+import { USE_MOCK } from '@/config';
 import { useAuth } from '@/data/auth';
 import { isOpen, useLakaz } from '@/data/store';
 import { ALERT_KEY, fill, STATUS_KEY } from '@/i18n';
@@ -121,6 +123,13 @@ export default function Home() {
               </AppText>
             </Card>
           </FadeIn>
+          ) : !USE_MOCK ? (
+            // LIVE: Fahim's BandStatus — Online / Offline from the band's real heartbeat (devices.last_seen),
+            // for the band of the newest alert (or the first linked band).
+            <FadeIn delay={motion.stagger * 3} style={styles.group}>
+              <SectionTitle>{t('bandTitle')}</SectionTitle>
+              <BandStatus deviceId={alerts[0]?.device_id} />
+            </FadeIn>
           ) : null}
 
           <DemoControls />

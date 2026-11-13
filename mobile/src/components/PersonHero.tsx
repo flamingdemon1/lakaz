@@ -78,7 +78,12 @@ export function PersonHero({ status }: { status: DeviceStatus | null }) {
 
   return (
     <View style={styles.wrap}>
-      {SUPABASE_ENABLED && <AppText variant="small">Wearer details from Supabase · home/GPS status simulated</AppText>}
+      {/* Honest source line: since PR #24 the status comes from real Supabase alerts too; only GPS is not live. */}
+      {SUPABASE_ENABLED && (
+        <AppText variant="small" color={colors.textMuted}>
+          Wearer details and alerts from Supabase · no GPS on the band
+        </AppText>
+      )}
       {/* Brand line + two shortcuts above the card. */}
       <View style={styles.top}>
         <AppText variant="heading" color={colors.text}>

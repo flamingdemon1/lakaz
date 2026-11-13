@@ -14,6 +14,7 @@ import React, { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { FadeIn } from '@/components/motion';
 import { AppText, IconName, SimulatedTag } from '@/components/ui';
 import { CATEGORY_INFO, Tone, useNotify } from '@/data/notify';
 import { clock } from '@/lib/format';
@@ -62,6 +63,8 @@ export function NotificationBanner() {
 
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { top: insets.top + space.sm }]}>
+      {/* Drops in from the top; key = notice id so every new notice animates in again. */}
+      <FadeIn key={n.id} from={-24} style={styles.full}>
       <Pressable
         onPress={open}
         accessibilityRole="alert"
@@ -91,6 +94,7 @@ export function NotificationBanner() {
           <Ionicons name="close" size={22} color={colors.white} />
         </Pressable>
       </Pressable>
+      </FadeIn>
     </View>
   );
 }
@@ -111,6 +115,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
   },
   flex: { flex: 1, gap: 2 },
+  full: { width: '100%', alignItems: 'center' },
   tagRow: { flexDirection: 'row', marginTop: 2 },
   close: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
 });

@@ -9,7 +9,7 @@
  *  - Timings come from `motion` in theme.ts so the whole app feels consistent.
  */
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
@@ -54,10 +54,13 @@ export function useReducedMotion(): boolean {
 export function FadeIn({
   children,
   delay = 0,
+  from = 14,
   style,
 }: {
   children: React.ReactNode;
   delay?: number;
+  /** Start offset in px: positive = rises from below, negative = drops from above (banners). */
+  from?: number;
   style?: StyleProp<ViewStyle>;
 }) {
   const reduced = useReducedMotion();
@@ -75,7 +78,7 @@ export function FadeIn({
       useNativeDriver: NATIVE,
     }).start();
   }, [v, delay, reduced]);
-  const translateY = v.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });
+  const translateY = v.interpolate({ inputRange: [0, 1], outputRange: [from, 0] });
   return <Animated.View style={[style, { opacity: v, transform: [{ translateY }] }]}>{children}</Animated.View>;
 }
 
@@ -169,16 +172,18 @@ export function PopIn({ children, delay = 0 }: { children: React.ReactNode; dela
  */
 export function useColorTransition(color: string) {
   const reduced = useReducedMotion();
-  const [pair, setPair] = useState({ from: color, to: color });
   const v = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    if (color === pair.to) return;
-    setPair({ from: pair.to, to: color });
+  // Why a ref (not state): the from/to pair must switch in the SAME render as the new colour.
+  const pair = useRef({ from: color, to: color });
+  if (color !== pair.current.to) pair.current = { from: pair.current.to, to: color };
+  // Layout effect (not during render — React forbids that, and not a normal effect — that paints
+  // one frame of the new colour first): rewind to the old colour, then blend, all before the screen paints.
+  useLayoutEffect(() => {
+    if (pair.current.from === pair.current.to) return;
     v.setValue(0);
     Animated.timing(v, { toValue: 1, duration: reduced ? 0 : motion.slow * 1.4, useNativeDriver: false }).start();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [color]);
-  return v.interpolate({ inputRange: [0, 1], outputRange: [pair.from, pair.to] });
+  }, [color, reduced, v]);
+  return v.interpolate({ inputRange: [0, 1], outputRange: [pair.current.from, pair.current.to] });
 }
 
 /**

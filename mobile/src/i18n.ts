@@ -17,6 +17,16 @@ export type Lang = 'en' | 'fr' | 'mfe';
 export const LANG_NAMES: Record<Lang, string> = { en: 'English', fr: 'Français', mfe: 'Kreol' };
 
 const en = {
+  bandChecking: "Checking band…",
+  bandReportError: "Unable to load band reports",
+  bandNotLinked: "No linked band",
+  bandHomeUnknown: "Home or away not reported yet",
+  bandHomeSince: "At home since {time}",
+  bandAwaySince: "Away since {time}",
+  bandLastHeard: "Last heard from the band {ago}",
+  bandNotHeard: "Not heard from yet",
+  bandEventNote: "Updates when the band sends an event (help, left home, back home).",
+  bandTimeUnknown: "time unknown",
   heroThem: 'them',
   heroNeutralWaiting: 'Waiting for a band update to check on {name}.',
   heroNeutralNeeds: 'The help button was pressed. Open the alert to help {name}.',
@@ -225,6 +235,16 @@ const en = {
 export type TKey = keyof typeof en;
 
 const fr: Record<TKey, string> = {
+  bandChecking: "Vérification du bracelet…",
+  bandReportError: "Impossible de charger les informations du bracelet",
+  bandNotLinked: "Aucun bracelet lié",
+  bandHomeUnknown: "Présence ou absence du domicile pas encore signalée",
+  bandHomeSince: "À domicile depuis {time}",
+  bandAwaySince: "Absent du domicile depuis {time}",
+  bandLastHeard: "Dernier signal du bracelet {ago}",
+  bandNotHeard: "Aucun signal reçu pour le moment",
+  bandEventNote: "Mise à jour quand le bracelet envoie un événement (aide, sortie, retour à domicile).",
+  bandTimeUnknown: "heure inconnue",
   heroThem: 'la personne',
   heroNeutralWaiting: 'En attente du bracelet pour vérifier la situation de {name}.',
   heroNeutralNeeds: "Le bouton d’aide a été appuyé. Ouvrez l’alerte pour aider {name}.",
@@ -431,6 +451,16 @@ const fr: Record<TKey, string> = {
 };
 
 const mfe: Record<TKey, string> = {
+  bandChecking: "Pe verifye brasle…",
+  bandReportError: "Pa kapav sarz bann nouvel brasle",
+  bandNotLinked: "Pena brasle lie",
+  bandHomeUnknown: "Brasle pankor dir si li lakaz ouswa deor",
+  bandHomeSince: "Lakaz depi {time}",
+  bandAwaySince: "Deor depi {time}",
+  bandLastHeard: "Dernie nouvel depi brasle {ago}",
+  bandNotHeard: "Pankor gagn nouvel depi brasle",
+  bandEventNote: "Mizazour kan brasle avoy enn evennman (sekour, sorti lakaz, retourn lakaz).",
+  bandTimeUnknown: "ler pa koni",
   heroThem: 'li',
   heroNeutralWaiting: 'Pe atann enn nouvel depi brasle pou verifye kouma {name} ete.', // CHECK
   heroNeutralNeeds: 'Kikenn finn apiy bouton sekour. Ouver lalert pou ed {name}.', // CHECK

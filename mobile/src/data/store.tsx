@@ -22,6 +22,7 @@ import {
   mockStatusHome,
   mockWalk,
 } from '@/data/mock';
+import { communityBlockedReason, useEscalation } from '@/data/escalation';
 import { useNotify } from '@/data/notify';
 import type { Alert, ConnectionMode, Device, DeviceStatus } from '@/types';
 
@@ -45,6 +46,8 @@ interface LakazActions {
   dismissIncoming: () => void;
   login: () => void;
   logout: () => void;
+  /** Push an open incident one level up now (SAMPLE mode only). */
+  escalateNow: (id: string) => Promise<void>;
   /** SIMULATED buttons — only work in mock mode (the real band/simulator page drives live mode). */
   sim: {
     leaveHome: () => void;
@@ -84,6 +87,10 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
 
   // Why a ref: the socket listener is created once, but must always call the newest push().
   const { push } = useNotify();
+  // Escalation settings (timers, community rules), read inside the 1 s tick through a ref.
+  const esc = useEscalation();
+  const escRef = useRef(esc);
+  escRef.current = esc;
   const pushRef = useRef(push);
   pushRef.current = push;
 
@@ -183,7 +190,9 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
         list.map((a) => {
           if (a.status === 'Resolved') return a;
           const secs = (Date.now() - new Date(a.created_at).getTime()) / 1000;
-          const next = mockLevelFor(a, secs);
+          // Timers + community rules come from the caregiver's escalation settings (section F).
+          const esc = escRef.current;
+          const next = mockLevelFor(a, secs, esc.timers, communityBlockedReason(a, esc.settings) === null);
           let updated = a;
           if (next.level !== a.level || next.status !== a.status) {
             updated = { ...a, ...next };
@@ -281,6 +290,26 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
   }, [announce]);
 
   /** SIMULATED: start the demo again from a calm state. */
+  /**
+   * "Escalate now": a caregiver who can't handle it pushes the incident one level up immediately.
+   * SAMPLE only — on the real backend the server owns the ladder (no endpoint for this in section 7.3 yet).
+   * Level 3 still obeys the community rules.
+   */
+  const escalateNow = useCallback(async (id: string) => {
+    if (!USE_MOCK) throw new Error('Not available yet: the server controls escalation (needs a backend endpoint).');
+    setAlerts((l) =>
+      l.map((a) => {
+        if (a.alert_id !== id || a.status === 'Resolved' || a.status === 'Acknowledged' || a.level >= 3) return a;
+        const allowed = communityBlockedReason(a, escRef.current.settings) === null;
+        const level = Math.min(a.level + 1, allowed ? 3 : 2) as Alert['level'];
+        if (level === a.level) return a;
+        const up = { ...a, level, status: level === 3 ? 'Critical' : a.status } as Alert;
+        setIncoming(up);
+        return up;
+      }),
+    );
+  }, []);
+
   const reset = useCallback(() => {
     heartbeatPaused.current = false;
     setAlerts(mockHistory());
@@ -305,9 +334,10 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
       dismissIncoming: () => setIncoming(null),
       login: () => setMe({ id: ME.id, name: ME.name }),
       logout: () => setMe(null),
+      escalateNow,
       sim: { leaveHome, sos, backHome, reset, lowBattery, deviceOffline, possibleRemoval },
     }),
-    [alerts, status, device, mode, loading, error, incoming, me, acknowledge, resolve, refresh, leaveHome, sos, backHome, reset, lowBattery, deviceOffline, possibleRemoval],
+    [alerts, status, device, mode, loading, error, incoming, me, acknowledge, resolve, refresh, escalateNow, leaveHome, sos, backHome, reset, lowBattery, deviceOffline, possibleRemoval],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -26,6 +26,8 @@ import { TrackingProvider } from '@/data/tracking';
 import { ZonesProvider } from '@/data/zones';
 import { NotificationBanner } from '@/components/NotificationBanner';
 import { NotifyProvider } from '@/data/notify';
+import { EscalationProvider } from '@/data/escalation';
+import { EscalationBridge } from '@/components/EscalationBridge';
 import { colors, fonts } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -45,6 +47,8 @@ export default function RootLayout() {
     <SafeAreaProvider>
       {/* NotifyProvider is outermost so every store below can raise a notification. */}
       <NotifyProvider>
+      {/* EscalationProvider sits above LakazProvider: the sample ladder in the store reads its timers/rules. */}
+      <EscalationProvider>
       <LakazProvider>
         {/* AuthProvider sits inside LakazProvider because logging in/out opens/closes the caregiver tabs. */}
         <AuthProvider>
@@ -62,7 +66,8 @@ export default function RootLayout() {
           }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ headerShown: false }} />
-          <Stack.Screen name="alert/[id]" options={{ title: 'Alert', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="alert/[id]/index" options={{ title: 'Incident', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="alert/[id]/report" options={{ title: 'Incident report', headerBackTitle: 'Back' }} />
           <Stack.Screen name="responder" options={{ headerShown: false, title: 'LAKAZ community alert' }} />
           {/* Help alert + acknowledge — the checkpoint flow agreed with the backend (docs/handoff.md). */}
           <Stack.Screen name="help-alert" options={{ title: 'Help alerts', headerBackTitle: 'Back' }} />
@@ -85,14 +90,19 @@ export default function RootLayout() {
           <Stack.Screen name="person/[id]/zone-edit" options={{ title: 'Safe zone', headerBackTitle: 'Back' }} />
           {/* Alerts & notifications (section E). */}
           <Stack.Screen name="notifications" options={{ title: 'Notifications', headerBackTitle: 'Back' }} />
+          {/* Emergency escalation (section F). */}
+          <Stack.Screen name="escalation" options={{ title: 'Escalation', headerBackTitle: 'Back' }} />
         </Stack>
         {/* One banner for every notification category (src/data/notify.tsx), drawn above every screen. */}
         <NotificationBanner />
+        {/* Invisible: writes incident timelines + starts/stops live tracking at escalation step 2. */}
+        <EscalationBridge />
         </ZonesProvider>
         </TrackingProvider>
         </PeopleProvider>
         </AuthProvider>
       </LakazProvider>
+      </EscalationProvider>
       </NotifyProvider>
     </SafeAreaProvider>
   );

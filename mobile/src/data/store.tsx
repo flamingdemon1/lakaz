@@ -13,7 +13,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { POLL_MS, USE_MOCK } from '@/config';
-import { acknowledgeLive, fetchCarerNames, fetchLiveAlerts, resolveLive } from '@/data/alertsLive';
+import { acknowledgeLive, fetchCarerNames, fetchHomeState, fetchLiveAlerts, HomeState, resolveLive } from '@/data/alertsLive';
 import { NOT_SIGNED_IN, onHelpEventsChanged } from '@/data/helpAlert';
 import * as supa from '@/data/supabase';
 import {
@@ -69,21 +69,31 @@ export const isTakeover = (a: Alert) => a.type === 'unexpected_exit' || a.type =
 const Ctx = createContext<(LakazState & LakazActions) | null>(null);
 
 /**
- * LIVE Home status from the real alerts (the band can't tell us "at home" / "left home" yet):
- *  NEEDS_HELP  = a help request nobody has acknowledged (since = when it was pressed)
- *  HELP_COMING = acknowledged but not closed yet          (since = when it was acknowledged)
- *  ALL_CLEAR   = nothing open                             (since = when the last one was closed, or now)
+ * LIVE Home status from the real alerts + where the band says she is (the anchor, Kavish's firmware).
+ * Priority — the most urgent thing wins:
+ *  NEEDS_HELP  = a help press nobody has acknowledged          (red,   since = when it was pressed)
+ *  LEFT HOME   = she left home and nobody has acknowledged it    (amber, since = when she left)
+ *  HELP_COMING = something is acknowledged but not closed yet     (blue,  since = when it was acknowledged)
+ *  LEFT HOME   = the band still says "away" (all handled)          (amber, since = when she left)
+ *  HOME        = the band says "home"                              (green, since = when she came back)
+ *  ALL_CLEAR   = nothing open and the band hasn't reported home/away (migration not applied yet)
  */
-function liveStatus(list: Alert[]): DeviceStatus {
+function liveStatus(list: Alert[], home: HomeState | null): DeviceStatus {
+  const name = 'Marie-Claire';
   const waiting = list.filter((a) => a.status === 'Critical');
+  const away = list.filter((a) => a.type === 'unexpected_exit' && a.status === 'Active');
   const handling = list.filter((a) => a.status === 'Acknowledged');
   const lastClosed = list.find((a) => a.status === 'Resolved');
-  if (waiting.length) return { status: 'NEEDS_HELP', person_name: 'Marie-Claire', since: waiting[waiting.length - 1].created_at, level: 1 };
+  if (waiting.length) return { status: 'NEEDS_HELP', person_name: name, since: waiting[waiting.length - 1].created_at, level: 1 };
+  // level null: the real backend has no escalation ladder, so the card mustn't say "step 1".
+  if (away.length) return { status: 'LEFT HOME', person_name: name, since: away[away.length - 1].created_at, level: null };
   if (handling.length)
-    return { status: 'HELP_COMING', person_name: 'Marie-Claire', since: handling[0].acknowledged_at ?? handling[0].created_at, level: 1 };
+    return { status: 'HELP_COMING', person_name: name, since: handling[0].acknowledged_at ?? handling[0].created_at, level: 1 };
+  if (home?.state === 'away') return { status: 'LEFT HOME', person_name: name, since: home.since ?? new Date().toISOString(), level: null };
+  if (home?.state === 'home') return { status: 'HOME', person_name: name, since: home.since ?? new Date().toISOString(), level: null };
   return {
     status: 'ALL_CLEAR',
-    person_name: 'Marie-Claire',
+    person_name: name,
     since: lastClosed?.resolved_at ?? lastClosed?.acknowledged_at ?? new Date().toISOString(),
     level: null,
   };
@@ -109,6 +119,12 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
   // Latest alerts for the async actions (acknowledge / resolve need the device id of the alert).
   const alertsRef = useRef<Alert[]>([]);
   alertsRef.current = alerts;
+  // LIVE: the band's last reported home/away state (for the Home card after acknowledge / resolve).
+  const homeRef = useRef<HomeState | null>(null);
+  // LIVE: exit alerts already shown as a takeover, and exits that were open on the previous refresh.
+  // null = first load (open exits are shown once, older closed ones are never announced).
+  const announcedRef = useRef<Set<string> | null>(null);
+  const openExitsRef = useRef<Set<string>>(new Set());
   // SAMPLE: when true the fake heartbeat stops, so the band really looks disconnected (20 s rule).
   const heartbeatPaused = useRef(false);
 
@@ -139,6 +155,39 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /**
+   * LIVE: reacts to what changed since the last refresh.
+   *  - A NEW left-home alert nobody has acknowledged → the full-screen wandering takeover (IncomingAlert),
+   *    once per alert. (Help presses already have their own takeover: HelpAlertTakeover.)
+   *  - An exit that was open and is now closed BY THE BAND (resolved_by null = it heard the anchor again)
+   *    → a calm "back home" banner.
+   */
+  const announceLive = useCallback((list: Alert[]) => {
+    const exits = list.filter((a) => a.live && a.type === 'unexpected_exit');
+    const first = announcedRef.current === null;
+    const seen = announcedRef.current ?? new Set<string>();
+    for (const a of exits) {
+      if (seen.has(a.alert_id)) continue;
+      seen.add(a.alert_id);
+      if (a.status === 'Active') setIncoming(a);
+    }
+    announcedRef.current = seen;
+    if (!first) {
+      for (const a of exits) {
+        if (openExitsRef.current.has(a.alert_id) && a.status === 'Resolved' && !a.resolved_by) {
+          pushRef.current({
+            category: 'safe_return',
+            title: 'Marie-Claire is back home',
+            body: 'The band heard the home beacon again. The alert closed by itself.',
+            href: { pathname: '/alert/[id]', params: { id: a.alert_id } },
+            sample: false,
+          });
+        }
+      }
+    }
+    openExitsRef.current = new Set(exits.filter((a) => a.status !== 'Resolved').map((a) => a.alert_id));
+  }, []);
+
+  /**
    * LIVE: re-reads the carer's alerts from Supabase and works out the Home status from them.
    * Why polling (every 5 s) and not realtime: agreed with Shihad — simpler, works on a hotspot, and the
    * help-alert screens already poll at the same rate.
@@ -147,8 +196,11 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
     if (USE_MOCK) return;
     try {
       const list = await fetchLiveAlerts();
+      const home = await fetchHomeState(list[0]?.device_id);
+      homeRef.current = home;
+      announceLive(list);
       setAlerts(list);
-      setStatus(liveStatus(list));
+      setStatus(liveStatus(list, home));
       const user = supa.currentUser();
       setMe(user ? { id: user.id, name: user.user_metadata?.name ?? user.email ?? 'You' } : null);
       // Names only change when someone links/renames, so one band lookup per refresh is plenty.
@@ -169,7 +221,7 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [announceLive]);
 
   // ---------- LIVE mode: Supabase, every 5 s + instantly when this phone acknowledges ----------
   useEffect(() => {
@@ -235,7 +287,7 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
     const a = await acknowledgeLive(current);
     setAlerts((l) => {
       const next = upsert(l, a);
-      setStatus(liveStatus(next));
+      setStatus(liveStatus(next, homeRef.current));
       return next;
     });
   }, []);
@@ -252,7 +304,7 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
     const a = await resolveLive(current);
     setAlerts((l) => {
       const next = upsert(l, a);
-      setStatus(liveStatus(next));
+      setStatus(liveStatus(next, homeRef.current));
       return next;
     });
   }, []);

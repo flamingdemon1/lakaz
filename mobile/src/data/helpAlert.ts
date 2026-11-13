@@ -93,7 +93,9 @@ const notify = () => listeners.forEach((fn) => fn());
 export async function fetchHelpEvents(): Promise<HelpEvent[]> {
   if (!IS_SAMPLE) {
     if (!supa.isSignedIn()) throw new Error(NOT_SIGNED_IN);
-    const tail = '&order=received_at.desc&limit=50';
+    // Only help presses: the same table also holds the band's left-home alerts (Kavish, #29), which have their
+    // own amber takeover — without this filter a walk outside would show up as a fake "Help requested".
+    const tail = '&kind=eq.help_requested&order=received_at.desc&limit=50';
     // Ask for acknowledged_by too. If Supabase doesn't have that column yet (migration not applied),
     // fall back to the original query so the live demo never breaks — and stop asking.
     if (hasAckBy) {

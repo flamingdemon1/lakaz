@@ -1,5 +1,5 @@
 /**
- * app/(tabs)/alerts.tsx — list of alerts with a simple filter (Open / Resolved / All).
+ * app/(tabs)/alerts.tsx — open alerts and caregiver safety history.
  * Owner: Person 3 (Fahim, Zuhayr).
  */
 import React, { useState } from 'react';
@@ -7,19 +7,28 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AlertCard } from '@/components/AlertCard';
 import { AppText, EmptyState, Screen } from '@/components/ui';
-import { isOpen, useLakaz } from '@/data/store';
+import { USE_MOCK } from '@/config';
+import { isOpen, isTakeover, useLakaz } from '@/data/store';
 import { colors, radius, space, TOUCH } from '@/theme';
 
-type Filter = 'Open' | 'Resolved' | 'All';
+const filters = ['Open', 'Resolved', 'History', 'Incidents', 'Acknowledged'] as const;
+type Filter = (typeof filters)[number];
 
-/** Alerts tab. */
+/** Reads the alert store and renders the selected alert list. Takes no props. */
 export default function Alerts() {
-  const { alerts } = useLakaz();
+  const { alerts, error, loading } = useLakaz();
   const [filter, setFilter] = useState<Filter>('Open');
 
-  const shown = alerts.filter((a) =>
-    filter === 'All' ? true : filter === 'Open' ? isOpen(a) : a.status === 'Resolved',
-  );
+  // Resolved alerts may still retain the caregiver who acknowledged them.
+  const shown = alerts.filter((alert) => {
+    switch (filter) {
+      case 'Open': return isOpen(alert);
+      case 'Resolved': return alert.status === 'Resolved';
+      case 'Incidents': return alert.status === 'Resolved' && isTakeover(alert);
+      case 'Acknowledged': return Boolean(alert.acknowledged_by);
+      case 'History': return true;
+    }
+  });
 
   return (
     <Screen>
@@ -27,8 +36,12 @@ export default function Alerts() {
         Alerts
       </AppText>
 
+      {USE_MOCK && <AppText variant="smallBold">SIMULATED</AppText>}
+      {filter !== 'Open' && !USE_MOCK && (
+        <AppText variant="small">Showing alerts available from the server.</AppText>
+      )}
       <View style={styles.chips} accessibilityRole="tablist">
-        {(['Open', 'Resolved', 'All'] as Filter[]).map((f) => {
+        {filters.map((f) => {
           const on = f === filter;
           return (
             <Pressable
@@ -45,14 +58,27 @@ export default function Alerts() {
         })}
       </View>
 
-      {shown.length === 0 ? (
+      {error && <AppText variant="small">Unable to refresh alerts.</AppText>}
+      {loading && shown.length === 0 ? (
+        <AppText>Loading alerts…</AppText>
+      ) : shown.length === 0 ? (
         <EmptyState
           icon={filter === 'Open' ? 'shield-checkmark' : 'archive'}
-          title={filter === 'Open' ? 'No open alerts' : 'Nothing here yet'}
+          title={filter === 'Open' ? 'No open alerts' : 'No matching alerts available'}
           body={filter === 'Open' ? 'You will hear a sound and see a full-screen alert if anything happens.' : undefined}
         />
       ) : (
-        shown.map((a) => <AlertCard key={a.alert_id} alert={a} />)
+        shown.map((alert) => (
+          <View key={alert.alert_id} style={styles.entry}>
+            {filter !== 'Open' && (
+              <AppText variant="small" color={colors.textMuted}>
+                Alert opened {new Date(alert.created_at).toLocaleDateString()}
+                {alert.acknowledged_by ? ` · Acknowledged by ${alert.acknowledged_by}` : ''}
+              </AppText>
+            )}
+            <AlertCard alert={alert} />
+          </View>
+        ))
       )}
     </Screen>
   );
@@ -60,7 +86,8 @@ export default function Alerts() {
 
 const styles = StyleSheet.create({
   title: { marginTop: space.sm },
-  chips: { flexDirection: 'row', gap: space.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  entry: { gap: space.sm },
   chip: {
     minHeight: TOUCH - 8,
     paddingHorizontal: space.lg,

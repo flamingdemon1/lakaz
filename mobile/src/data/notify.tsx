@@ -14,9 +14,7 @@ import React, { createContext, useCallback, useContext, useMemo, useState } from
 export type NotifyCategory =
   | 'unexpected_exit'
   | 'sos'
-  | 'low_battery'
   | 'device_offline'
-  | 'possible_removal'
   | 'safe_return'
   | 'zone_arrival'
   | 'zone_departure';
@@ -29,9 +27,7 @@ export const CATEGORY_INFO: Record<
 > = {
   unexpected_exit: { label: 'Unexpected exit', desc: 'They left a safe zone when they should not have', tone: 'critical', icon: 'warning', locked: true },
   sos: { label: 'SOS', desc: 'The SOS button on the band was held down', tone: 'critical', icon: 'megaphone', locked: true },
-  low_battery: { label: 'Low battery', desc: 'The band needs charging soon', tone: 'warning', icon: 'battery-dead' },
   device_offline: { label: 'Band disconnected', desc: 'No signal from the band for 20 seconds', tone: 'warning', icon: 'cloud-offline' },
-  possible_removal: { label: 'Possible band removal', desc: 'No movement for a long time while away from home', tone: 'warning', icon: 'hand-left' },
   safe_return: { label: 'Safe return', desc: 'They are back home and the alert is closed', tone: 'good', icon: 'home' },
   zone_arrival: { label: 'Zone arrival', desc: 'They arrived at a safe zone', tone: 'good', icon: 'enter' },
   zone_departure: { label: 'Zone departure', desc: 'They left a safe zone at an allowed time', tone: 'info', icon: 'exit' },

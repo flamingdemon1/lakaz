@@ -135,11 +135,6 @@ export default function AlertDetail() {
         <Ionicons name="bulb" size={20} color={colors.primary} />
         <AppText style={styles.flex}>{alertAdvice[alert.type]}</AppText>
       </Card>
-      {alert.type === 'possible_removal' ? (
-        <AppText variant="small" color={colors.textMuted}>
-          SAMPLE alert type — not in the shared backend contract yet (needs team approval).
-        </AppText>
-      ) : null}
 
       {/* Only emergencies climb the ladder; device warnings go to the primary caregiver only. */}
       {ESCALATING.includes(alert.type) ? (

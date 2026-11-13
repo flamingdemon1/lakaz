@@ -45,28 +45,22 @@ export const isOnline = (d: Device | null, now = Date.now()) => !!d && ageMs(d.l
 export const alertTitle: Record<AlertType, string> = {
   unexpected_exit: 'Left home',
   sos: 'SOS pressed',
-  low_battery: 'Band battery low',
   device_offline: 'Band disconnected',
-  possible_removal: 'Band possibly removed',
 };
 
 /** One-line explanation for each alert type. */
 export const alertExplainer: Record<AlertType, string> = {
   unexpected_exit: 'The band lost the home signal. GPS is now on.',
   sos: 'The SOS button on the band was held down.',
-  low_battery: 'Charge the band soon so tracking keeps working.',
   device_offline: 'The band is disconnected.',
   // Honest wording: we have no skin sensor, so this is a guess from "no movement" (team file, known clashes).
-  possible_removal: 'No movement for 30 minutes while away from home. The band may have been taken off — this is a guess.',
 };
 
 /** What the caregiver should do next, per alert type (short, practical, no medical advice). */
 export const alertAdvice: Record<AlertType, string> = {
   unexpected_exit: 'Call them, then check the map. Tap "I\'ve got it" so others know you are handling it.',
   sos: 'Call them now. If you cannot reach them, call 999.',
-  low_battery: 'Plug the band in or swap it when they are home.',
   device_offline: 'Check the band is charged and near the home Wi-Fi/hotspot. Call them if they are out.',
-  possible_removal: 'Call them and ask if they are still wearing the band.',
 };
 
 /** Only these alert types climb the escalation ladder (section 9). */

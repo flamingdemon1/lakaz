@@ -41,15 +41,10 @@ export function DemoControls() {
             <Button label="Help button" icon="hand-left" tone="secondary" onPress={addSampleHelpEvent} />
           </View>
         ) : null}
-        {/* Device warnings (section E): banner + alert in the list, no escalation ladder. */}
-        <View style={styles.cell}>
-          <Button label="Low battery" icon="battery-dead" tone="secondary" onPress={sim.lowBattery} />
-        </View>
+        {/* Device warning (section E): banner + alert in the list, no escalation ladder.
+            Low battery and "band removed" were dropped (13 Nov): the band can't report either. */}
         <View style={styles.cell}>
           <Button label="Disconnect" icon="cloud-offline" tone="secondary" onPress={sim.deviceOffline} />
-        </View>
-        <View style={styles.cell}>
-          <Button label="Band removed?" icon="hand-left" tone="secondary" onPress={sim.possibleRemoval} />
         </View>
         <View style={styles.cell}>
           <Button label="Reset" icon="refresh" tone="ghost" onPress={() => { sim.reset(); resetSampleHelpEvents(); }} />

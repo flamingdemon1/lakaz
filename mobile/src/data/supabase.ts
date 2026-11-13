@@ -38,6 +38,9 @@ export const currentUser = () => session?.user ?? null;
  */
 function friendly(status: number, body: any): string {
   const msg: string = body?.message ?? body?.msg ?? body?.error_description ?? body?.error ?? '';
+  // PGRST205 = table missing: the backend migration hasn't been applied to this Supabase project yet.
+  if (body?.code === 'PGRST205' || /could not find the (table|function)/i.test(msg))
+    return 'Backend not set up yet: the alerts table/function is missing in Supabase. Ask Shihad/Inshiraah to apply the migration.';
   // A wrong/old key in mobile/.env — not the user's fault, so say what to fix.
   if (/invalid api key|no api key/i.test(msg)) return 'App setup problem: the Supabase key in mobile/.env is wrong. Ask Shihad for the publishable key.';
   if (/invalid login credentials/i.test(msg)) return 'Email or password is not right.';

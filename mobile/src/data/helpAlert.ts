@@ -28,7 +28,7 @@ export interface HelpEvent {
   acknowledged_at: string | null;
   /**
    * Auth user id of the carer who acknowledged FIRST (set by the server, never sent by the app).
-   * Optional: undefined until migration 20261114003000 is applied to Supabase.
+   * Optional: undefined until migration 20261114013000 is applied to Supabase.
    */
   acknowledged_by?: string | null;
 }

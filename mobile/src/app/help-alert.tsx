@@ -285,7 +285,7 @@ function HelpAlertCard({
             <Ionicons name="person-circle" size={18} color={statusStyles.Acknowledged.bg} />
             <AppText variant="bodyBold" color={statusStyles.Acknowledged.bg}>
               {fill(t('ackedAt'), { time: clock(event.acknowledged_at!), ago: timeAgo(event.acknowledged_at, now) })}
-              {/* Who: only shown once Supabase records acknowledged_by (migration 20261114003000). */}
+              {/* Who: only shown once Supabase records acknowledged_by (migration 20261114013000). */}
               {event.acknowledged_by ? ` · ${event.acknowledged_by === myCarerId() ? t('ackByYou') : t('ackByOther')}` : ''}
             </AppText>
           </View>

@@ -1,4 +1,4 @@
--- 20261114003000_ack_by_band_label_claim.sql
+-- 20261114013000_ack_by_band_label_claim.sql
 -- Owner: Zuhayr (mobile), for Shihad / Inshiraah to review and apply. Written 14 Nov 2026.
 --
 -- Three small additions the app needs. Nothing existing is removed or renamed, so the current app keeps

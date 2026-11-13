@@ -1,6 +1,6 @@
 /**
  * app/link-band.tsx — LINK A BAND: the carer types the code printed on the band and is linked to it.
- * Owner: Person 3 (Zuhayr). Backend: RPC claim_device(p_code) in migration 20261114003000 (Shihad applies it).
+ * Owner: Person 3 (Zuhayr). Backend: RPC claim_device(p_code) in migration 20261114013000 (Shihad applies it).
  *
  * Why: until now an admin linked each carer to a band by hand in the Supabase SQL editor. With this screen a
  * family member links themselves. The server checks the code, uses the signed-in carer's identity and is

@@ -52,7 +52,7 @@ Never commit Wi-Fi credentials, device tokens, privileged Supabase keys, real we
 |---|---|
 | OpenAI ChatGPT / Codex | Drafted the kick-off README, collaboration instructions, proposed interface and submission checklist. |
 | Anthropic Claude | Team tool; specific uses to be recorded by its users. |
-| Google Gemini | Team tool; specific uses to be recorded by its users. |
+| Google Gemini | Team tool; drafted, verified and committed database schema migration with RLS policies, acknowledge_alert and submit_device_event RPCs on feat/backend-db. |
 
 Append actual uses as work happens, including code, UI, data cleaning or pitch assistance. Each teammate should be able to explain and change their own work in Q&A.
 

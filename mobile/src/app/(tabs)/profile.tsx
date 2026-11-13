@@ -116,6 +116,7 @@ export default function Profile() {
       <Card style={styles.list}>
         {/* Guardians are now managed per person (People tab → person → Guardians). */}
         <Row icon="people" label={t('people')} onPress={() => router.push('/people')} />
+        <Row icon="notifications" label="Notifications" onPress={() => router.push('/notifications')} />
         <Row icon="lock-closed" label={t('security')} onPress={() => router.push('/security')} last />
       </Card>
 

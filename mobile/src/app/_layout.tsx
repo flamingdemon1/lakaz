@@ -25,6 +25,8 @@ import { LakazProvider } from '@/data/store';
 import { TrackingProvider } from '@/data/tracking';
 import { ZonesProvider } from '@/data/zones';
 import { ZoneToast } from '@/components/ZoneToast';
+import { NotificationBanner } from '@/components/NotificationBanner';
+import { NotifyProvider } from '@/data/notify';
 import { colors, fonts } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -42,6 +44,8 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
+      {/* NotifyProvider is outermost so every store below can raise a notification. */}
+      <NotifyProvider>
       <LakazProvider>
         {/* AuthProvider sits inside LakazProvider because logging in/out opens/closes the caregiver tabs. */}
         <AuthProvider>
@@ -80,14 +84,19 @@ export default function RootLayout() {
           {/* Safe zones & geofencing (section D, SAMPLE data in src/data/zones.tsx). */}
           <Stack.Screen name="person/[id]/zones" options={{ title: 'Safe zones', headerBackTitle: 'Back' }} />
           <Stack.Screen name="person/[id]/zone-edit" options={{ title: 'Safe zone', headerBackTitle: 'Back' }} />
+          {/* Alerts & notifications (section E). */}
+          <Stack.Screen name="notifications" options={{ title: 'Notifications', headerBackTitle: 'Back' }} />
         </Stack>
         {/* Arrival / departure / unexpected-exit banner, drawn above every screen. */}
         <ZoneToast />
+        {/* One banner for every notification category (src/data/notify.tsx), drawn above every screen. */}
+        <NotificationBanner />
         </ZonesProvider>
         </TrackingProvider>
         </PeopleProvider>
         </AuthProvider>
       </LakazProvider>
+      </NotifyProvider>
     </SafeAreaProvider>
   );
 }

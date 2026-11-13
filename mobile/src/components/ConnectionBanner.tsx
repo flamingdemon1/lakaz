@@ -37,7 +37,7 @@ export function ConnectionBanner() {
           <AppText variant="small" color={colors.text} style={styles.flex}>
             {error}
           </AppText>
-          <AppText variant="smallBold" color={colors.primary}>
+          <AppText variant="smallBold" color={colors.link}>
             Retry
           </AppText>
         </Pressable>
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     marginTop: space.xs,
     padding: space.md,
     borderRadius: radius.md,
-    backgroundColor: '#FDE8E8',
+    backgroundColor: colors.dangerSoft,
   },
   flex: { flex: 1 },
 });

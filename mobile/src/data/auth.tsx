@@ -14,6 +14,7 @@ import { SUPABASE_ENABLED } from '@/config';
 import { useLakaz } from '@/data/store';
 import * as supa from '@/data/supabase';
 import { Lang, STRINGS, TKey } from '@/i18n';
+import { setCurrentLang } from '@/i18n-auto';
 import { normalisePhone } from '@/lib/validate';
 
 /** The fixed code every SAMPLE "SMS/email" contains. Shown on screen with a SAMPLE label. */
@@ -100,6 +101,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return accounts.find((a) => a.email.toLowerCase() === id || (phone && a.phone === phone));
     };
 
+    // Keep non-React helpers (timeAgo in lib/format.ts) on the same language as the screens.
+    setCurrentLang(lang);
     return {
       user,
       pending,
@@ -243,6 +246,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 /** Hook for every account screen. */
+/**
+ * The chosen language, or 'en' outside <AuthProvider>. Safe to call from shared components like AppText,
+ * which also render on screens that sit outside the provider.
+ */
+export function useLang(): Lang {
+  return useContext(Ctx)?.lang ?? 'en';
+}
+
 export function useAuth() {
   const v = useContext(Ctx);
   if (!v) throw new Error('useAuth must be used inside <AuthProvider>');

@@ -25,7 +25,7 @@ export default function NotificationSettings() {
   return (
     <Screen edges={['bottom']}>
       <Card style={styles.push}>
-        <Ionicons name="phone-portrait" size={24} color={colors.primary} />
+        <Ionicons name="phone-portrait" size={24} color={colors.link} />
         <View style={styles.flex}>
           <AppText variant="bodyBold">Push notifications</AppText>
           <AppText variant="small" color={colors.textMuted}>

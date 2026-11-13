@@ -116,7 +116,7 @@ export default function FacilitiesScreen() {
         />
       ) : loading && !rows ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.link} />
           <AppText color={colors.textMuted}>Loading facilities in {district}…</AppText>
         </View>
       ) : rows && rows.length === 0 ? (
@@ -128,14 +128,14 @@ export default function FacilitiesScreen() {
               {rows.length} {rows.length === 1 ? 'facility' : 'facilities'} in {district}
             </AppText>
             {/* Keeps the old list visible while the next district loads — no jumpy blank screen. */}
-            {loading ? <ActivityIndicator color={colors.primary} /> : null}
+            {loading ? <ActivityIndicator color={colors.link} /> : null}
           </View>
           <Card style={styles.list}>
             {rows.map((f, i) => (
               <FadeIn key={f.id} delay={Math.min(i, 8) * (motion.stagger / 2)}>
                 <View style={[styles.row, i > 0 && styles.divider]} accessibilityLabel={`${f.name}, ${f.type}`}>
                   <View style={styles.icon}>
-                    <Ionicons name={typeIcon(f.type)} size={20} color={colors.primary} />
+                    <Ionicons name={typeIcon(f.type)} size={20} color={colors.link} />
                   </View>
                   <View style={styles.flex}>
                     <AppText variant="bodyBold">{f.name}</AppText>
@@ -162,8 +162,8 @@ export default function FacilitiesScreen() {
             accessibilityLabel="Open the dataset source on data.govmu.org"
             hitSlop={8}
             style={styles.link}>
-            <Ionicons name="open-outline" size={16} color={colors.primary} />
-            <AppText variant="smallBold" color={colors.primary}>
+            <Ionicons name="open-outline" size={16} color={colors.link} />
+            <AppText variant="smallBold" color={colors.link}>
               View dataset on data.govmu.org
             </AppText>
           </Pressable>

@@ -43,8 +43,8 @@ export function ProfileChip({ profile }: { profile: SafetyProfile }) {
   return (
     <View style={styles.chipRow}>
       <View style={styles.chip}>
-        <Ionicons name={info.icon} size={14} color={colors.primary} />
-        <AppText variant="label" color={colors.primary}>
+        <Ionicons name={info.icon} size={14} color={colors.link} />
+        <AppText variant="label" color={colors.link}>
           {info.title.toUpperCase()}
         </AppText>
       </View>
@@ -69,7 +69,7 @@ export function ProfilePicker({ value, onChange }: { value: SafetyProfile; onCha
             aria-checked={on}
             style={[styles.profileCard, on && styles.profileOn]}>
             <View style={[styles.profileIcon, on && { backgroundColor: colors.primary }]}>
-              <Ionicons name={info.icon} size={22} color={on ? colors.white : colors.primary} />
+              <Ionicons name={info.icon} size={22} color={on ? colors.white : colors.link} />
             </View>
             <View style={styles.flex}>
               <View style={styles.chipRow}>
@@ -80,7 +80,7 @@ export function ProfilePicker({ value, onChange }: { value: SafetyProfile; onCha
                 {info.body}
               </AppText>
             </View>
-            <Ionicons name={on ? 'radio-button-on' : 'radio-button-off'} size={24} color={on ? colors.primary : colors.textMuted} />
+            <Ionicons name={on ? 'radio-button-on' : 'radio-button-off'} size={24} color={on ? colors.link : colors.textMuted} />
           </Pressable>
         );
       })}
@@ -137,14 +137,14 @@ export function DevicePicker({
             accessibilityState={{ checked: on }}
             aria-checked={on}
             style={[styles.deviceRow, on && styles.profileOn]}>
-            <Ionicons name={id ? 'watch' : 'remove-circle-outline'} size={22} color={on ? colors.primary : colors.textMuted} />
+            <Ionicons name={id ? 'watch' : 'remove-circle-outline'} size={22} color={on ? colors.link : colors.textMuted} />
             <View style={styles.flex}>
               <AppText variant="bodyBold">{d ? d.device_id : 'No device yet'}</AppText>
               <AppText variant="small" color={usedByOther ? statusStyles.Active.bg : colors.textMuted}>
                 {d ? (usedByOther ? `Used by ${owner!.name} — will move to this person` : d.label) : 'You can assign one later'}
               </AppText>
             </View>
-            <Ionicons name={on ? 'radio-button-on' : 'radio-button-off'} size={24} color={on ? colors.primary : colors.textMuted} />
+            <Ionicons name={on ? 'radio-button-on' : 'radio-button-off'} size={24} color={on ? colors.link : colors.textMuted} />
           </Pressable>
         );
       })}
@@ -183,7 +183,7 @@ export function DeviceConnection({ person }: { person: CaredPerson }) {
     <Card style={styles.gapSm}>
       <View style={styles.rowCard}>
         <View style={[styles.ring, { borderColor: online ? colors.primary : colors.offline }]}>
-          <Ionicons name="watch" size={24} color={online ? colors.primary : colors.offline} />
+          <Ionicons name="watch" size={24} color={online ? colors.link : colors.offline} />
         </View>
         <View style={styles.flex}>
           <AppText variant="bodyBold">
@@ -304,7 +304,7 @@ export function PersonForm({
       <SectionTitle right={<AppText variant="small" color={colors.textMuted}>Optional</AppText>}>Medical & safety notes</SectionTitle>
       <Card style={styles.gap}>
         <View style={styles.privacy}>
-          <Ionicons name="lock-closed" size={18} color={colors.primary} />
+          <Ionicons name="lock-closed" size={18} color={colors.link} />
           <AppText variant="small" style={styles.flex}>
             Only guardians see this. It is never shown to community responders. Only add what helps keep them safe.
           </AppText>
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     minHeight: TOUCH + 16,
   },
-  profileOn: { borderColor: colors.primary, backgroundColor: '#E8F4F7' },
+  profileOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
   profileIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.muted, alignItems: 'center', justifyContent: 'center' },
   deviceRow: {
     flexDirection: 'row',

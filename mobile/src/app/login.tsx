@@ -48,7 +48,7 @@ export default function Login() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <AuthHeader title={t('loginTitle')} body={t('appTagline')} />
+      <AuthHeader headline={t('loginHeadline')} title={t('loginTitle')} body={t('appTagline')} />
       <LanguagePicker />
 
       <Card style={styles.gap}>

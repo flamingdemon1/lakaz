@@ -10,10 +10,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Modal, StyleSheet, View } from 'react-native';
 
 import { PopIn, SlideToConfirm } from '@/components/motion';
+import { Glow } from '@/components/Glow';
 import { AppText, Button, SimulatedTag } from '@/components/ui';
 import { USE_MOCK } from '@/config';
+import { useAuth } from '@/data/auth';
 import { useLakaz } from '@/data/store';
-import { alertExplainer, alertTitle, ladderSteps } from '@/lib/format';
+import { ALERT_KEY, fill, LADDER_KEY } from '@/i18n';
 import { useAlertFeedback } from '@/lib/useAlertFeedback';
 import { colors, MAX_WIDTH, motion, radius, space, statusStyles } from '@/theme';
 
@@ -44,6 +46,7 @@ function LadderBars({ level, color }: { level: number; color: string }) {
 export function IncomingAlert() {
   const { incoming, dismissIncoming, acknowledge, alerts } = useLakaz();
   const { play } = useAlertFeedback();
+  const { t } = useAuth(); // the takeover speaks the carer's chosen language
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   // After a successful "I've got it" we show a short green "done" moment before closing.
@@ -77,7 +80,7 @@ export function IncomingAlert() {
   if (!alert) return null;
   const critical = alert.status === 'Critical';
   const tone = critical ? statusStyles.Critical : statusStyles.Active;
-  const step = ladderSteps[alert.level];
+  const step = LADDER_KEY[alert.level];
 
   /** "I've got it" → acknowledge on the server, then close. Shows the error if the server says no. */
   const onAck = async () => {
@@ -106,7 +109,9 @@ export function IncomingAlert() {
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={dismissIncoming}>
-      <View style={[styles.backdrop, { backgroundColor: showingDone ? colors.safe : tone.bg }]}>
+      {/* Night glow: black screen, the alert colour rises from the bottom (red = emergency, green = handled). */}
+      <View style={styles.backdrop}>
+        <Glow color={showingDone ? colors.safe : tone.bg} />
         {showingDone ? (
           <View style={styles.sheet} accessibilityLiveRegion="polite">
             <PopIn>
@@ -114,11 +119,11 @@ export function IncomingAlert() {
                 <Ionicons name="checkmark" size={52} color={colors.white} />
               </View>
             </PopIn>
-            <AppText variant="hero" style={styles.center}>
-              You've got it.
+            <AppText variant="display" style={styles.center}>
+              {t('gotItTitle')}
             </AppText>
             <AppText color={colors.textMuted} style={styles.center}>
-              The others won't be alerted. Approach calmly, say your name and offer water.
+              {t('gotItBody')}
             </AppText>
           </View>
         ) : (
@@ -128,35 +133,35 @@ export function IncomingAlert() {
             <Ionicons name={alert.type === 'sos' ? 'megaphone' : 'walk'} size={44} color={tone.bg} />
           </Animated.View>
           <AppText variant="label" color={tone.bg}>
-            {critical ? 'CRITICAL ALERT' : 'ALERT'} · LEVEL {alert.level}
+            {t(critical ? 'tkCritical' : 'tkAlert')} · {fill(t('tkLevel'), { n: alert.level })}
           </AppText>
-          <AppText variant="hero" style={styles.center}>
-            Marie-Claire · {alertTitle[alert.type]}
+          <AppText variant="display" style={styles.center}>
+            Marie-Claire · {t(ALERT_KEY[alert.type].title)}
           </AppText>
           <AppText color={colors.textMuted} style={styles.center}>
-            {alertExplainer[alert.type]}
+            {t(ALERT_KEY[alert.type].explain)}
           </AppText>
           <LadderBars level={alert.level} color={tone.bg} />
           <View style={[styles.stepBox, { backgroundColor: tone.soft }]}>
             <AppText variant="smallBold" color={tone.bg}>
-              Now: {step.title} — {step.detail}
+              {fill(t('tkNow'), { step: `${t(step.title)} — ${t(step.detail)}` })}
             </AppText>
           </View>
           {err ? (
             <AppText variant="small" color={statusStyles.Critical.bg} style={styles.center}>
-              Could not acknowledge: {err}
+              {fill(t('tkCouldNotAck'), { err })}
             </AppText>
           ) : null}
           <View style={styles.actions}>
             {/* Slide, not tap: stopping the escalation for everyone must never happen from a pocket tap. */}
             <SlideToConfirm
-              label="Slide — I've got it"
+              label={t('slideGotIt')}
               color={tone.bg}
               loading={busy}
               onConfirm={onAck}
               accessibilityHint="Tells the other caregivers you are handling this and stops escalation"
             />
-            <Button label="See location & details" icon="map" tone="secondary" onPress={onDetails} />
+            <Button label={t('seeLocationDetails')} icon="map" tone="secondary" onPress={onDetails} />
           </View>
         </View>
         )}
@@ -166,11 +171,11 @@ export function IncomingAlert() {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.lg },
+  backdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.lg, backgroundColor: colors.background },
   sheet: {
     width: '100%',
     maxWidth: MAX_WIDTH,
-    backgroundColor: colors.card,
+    backgroundColor: 'transparent', // content sits straight on the black screen (glow design)
     borderRadius: radius.xl,
     padding: space.xl,
     alignItems: 'center',

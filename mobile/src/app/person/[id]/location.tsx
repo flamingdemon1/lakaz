@@ -132,14 +132,14 @@ export default function PersonLocation() {
           title="GPS"
           value={t.gps === 'fix' ? 'Fix' : t.gps === 'searching' ? 'Searching…' : 'Idle'}
           sub={t.gps === 'idle' ? 'Off to save battery' : t.gps === 'searching' ? 'Needs open sky' : 'Getting positions'}
-          color={t.gps === 'fix' ? colors.primary : t.gps === 'searching' ? statusStyles.Active.bg : colors.textMuted}
+          color={t.gps === 'fix' ? colors.link : t.gps === 'searching' ? statusStyles.Active.bg : colors.textMuted}
         />
         <StatusTile
           icon={online ? 'wifi' : 'cloud-offline'}
           title="Band connection"
           value={device ? (online ? 'Online' : 'Offline') : 'No band'}
           sub={device ? device.device_id : 'Assign one first'}
-          color={online ? colors.primary : colors.offline}
+          color={online ? colors.link : colors.offline}
         />
       </View>
 
@@ -156,7 +156,7 @@ export default function PersonLocation() {
       )}
 
       <Card style={styles.privacy}>
-        <Ionicons name="shield-checkmark" size={20} color={colors.primary} />
+        <Ionicons name="shield-checkmark" size={20} color={colors.link} />
         <AppText variant="small" style={styles.flex}>
           Tracking is off by default. Only the people chosen can see it, it stops by itself, and every view is logged.
         </AppText>
@@ -291,7 +291,7 @@ function StartForm({ personId, guardians, me, hasDevice }: { personId: string; g
                 accessibilityState={{ checked: on }}
                 aria-checked={on}
                 style={styles.checkRow}>
-                <Ionicons name={on ? 'checkbox' : 'square-outline'} size={26} color={on ? colors.primary : colors.textMuted} />
+                <Ionicons name={on ? 'checkbox' : 'square-outline'} size={26} color={on ? colors.link : colors.textMuted} />
                 <AppText style={styles.flex}>
                   {g.name} <AppText color={colors.textMuted}>({g.relationship})</AppText>
                 </AppText>
@@ -339,7 +339,7 @@ function ActiveControls({ personId, guardians, me }: { personId: string; guardia
           const starter = g.phone === s.startedBy.phone;
           return (
             <View key={g.id} style={styles.viewerRow}>
-              <Ionicons name={can ? 'eye' : 'eye-off'} size={20} color={can ? colors.primary : colors.textMuted} />
+              <Ionicons name={can ? 'eye' : 'eye-off'} size={20} color={can ? colors.link : colors.textMuted} />
               <AppText style={styles.flex}>
                 {g.name}
                 {g.phone === me.phone ? ' (You)' : ''}
@@ -395,7 +395,7 @@ function Choice({
             aria-checked={on}
             // Row chips go solid teal (white text); list options get a light highlight (dark text stays readable).
             style={[styles.choice, row ? styles.flex : styles.choiceList, on && (row ? styles.choiceOn : styles.choiceOnSoft)]}>
-            {!row ? <Ionicons name={on ? 'radio-button-on' : 'radio-button-off'} size={22} color={on ? colors.primary : colors.textMuted} /> : null}
+            {!row ? <Ionicons name={on ? 'radio-button-on' : 'radio-button-off'} size={22} color={on ? colors.link : colors.textMuted} /> : null}
             <AppText variant="bodyBold" color={on && row ? colors.white : colors.text}>
               {o.label}
             </AppText>
@@ -465,6 +465,6 @@ const styles = StyleSheet.create({
   },
   choiceOn: { borderColor: colors.primary, backgroundColor: colors.primary },
   choiceList: { justifyContent: 'flex-start' },
-  choiceOnSoft: { borderColor: colors.primary, backgroundColor: '#E8F4F7' },
+  choiceOnSoft: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
   tools: { gap: space.sm, borderWidth: 2, borderColor: colors.simulated, borderStyle: 'dashed' },
 });

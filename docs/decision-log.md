@@ -13,3 +13,6 @@ Times below are the evidence commits converted to Mauritius time (UTC+4). They r
 | 2026-11-14 01:20:01 | Use real open → acknowledged → resolved help alerts | PR #24; PR #22 adds acknowledgement identity, band labels and band linking; commit `86fe500` | Zuhayr |
 | 2026-11-14 01:23:06 | Keep help intake successful even when heartbeat fails | PR #23 adds wearer details and heartbeat; alert saved before best-effort timestamp update; commit `358b133` | Fahim |
 | 2026-11-14 01:24:05 | Label GPS and wandering demonstrations as simulated | PR #25 source line says no GPS on band; live help status and heartbeat are separate; commit `1d351b2` | Zuhayr / Fahim |
+| 2026-11-14 02:29:34 | Removed the band heartbeat; band status from real events | PR #32 (88df5fc) and PR #33 (cf0b26e); timestamp from #33 merge commit | Kavish / Fahim |
+| 2026-11-14 02:16:15 | Left home / back home through Supabase instead of a laptop server | PR #30 (d341e3d), PR #31 (3ce1493); timestamp from #31 merge commit | Shihad / Zuhayr |
+| TODO time | Phone GPS as a demo stand-in for band GPS, disclosed to judges | Team decision, 14 Nov 2026. The band has no GPS; integration must be checked on a real phone | Team |

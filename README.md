@@ -39,7 +39,7 @@ The backend and frontend files are starters for their owners to complete as impl
 ## How to run
 
 1. Clone this repo and switch to the branch you need. Install Git, Node.js/npm for the app, Arduino IDE and the ESP32 board support for firmware. Use a phone with the team’s chosen Expo test setup.
-2. Once the mobile scaffold exists, run `npm ci` from its folder after a lockfile is committed, configure variables from its `.env.example`, then run `npx expo start`. Scan the QR with the chosen Expo test client.
+2. For web signup, run `npm ci` and `npm run web` in `mobile`. Open the localhost address Expo prints and add `/signup`. The shared Supabase project is configured by default. See the [mobile README](mobile/README.md#run-locally).
 3. Backend: apply the committed SQL migrations to the team’s Supabase project in order and configure the device endpoint and server-side secrets. Use a dedicated test wearer and carer. Backend owners must replace this line with the exact migration and deployment steps after the first successful run.
 4. Firmware: open the committed sketch, select the team’s actual ESP32 board and serial port, set Wi-Fi and device credentials locally, upload and open Serial Monitor. Press the button and verify that the event appears in the app, then acknowledge and refresh.
 5. Before submitting, update these steps with actual paths, board settings, and a tested APK or Expo/test link. Verify on a second phone/account.
@@ -50,7 +50,7 @@ Never commit Wi-Fi credentials, device tokens, privileged Supabase keys, real we
 
 | Tool used | What it was used for |
 |---|---|
-| OpenAI ChatGPT / Codex | Drafted the kick-off README, collaboration instructions, proposed interface and submission checklist. Also converted and checked the facilities CSV for the database migration. |
+| OpenAI ChatGPT / Codex | Drafted the kick-off README, collaboration instructions, proposed interface and submission checklist. Also converted and checked the facilities CSV, integrated email accounts with Supabase Auth, connected the Alerts tab to live help alerts, set up local runs against the shared project, and implemented carer profiles and account security. |
 | Anthropic Claude | Team tool; specific uses to be recorded by its users. |
 | Google Gemini | Team tool; drafted, verified and committed database schema migration with RLS policies, acknowledge_alert and submit_device_event RPCs on feat/backend-db. |
 

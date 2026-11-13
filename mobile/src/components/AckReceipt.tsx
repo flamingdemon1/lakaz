@@ -17,7 +17,7 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { PopIn } from '@/components/motion';
 import { AppText, Button, SimulatedTag } from '@/components/ui';
 import { useAuth } from '@/data/auth';
-import type { HelpEvent } from '@/data/helpAlert';
+import { HelpEvent, myCarerId } from '@/data/helpAlert';
 import { fill } from '@/i18n';
 import { colors, MAX_WIDTH, radius, space } from '@/theme';
 
@@ -43,11 +43,14 @@ export function AckReceipt({
   event,
   loadedAt,
   sample,
+  bandName,
   onClose,
 }: {
   event: HelpEvent | null;
   loadedAt: number | null;
   sample: boolean;
+  /** The band's friendly name (devices.label), if Supabase has one. */
+  bandName?: string;
   onClose: () => void;
 }) {
   const open = !!event?.acknowledged_at;
@@ -74,9 +77,13 @@ export function AckReceipt({
 
             <View style={styles.rows}>
               <Row label={t('rcRef')} value={event.event_id} mono />
-              <Row label={t('bandTitle')} value={`…${event.device_id.slice(-4)}`} />
+              <Row label={t('bandTitle')} value={bandName ? `${bandName} · …${event.device_id.slice(-4)}` : `…${event.device_id.slice(-4)}`} />
               <Row label={t('rcRequested')} value={fullStamp(event.received_at)} />
               <Row label={t('rcAckAt')} value={fullStamp(event.acknowledged_at!)} strong />
+              {/* Who acknowledged — recorded by the server (auth.uid()), shown once the migration is applied. */}
+              {event.acknowledged_by ? (
+                <Row label={t('rcAckBy')} value={event.acknowledged_by === myCarerId() ? t('whoYou') : t('whoOther')} />
+              ) : null}
             </View>
 
             {loadedAt ? (

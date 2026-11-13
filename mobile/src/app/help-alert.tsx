@@ -17,9 +17,11 @@ import { AppText, Button, Card, EmptyState, Screen, SimulatedTag } from '@/compo
 import {
   acknowledgeAlert,
   addSampleHelpEvent,
+  fetchBandNames,
   fetchHelpEvents,
   HelpEvent,
   IS_SAMPLE,
+  myCarerId,
   NOT_SIGNED_IN,
   onHelpEventsChanged,
   resetSampleHelpEvents,
@@ -34,29 +36,42 @@ import { colors, radius, space, statusStyles, TOUCH } from '@/theme';
 
 /** Screen: loads events, shows loading / error / empty / list states. */
 export default function HelpAlertScreen() {
+  return <HelpAlertList />;
+}
+
+const eventKey = (event: HelpEvent) => `${event.device_id}:${event.event_id}`;
+
+export function HelpAlertList({ asTab = false }: { asTab?: boolean }) {
   const [events, setEvents] = useState<HelpEvent[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [failNext, setFailNext] = useState(false); // sample-only switch to test the error state
   // Receipt (surprise card "Prove It Works"): which event's receipt is open, and when the list was last
-  // read from the server. We store the event_id, not the row, so the receipt always shows the NEWEST
-  // server copy — after a refresh it re-reads acknowledged_at from Supabase.
+  // read from the server. The receipt uses the composite key to find the current row after each refresh.
   const [receiptId, setReceiptId] = useState<string | null>(null);
   const { t } = useAuth(); // follows the language chosen in Profile
   const [loadedAt, setLoadedAt] = useState<number | null>(null);
+  // Friendly band names ({ device_id: "Marie-Claire's band" }); empty until Supabase has devices.label.
+  const [bandNames, setBandNames] = useState<Record<string, string>>({});
+  const latestLoad = useRef(0);
 
   /** (Re)loads from the "server". Used on open and by Refresh, to prove the acknowledgement was saved. */
   const load = useCallback(async (silent = false) => {
     // Why `silent`: background polls shouldn't flash the spinner every 5 s.
+    const request = ++latestLoad.current;
     if (!silent) setRefreshing(true);
     try {
-      setEvents(await fetchHelpEvents());
+      // Names never throw (they fall back to {}), so a missing devices.label can't break the alert list.
+      const [rows, names] = await Promise.all([fetchHelpEvents(), fetchBandNames()]);
+      if (request !== latestLoad.current) return;
+      setEvents(rows);
+      setBandNames(names);
       setLoadedAt(Date.now());
       setLoadError(null);
     } catch (e) {
-      setLoadError((e as Error).message);
+      if (request === latestLoad.current) setLoadError((e as Error).message);
     } finally {
-      if (!silent) setRefreshing(false);
+      if (request === latestLoad.current) setRefreshing(false);
     }
   }, []);
 
@@ -71,34 +86,38 @@ export default function HelpAlertScreen() {
 
   /** Replaces one row with the server's updated copy. */
   const onUpdated = (row: HelpEvent) =>
-    setEvents((list) => (list ?? []).map((e) => (e.event_id === row.event_id ? row : e)));
+    setEvents((list) => (list ?? []).map((e) => (eventKey(e) === eventKey(row) ? row : e)));
 
   const waiting = (events ?? []).filter((e) => !e.acknowledged_at).length;
-  const receiptEvent = (events ?? []).find((e) => e.event_id === receiptId) ?? null;
+  const receiptEvent = (events ?? []).find((e) => eventKey(e) === receiptId) ?? null;
 
   // Why: with no screen behind this one (opened by direct link, or the web page was reloaded here) the header
   // has no back arrow and the carer is stuck. Then we show our own arrow that goes to Home instead.
   const canGoBack = router.canGoBack();
 
   return (
-    <Screen edges={[]}>
-      <Stack.Screen
-        options={{
-          title: t('actHelpAlerts'), // header title follows the chosen language too
-          headerLeft: canGoBack
-            ? undefined // normal case: the standard back arrow
-            : () => (
-                <Pressable
-                  onPress={() => router.replace('/')}
-                  accessibilityRole="button"
-                  accessibilityLabel="Back to Home"
-                  hitSlop={8}
-                  style={styles.back}>
-                  <Ionicons name="arrow-back" size={24} color={colors.link} />
-                </Pressable>
-              ),
-        }}
-      />
+    <Screen edges={asTab ? undefined : []}>
+      {asTab ? (
+        <AppText variant="title" accessibilityRole="header">{t('actHelpAlerts')}</AppText>
+      ) : (
+        <Stack.Screen
+          options={{
+            title: t('actHelpAlerts'),
+            headerLeft: canGoBack
+              ? undefined // normal case: the standard back arrow
+              : () => (
+                  <Pressable
+                    onPress={() => router.replace('/')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Back to Home"
+                    hitSlop={8}
+                    style={styles.back}>
+                    <Ionicons name="arrow-back" size={24} color={colors.link} />
+                  </Pressable>
+                ),
+          }}
+        />
+      )}
       <View style={styles.topRow}>
         {IS_SAMPLE ? <SimulatedTag text="SAMPLE DATA" /> : null}
         <AppText variant="small" color={colors.textMuted} style={styles.flex}>
@@ -148,12 +167,13 @@ export default function HelpAlertScreen() {
           </AppText>
           {events!.map((e) => (
             <HelpAlertCard
-              key={e.event_id}
+              key={eventKey(e)}
               event={e}
               failNext={failNext}
               onUpdated={onUpdated}
               onFailUsed={() => setFailNext(false)}
-              onViewReceipt={() => setReceiptId(e.event_id)}
+              onViewReceipt={() => setReceiptId(eventKey(e))}
+              bandName={bandNames[e.device_id]}
             />
           ))}
         </>
@@ -175,7 +195,15 @@ export default function HelpAlertScreen() {
           <Button label="Reset sample" icon="refresh" tone="ghost" onPress={resetSampleHelpEvents} />
         </Card>
       ) : null}
-      <AckReceipt event={receiptEvent} loadedAt={loadedAt} sample={IS_SAMPLE} onClose={() => setReceiptId(null)} />
+      {/* Link another band with the code printed on it (RPC claim_device). Its alerts then appear here. */}
+      <Button label={t('linkBand')} icon="link" tone="ghost" onPress={() => router.push('/link-band')} />
+      <AckReceipt
+        event={receiptEvent}
+        loadedAt={loadedAt}
+        sample={IS_SAMPLE}
+        bandName={receiptEvent ? bandNames[receiptEvent.device_id] : undefined}
+        onClose={() => setReceiptId(null)}
+      />
     </Screen>
   );
 }
@@ -190,8 +218,11 @@ function HelpAlertCard({
   onUpdated,
   onFailUsed,
   onViewReceipt,
+  bandName,
 }: {
   event: HelpEvent;
+  /** The band's friendly name, if Supabase has one (devices.label). */
+  bandName?: string;
   failNext: boolean;
   onUpdated: (row: HelpEvent) => void;
   onFailUsed: () => void;
@@ -236,9 +267,9 @@ function HelpAlertCard({
           </View>
           <View style={styles.flex}>
             <AppText variant="title">{t('helpRequested')}</AppText>
-            {/* Only device_id is in the agreed shape — we don't invent a person name here. */}
+            {/* The band's real name from Supabase if set; otherwise its last 4 characters (never an invented name). */}
             <AppText variant="small" color={colors.textMuted}>
-              {fill(t('fromBand'), { id: event.device_id.slice(-4) })}
+              {bandName ? `${bandName} · …${event.device_id.slice(-4)}` : fill(t('fromBand'), { id: event.device_id.slice(-4) })}
             </AppText>
           </View>
         </View>
@@ -254,6 +285,8 @@ function HelpAlertCard({
             <Ionicons name="person-circle" size={18} color={statusStyles.Acknowledged.bg} />
             <AppText variant="bodyBold" color={statusStyles.Acknowledged.bg}>
               {fill(t('ackedAt'), { time: clock(event.acknowledged_at!), ago: timeAgo(event.acknowledged_at, now) })}
+              {/* Who: only shown once Supabase records acknowledged_by (migration 20261114013000). */}
+              {event.acknowledged_by ? ` · ${event.acknowledged_by === myCarerId() ? t('ackByYou') : t('ackByOther')}` : ''}
             </AppText>
           </View>
         ) : null}

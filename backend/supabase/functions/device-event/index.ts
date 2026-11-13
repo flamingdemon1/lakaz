@@ -1,3 +1,4 @@
+// Device intake and server-only heartbeat RPC. Owner: Fahim; review/deploy: Shihad.
 import { createDeviceEventHandler } from "./request.ts";
 
 Deno.serve(createDeviceEventHandler(async (token, event) => {
@@ -9,6 +10,21 @@ Deno.serve(createDeviceEventHandler(async (token, event) => {
   const tokenHash = Array.from(new Uint8Array(digest), (byte) =>
     byte.toString(16).padStart(2, "0")
   ).join("");
+
+  /** Takes no inputs. Updates the authenticated band's timestamp, returning token validity. */
+  async function heartbeat(): Promise<boolean> {
+    const response = await fetch(new URL("/rest/v1/rpc/submit_heartbeat", url), {
+      method: "POST",
+      headers: { apikey: key!, Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_token_hash: tokenHash }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) throw new Error("Heartbeat RPC failed");
+    return await response.json() === true;
+  }
+
+  // Standalone heartbeats validate the token through SQL and never call alert intake.
+  if (event.kind === "heartbeat") return await heartbeat() ? { ok: true as const } : null;
 
   const response = await fetch(new URL("/rest/v1/rpc/submit_device_event", url), {
     method: "POST",
@@ -38,6 +54,12 @@ Deno.serve(createDeviceEventHandler(async (token, event) => {
       row.kind !== event.kind || typeof row.received_at !== "string" ||
       !(row.acknowledged_at === null || typeof row.acknowledged_at === "string")) {
     throw new Error("Unexpected alert RPC response");
+  }
+  // The alert is already saved and validated. Timestamp failures must not hide that success.
+  try {
+    await heartbeat();
+  } catch {
+    console.warn("Help request saved; last_seen refresh failed");
   }
   return {
     device_id: row.device_id,

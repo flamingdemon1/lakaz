@@ -10,6 +10,7 @@ import React from 'react';
 
 import { HelpAlertTakeover } from '@/components/HelpAlertTakeover';
 import { IncomingAlert } from '@/components/IncomingAlert';
+import { SUPABASE_ENABLED } from '@/config';
 import { useAuth } from '@/data/auth';
 import { isOpen, useLakaz } from '@/data/store';
 import { colors, fonts, statusStyles } from '@/theme';
@@ -45,7 +46,7 @@ export default function TabsLayout() {
           options={{
             title: t('alerts'),
             tabBarIcon: ({ color, size }) => <Ionicons name="notifications" color={color as string} size={size} />,
-            tabBarBadge: openCount > 0 ? openCount : undefined,
+            tabBarBadge: !SUPABASE_ENABLED && openCount > 0 ? openCount : undefined,
             tabBarBadgeStyle: { backgroundColor: statusStyles.Critical.bg, fontFamily: fonts.bold },
           }}
         />

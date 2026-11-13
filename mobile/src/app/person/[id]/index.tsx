@@ -1,5 +1,5 @@
 /**
- * app/person/[id]/index.tsx — PERSON PAGE: profile, device connection, emergency contact,
+ * app/person/[id]/index.tsx — PERSON PAGE: profile, device connection, location link, emergency contact,
  * medical & safety notes, guardians, edit / remove.
  * Owner: Person 3/4 (Zuhayr). SAMPLE data.
  */
@@ -12,13 +12,16 @@ import { FormError } from '@/components/forms';
 import { Avatar, DeviceConnection, ProfileChip } from '@/components/person';
 import { AppText, Button, Card, EmptyState, InfoRow, Screen, SectionTitle } from '@/components/ui';
 import { usePeople } from '@/data/people';
+import { useTracking } from '@/data/tracking';
 import { colors, space, TOUCH } from '@/theme';
 
 /** Person detail screen. */
 export default function PersonPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { get, removePerson } = usePeople();
+  const tracking = useTracking();
   const p = get(id);
+  const trackingOn = !!tracking.get(id).session;
   const [showMedical, setShowMedical] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -66,6 +69,15 @@ export default function PersonPage() {
 
       <SectionTitle>Device connection</SectionTitle>
       <DeviceConnection person={p} />
+
+      {/* Section C: live tracking / last known location (privacy rules in src/data/tracking.tsx). */}
+      <SectionTitle>Location</SectionTitle>
+      <Button
+        label={trackingOn ? 'Live tracking is ON — open' : 'Location & live tracking'}
+        icon={trackingOn ? 'radio' : 'location'}
+        tone={trackingOn ? 'success' : 'secondary'}
+        onPress={() => router.push({ pathname: '/person/[id]/location', params: { id: p.id } })}
+      />
 
       <SectionTitle>Emergency contact</SectionTitle>
       <Card>

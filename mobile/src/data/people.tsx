@@ -8,7 +8,7 @@
  * Medical notes are the most sensitive data in the app: guardians only, never on the responder page (D10).
  * Functions marked "SWAP FOR SUPABASE" are the only ones that change when the backend is ready.
  */
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { normalisePhone } from '@/lib/validate';
 
@@ -106,6 +106,17 @@ let people: CaredPerson[] = [
 const wait = (ms = 500) => new Promise((r) => setTimeout(r, ms));
 const uid = (p: string) => `${p}-${Date.now().toString(36)}`;
 
+/** SAMPLE tool: devices whose heartbeat we pretend has stopped (to show the offline state). */
+const offlineDevices = new Set<string>();
+
+/** SAMPLE ONLY: switch a band's fake heartbeat off/on. */
+export function simulateDeviceOffline(deviceId: string, off: boolean) {
+  if (off) offlineDevices.add(deviceId);
+  else offlineDevices.delete(deviceId);
+}
+/** SAMPLE ONLY: is the fake heartbeat switched off? */
+export const isSimulatedOffline = (deviceId: string) => offlineDevices.has(deviceId);
+
 /** What the add/edit form sends. */
 export type PersonInput = Omit<CaredPerson, 'id' | 'guardians'>;
 
@@ -132,6 +143,18 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
   // A version number that bumps after every change so screens re-render from the module data.
   const [version, setVersion] = useState(0);
   const bump = () => setVersion((v) => v + 1);
+
+  // SAMPLE heartbeat: band-01 "reports" every 5 s like the real band (section 6, Person 1),
+  // unless a sample tool switched it off. Without this the band would look offline after 20 s.
+  useEffect(() => {
+    const id = setInterval(() => {
+      devices = devices.map((d) =>
+        d.device_id === 'band-01' && !offlineDevices.has(d.device_id) ? { ...d, last_seen: new Date().toISOString() } : d,
+      );
+      setVersion((v) => v + 1);
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
 
   const value = useMemo<PeopleCtx>(() => {
     /** Replaces one person by id. */

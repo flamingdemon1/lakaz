@@ -33,7 +33,11 @@ export default function Home() {
   const main = open[0];
   const online = isOnline(device, now);
   // Newest first; the stack shows at most 4 so Home stays a glance, not a log.
-  const recent = [...alerts].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 4);
+  // Only CLOSED alerts here — open ones are already listed above, so nothing shows twice.
+  const recent = alerts
+    .filter((a) => !isOpen(a))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .slice(0, 4);
 
   return (
     <Screen>
@@ -65,7 +69,8 @@ export default function Home() {
                   <AlertCard alert={a} />
                 </FadeIn>
               ))}
-              <LocationCard alert={main} />
+              {/* No map for real help alerts: the band has no GPS (never show a fake position as real). */}
+              {main.type === 'help_requested' ? null : <LocationCard alert={main} />}
             </>
           ) : null}
 
@@ -86,7 +91,7 @@ export default function Home() {
                 ))}
               </View>
             </FadeIn>
-          ) : (
+          ) : main ? null : (
             <FadeIn delay={motion.stagger * 2}>
               <Card style={styles.calm}>
                 <Ionicons name="shield-checkmark" size={28} color={statusStyles.Resolved.bg} />
@@ -101,6 +106,9 @@ export default function Home() {
             </FadeIn>
           )}
 
+          {/* Band online/offline needs the heartbeat (Fahim's migration). Until then, live mode shows nothing
+              rather than a false "Band offline". */}
+          {device ? (
           <FadeIn delay={motion.stagger * 3} style={styles.group}>
             <SectionTitle>{t('bandTitle')}</SectionTitle>
             <Card style={styles.bandRow}>
@@ -113,6 +121,7 @@ export default function Home() {
               </AppText>
             </Card>
           </FadeIn>
+          ) : null}
 
           <DemoControls />
         </>

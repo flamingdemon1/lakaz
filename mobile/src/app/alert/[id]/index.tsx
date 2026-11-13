@@ -15,8 +15,11 @@ import { AppText, Button, Card, EmptyState, IconName, Screen, SectionTitle, Simu
 import { USE_MOCK } from '@/config';
 import { communityBlockedReason, TimelineEntry, useEscalation } from '@/data/escalation';
 import { MOCK_CAREGIVERS } from '@/data/mock';
+import { useAuth } from '@/data/auth';
 import { useLakaz } from '@/data/store';
 import { alertAdvice, alertExplainer, alertTitle, clock, ESCALATING, timeAgo } from '@/lib/format';
+import { fill } from '@/i18n';
+import { useAlertTimeline, useCarerName } from '@/lib/useAlertTimeline';
 import { useNow } from '@/lib/useNow';
 import { colors, radius, space, statusStyles } from '@/theme';
 
@@ -24,12 +27,16 @@ import { colors, radius, space, statusStyles } from '@/theme';
 export default function AlertDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { alerts, acknowledge, resolve, escalateNow, me } = useLakaz();
-  const { timeline: timelineOf, settings: escSettings } = useEscalation();
+  const { settings: escSettings } = useEscalation();
   const now = useNow();
   const [busy, setBusy] = useState<'ack' | 'resolve' | 'escalate' | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   const alert = alerts.find((a) => a.alert_id === id);
+  // Hooks must run before the early return below.
+  const timeline = useAlertTimeline(alert);
+  const nameOf = useCarerName();
+  const { t } = useAuth();
   if (!alert) {
     return (
       <Screen edges={[]}>
@@ -45,11 +52,14 @@ export default function AlertDetail() {
   // community rules block step 3 — then the button would do nothing, so hide it.
   const top = communityBlockedReason(alert, escSettings) === null ? 3 : 2;
   const canEscalate = canAck && alert.level < top && USE_MOCK;
-  const timeline = timelineOf(alert.alert_id);
+  // Real help alerts: the name comes from Supabase (linked_carer_names) or "You"; sample: the demo carers.
+  const live = alert.type === 'help_requested';
   const ackName = alert.acknowledged_by
-    ? alert.acknowledged_by === me?.id
-      ? 'You'
-      : MOCK_CAREGIVERS[alert.acknowledged_by as keyof typeof MOCK_CAREGIVERS]?.name ?? alert.acknowledged_by
+    ? live
+      ? nameOf(alert.acknowledged_by)
+      : alert.acknowledged_by === me?.id
+        ? 'You'
+        : MOCK_CAREGIVERS[alert.acknowledged_by as keyof typeof MOCK_CAREGIVERS]?.name ?? alert.acknowledged_by
     : null;
 
   /** Runs an action and shows a readable error instead of failing silently. */
@@ -81,7 +91,7 @@ export default function AlertDetail() {
           <View style={styles.ackRow}>
             <Ionicons name="person-circle" size={20} color={statusStyles.Acknowledged.bg} />
             <AppText variant="smallBold" color={statusStyles.Acknowledged.bg}>
-              {ackName} acknowledged this alert
+              {fill(t('ackedThisAlert'), { who: ackName })}
             </AppText>
           </View>
         ) : null}
@@ -187,7 +197,10 @@ export default function AlertDetail() {
       />
 
       {/* Privacy (D10): location shown only for this incident, and history only as "last known". */}
-      <LocationCard alert={alert} title={alert.status === 'Resolved' ? 'Last known location (closed)' : 'Location'} mapHeight={240} />
+      {/* The real band has no GPS, so a live help alert has no map (never show a fake position as real). */}
+      {live ? null : (
+        <LocationCard alert={alert} title={alert.status === 'Resolved' ? 'Last known location (closed)' : 'Location'} mapHeight={240} />
+      )}
     </Screen>
   );
 }

@@ -4,15 +4,18 @@
  *
  * Two modes:
  *  - MOCK (USE_MOCK=true): SIMULATED data + a fake demo-mode escalation ladder. No backend needed.
- *  - LIVE: loads from the REST endpoints, then listens to Socket.IO events
- *    `status:update`, `alert:new`, `alert:update` (section 7.4).
+ *  - LIVE (Supabase configured): real help alerts from Supabase public.alerts, re-read every 5 s while signed in
+ *    (data/alertsLive.ts). The old plan — a Node REST + Socket.IO server — was replaced by Supabase and never
+ *    built, so that code is gone. Only the band's help button exists for real; exits / SOS / offline / GPS
+ *    stay SIMULATED in sample mode.
  * Screens only call useLakaz(); they never know which mode is running, except to show the label.
  */
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
 
-import { API_URL, DEMO_DEVICE_ID, USE_MOCK } from '@/config';
-import * as api from '@/data/api';
+import { POLL_MS, USE_MOCK } from '@/config';
+import { acknowledgeLive, fetchCarerNames, fetchLiveAlerts, resolveLive } from '@/data/alertsLive';
+import { NOT_SIGNED_IN, onHelpEventsChanged } from '@/data/helpAlert';
+import * as supa from '@/data/supabase';
 import {
   ME,
   mockDevice,
@@ -35,8 +38,10 @@ interface LakazState {
   error: string | null;
   /** The alert that should pop up over every screen right now (new or escalated). */
   incoming: Alert | null;
-  /** Caregiver using this phone (demo login). */
+  /** Caregiver using this phone (demo login, or the signed-in Supabase carer in live mode). */
   me: { id: string; name: string } | null;
+  /** LIVE: names of the carers linked to the band, { carer_id: "Sarah" } — for "Acknowledged by Sarah". */
+  carerNames: Record<string, string>;
 }
 
 interface LakazActions {
@@ -63,6 +68,27 @@ export const isTakeover = (a: Alert) => a.type === 'unexpected_exit' || a.type =
 
 const Ctx = createContext<(LakazState & LakazActions) | null>(null);
 
+/**
+ * LIVE Home status from the real alerts (the band can't tell us "at home" / "left home" yet):
+ *  NEEDS_HELP  = a help request nobody has acknowledged (since = when it was pressed)
+ *  HELP_COMING = acknowledged but not closed yet          (since = when it was acknowledged)
+ *  ALL_CLEAR   = nothing open                             (since = when the last one was closed, or now)
+ */
+function liveStatus(list: Alert[]): DeviceStatus {
+  const waiting = list.filter((a) => a.status === 'Critical');
+  const handling = list.filter((a) => a.status === 'Acknowledged');
+  const lastClosed = list.find((a) => a.status === 'Resolved');
+  if (waiting.length) return { status: 'NEEDS_HELP', person_name: 'Marie-Claire', since: waiting[waiting.length - 1].created_at, level: 1 };
+  if (handling.length)
+    return { status: 'HELP_COMING', person_name: 'Marie-Claire', since: handling[0].acknowledged_at ?? handling[0].created_at, level: 1 };
+  return {
+    status: 'ALL_CLEAR',
+    person_name: 'Marie-Claire',
+    since: lastClosed?.resolved_at ?? lastClosed?.acknowledged_at ?? new Date().toISOString(),
+    level: null,
+  };
+}
+
 /** Puts an alert into the list, replacing the old copy with the same alert_id. Newest first. */
 function upsert(list: Alert[], a: Alert): Alert[] {
   const rest = list.filter((x) => x.alert_id !== a.alert_id);
@@ -79,7 +105,10 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [incoming, setIncoming] = useState<Alert | null>(null);
   const [me, setMe] = useState<LakazState['me']>(null);
-  const socketRef = useRef<Socket | null>(null);
+  const [carerNames, setCarerNames] = useState<Record<string, string>>({});
+  // Latest alerts for the async actions (acknowledge / resolve need the device id of the alert).
+  const alertsRef = useRef<Alert[]>([]);
+  alertsRef.current = alerts;
   // SAMPLE: when true the fake heartbeat stops, so the band really looks disconnected (20 s rule).
   const heartbeatPaused = useRef(false);
 
@@ -109,60 +138,50 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  /** Loads everything from the backend once (LIVE mode). */
+  /**
+   * LIVE: re-reads the carer's alerts from Supabase and works out the Home status from them.
+   * Why polling (every 5 s) and not realtime: agreed with Shihad — simpler, works on a hotspot, and the
+   * help-alert screens already poll at the same rate.
+   */
   const refresh = useCallback(async () => {
     if (USE_MOCK) return;
     try {
-      const [a, s, d] = await Promise.all([
-        api.fetchAlerts(),
-        api.fetchStatus(DEMO_DEVICE_ID),
-        api.fetchDevices().catch(() => [] as Device[]),
-      ]);
-      setAlerts(a.sort((x, y) => y.created_at.localeCompare(x.created_at)));
-      setStatus(s);
-      setDevice(d.find((x) => x.device_id === DEMO_DEVICE_ID) ?? null);
+      const list = await fetchLiveAlerts();
+      setAlerts(list);
+      setStatus(liveStatus(list));
+      const user = supa.currentUser();
+      setMe(user ? { id: user.id, name: user.user_metadata?.name ?? user.email ?? 'You' } : null);
+      // Names only change when someone links/renames, so one band lookup per refresh is plenty.
+      if (list[0]) setCarerNames(await fetchCarerNames(list[0].device_id));
+      setMode('live');
       setError(null);
     } catch (e) {
-      setError((e as Error).message);
+      const msg = (e as Error).message;
+      // Not signed in is a normal state (login screen), not a connection problem.
+      if (msg === NOT_SIGNED_IN) {
+        setAlerts([]);
+        setStatus(null);
+        setMode('live');
+      } else {
+        setMode('disconnected');
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // ---------- LIVE mode: REST + Socket.IO ----------
+  // ---------- LIVE mode: Supabase, every 5 s + instantly when this phone acknowledges ----------
   useEffect(() => {
     if (USE_MOCK) return;
     refresh();
-    // Why both transports: websocket is fastest, polling still works if a hotspot blocks websockets.
-    const socket = io(API_URL, { transports: ['websocket', 'polling'], reconnectionDelay: 1000 });
-    socketRef.current = socket;
-    socket.on('connect', () => {
-      setMode('live');
-      refresh(); // catch up on anything missed while disconnected
-    });
-    socket.on('disconnect', () => setMode('disconnected'));
-    socket.on('connect_error', (e) => {
-      setMode('disconnected');
-      setError(`Can't reach ${API_URL} (${e.message}). Same hotspot? Firewall allows port 3000?`);
-      setLoading(false);
-    });
-    socket.on('status:update', (s: DeviceStatus) => setStatus(s));
-    socket.on('alert:new', (a: Alert) => {
-      setAlerts((l) => upsert(l, a));
-      announce(a, false);
-    });
-    socket.on('alert:update', (a: Alert) => {
-      setAlerts((l) => {
-        const old = l.find((x) => x.alert_id === a.alert_id);
-        // Pop the banner again only when the ladder climbs — not for every location update.
-        if (old && a.level > old.level && a.status !== 'Acknowledged') setIncoming(a);
-        return upsert(l, a);
-      });
-    });
+    const id = setInterval(refresh, POLL_MS);
+    const off = onHelpEventsChanged(() => void refresh());
     return () => {
-      socket.disconnect();
+      clearInterval(id);
+      off();
     };
-  }, [refresh, announce]);
+  }, [refresh]);
 
   // ---------- MOCK mode: SIMULATED data + fake ladder ----------
   useEffect(() => {
@@ -211,9 +230,15 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     // Why we don't update the UI first: the handoff says "only show success after the server confirms it".
-    const a = await api.ackAlert(id, me?.id ?? ME.id);
-    setAlerts((l) => upsert(l, a));
-  }, [me]);
+    const current = alertsRef.current.find((a) => a.alert_id === id);
+    if (!current) throw new Error('That alert no longer exists.');
+    const a = await acknowledgeLive(current);
+    setAlerts((l) => {
+      const next = upsert(l, a);
+      setStatus(liveStatus(next));
+      return next;
+    });
+  }, []);
 
   /** Marks an alert Resolved (person is safe). */
   const resolve = useCallback(async (id: string) => {
@@ -222,8 +247,14 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
       setStatus(mockStatusHome());
       return;
     }
-    const a = await api.resolveAlert(id);
-    setAlerts((l) => upsert(l, a));
+    const current = alertsRef.current.find((a) => a.alert_id === id);
+    if (!current) throw new Error('That alert no longer exists.');
+    const a = await resolveLive(current);
+    setAlerts((l) => {
+      const next = upsert(l, a);
+      setStatus(liveStatus(next));
+      return next;
+    });
   }, []);
 
   /** SIMULATED: band leaves home → new level-0 alert. */
@@ -307,16 +338,24 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
       error,
       incoming,
       me,
+      carerNames,
       acknowledge,
       resolve,
       refresh,
       dismissIncoming: () => setIncoming(null),
-      login: () => setMe({ id: ME.id, name: ME.name }),
-      logout: () => setMe(null),
+      // Sample login only: in live mode `me` is the signed-in Supabase carer (set by refresh()).
+      login: () => (USE_MOCK ? setMe({ id: ME.id, name: ME.name }) : void refresh()),
+      logout: () => {
+        setMe(null);
+        if (!USE_MOCK) {
+          setAlerts([]);
+          setStatus(null);
+        }
+      },
       escalateNow,
       sim: { leaveHome, sos, backHome, reset, deviceOffline },
     }),
-    [alerts, status, device, mode, loading, error, incoming, me, acknowledge, resolve, refresh, escalateNow, leaveHome, sos, backHome, reset, deviceOffline],
+    [alerts, status, device, mode, loading, error, incoming, me, carerNames, acknowledge, resolve, refresh, escalateNow, leaveHome, sos, backHome, reset, deviceOffline],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -18,7 +18,7 @@ export function ConnectionBanner() {
   const look: Record<typeof mode, { bg: string; icon: IconName; text: string }> = {
     mock: { bg: colors.simulated, icon: 'flask', text: 'SIMULATED data — demo mode, no backend' },
     connecting: { bg: colors.offline, icon: 'sync', text: 'Connecting to LAKAZ server…' },
-    live: { bg: colors.safe, icon: 'radio', text: 'Connected to LAKAZ server' },
+    live: { bg: colors.primary, icon: 'radio', text: 'Connected to LAKAZ server' },
     // Amber, not red: losing the connection is a warning; red is kept for emergencies only.
     disconnected: { bg: colors.warning, icon: 'cloud-offline', text: 'Not connected — showing last known data' },
   };

@@ -8,8 +8,8 @@
  *   RED    = danger / emergency only (critical alerts, SOS, 999). Never used for decoration or branding.
  *   AMBER  = warning, needs attention soon (active alert, low battery).
  *   BLUE   = someone is handling it (acknowledged).
- *   GREEN  = safe (at home, resolved, band online).
- *   INK    = everything else (brand, buttons, links) — neutral so it never competes with a status.
+ *   GREEN  = she is safe / done ✓ (at home, inside a safe zone, resolved, saved). NOT for "device online".
+ *   INK    = everything else (brand, buttons, links, band online, GPS fix, live) — neutral, never a status.
  * Change a colour HERE, never inside a component.
  */
 import { Platform } from 'react-native';

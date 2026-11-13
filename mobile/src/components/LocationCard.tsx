@@ -39,7 +39,7 @@ export function LocationCard({ alert, title = 'Last known location', mapHeight =
               // Why mock-only: the real home centre is set to the venue on the day (section 7.5) — not known here yet.
               home={USE_MOCK ? MOCK_HOME : undefined} />
             <View style={styles.row}>
-              <View style={[styles.dot, { backgroundColor: fresh ? statusStyles.Resolved.bg : colors.offline }]} />
+              <View style={[styles.dot, { backgroundColor: fresh ? colors.primary : colors.offline }]} />
               <AppText variant="bodyBold" style={styles.flex}>
                 {fresh ? 'Recent fix' : 'Old position — not live'}
               </AppText>

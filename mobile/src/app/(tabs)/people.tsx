@@ -48,7 +48,7 @@ export default function People() {
                 </AppText>
                 <ProfileChip profile={p.profile} />
                 <View style={styles.devRow}>
-                  <View style={[styles.dot, { backgroundColor: d ? (online ? statusStyles.Resolved.bg : colors.offline) : colors.border }]} />
+                  <View style={[styles.dot, { backgroundColor: d ? (online ? colors.primary : colors.offline) : colors.border }]} />
                   <AppText variant="small" color={colors.textMuted}>
                     {d ? `${d.device_id} · ${online ? 'online' : 'offline'}` : 'No band assigned'}
                   </AppText>

@@ -182,8 +182,8 @@ export function DeviceConnection({ person }: { person: CaredPerson }) {
   return (
     <Card style={styles.gapSm}>
       <View style={styles.rowCard}>
-        <View style={[styles.ring, { borderColor: online ? statusStyles.Resolved.bg : colors.offline }]}>
-          <Ionicons name="watch" size={24} color={online ? statusStyles.Resolved.bg : colors.offline} />
+        <View style={[styles.ring, { borderColor: online ? colors.primary : colors.offline }]}>
+          <Ionicons name="watch" size={24} color={online ? colors.primary : colors.offline} />
         </View>
         <View style={styles.flex}>
           <AppText variant="bodyBold">

@@ -77,7 +77,7 @@ export default function PersonPage() {
       <Button
         label={trackingOn ? 'Live tracking is ON — open' : 'Location & live tracking'}
         icon={trackingOn ? 'radio' : 'location'}
-        tone={trackingOn ? 'success' : 'secondary'}
+        tone={trackingOn ? 'primary' : 'secondary'}
         onPress={() => router.push({ pathname: '/person/[id]/location', params: { id: p.id } })}
       />
       {/* Section D: safe zones & geofencing. */}

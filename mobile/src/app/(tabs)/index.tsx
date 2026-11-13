@@ -89,7 +89,7 @@ export default function Home() {
           <FadeIn delay={motion.stagger * 4} style={styles.group}>
           <SectionTitle>Band</SectionTitle>
           <Card style={styles.bandRow}>
-            <Ionicons name="watch" size={26} color={online ? statusStyles.Resolved.bg : colors.offline} />
+            <Ionicons name="watch" size={26} color={online ? colors.primary : colors.offline} />
             <View style={styles.flex}>
               <AppText variant="bodyBold">{online ? 'Band online' : 'Band offline'}</AppText>
             </View>

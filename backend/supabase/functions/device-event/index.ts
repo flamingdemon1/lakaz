@@ -1,3 +1,4 @@
+// Device intake and server-only heartbeat RPC. Owner: Fahim; review/deploy: Shihad.
 import { createDeviceEventHandler } from "./request.ts";
 
 Deno.serve(createDeviceEventHandler(async (token, event) => {
@@ -9,6 +10,24 @@ Deno.serve(createDeviceEventHandler(async (token, event) => {
   const tokenHash = Array.from(new Uint8Array(digest), (byte) =>
     byte.toString(16).padStart(2, "0")
   ).join("");
+
+  // Refresh last_seen for both event kinds. Invalid tokens never create alerts.
+  const heartbeat = await fetch(new URL("/rest/v1/rpc/submit_heartbeat", url), {
+    method: "POST",
+    headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_token_hash: tokenHash }),
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!heartbeat.ok) {
+    // Keep the deployed help path working until Shihad applies the migration.
+    const problem = await heartbeat.json().catch(() => ({}));
+    if (event.kind === "heartbeat" || !["PGRST202", "42883"].includes(problem.code)) {
+      throw new Error("Heartbeat RPC failed");
+    }
+  } else {
+    if (await heartbeat.json() !== true) return null;
+    if (event.kind === "heartbeat") return { ok: true as const };
+  }
 
   const response = await fetch(new URL("/rest/v1/rpc/submit_device_event", url), {
     method: "POST",

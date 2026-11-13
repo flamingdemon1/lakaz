@@ -3,6 +3,7 @@
  * Owner: Person 3/4 (Fahim, Zuhayr). Keep wording calm, short and honest.
  */
 import { FRESH_MS, OFFLINE_MS } from '@/config';
+import { getCurrentLang } from '@/i18n-auto';
 import type { Alert, AlertLevel, AlertType, Device } from '@/types';
 
 /** Milliseconds since an ISO time (0 if missing or in the future). */
@@ -11,18 +12,26 @@ export function ageMs(iso: string | null | undefined, now = Date.now()): number 
   return Math.max(0, now - new Date(iso).getTime());
 }
 
+/** How long since an ISO time, as "12 s", "3 min" or "2 h" (no "ago"); '' if missing. Same in every language. */
+export function duration(iso: string | null | undefined, now = Date.now()): string {
+  const ms = ageMs(iso, now);
+  if (!isFinite(ms)) return '';
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s} s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} min`;
+  return `${Math.floor(m / 60)} h`;
+}
+
 /**
- * "12 s ago", "3 min ago", "2 h ago".
+ * "12 s ago" / "il y a 12 s" / "ena 12 s" — in the language chosen in Profile.
  * Why we always show this: old location must never look "live" (team rule).
  */
 export function timeAgo(iso: string | null | undefined, now = Date.now()): string {
-  const ms = ageMs(iso, now);
-  if (!isFinite(ms)) return 'never';
-  const s = Math.floor(ms / 1000);
-  if (s < 60) return `${s} s ago`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m} min ago`;
-  return `${Math.floor(m / 60)} h ago`;
+  const d = duration(iso, now);
+  const lang = getCurrentLang();
+  if (!d) return lang === 'fr' ? 'jamais' : lang === 'mfe' ? 'zame' : 'never';
+  return lang === 'fr' ? `il y a ${d}` : lang === 'mfe' ? `ena ${d}` : `${d} ago`;
 }
 
 /** Clock time like "09:41" in the phone's locale. */

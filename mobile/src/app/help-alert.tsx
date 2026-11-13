@@ -24,6 +24,8 @@ import {
   onHelpEventsChanged,
   resetSampleHelpEvents,
 } from '@/data/helpAlert';
+import { useAuth } from '@/data/auth';
+import { fill } from '@/i18n';
 import { resetTo } from '@/lib/nav';
 import { usePolling } from '@/lib/usePolling';
 import { clock, timeAgo } from '@/lib/format';
@@ -45,6 +47,7 @@ export function HelpAlertList({ asTab = false }: { asTab?: boolean }) {
   // Receipt (surprise card "Prove It Works"): which event's receipt is open, and when the list was last
   // read from the server. The receipt uses the composite key to find the current row after each refresh.
   const [receiptId, setReceiptId] = useState<string | null>(null);
+  const { t } = useAuth(); // follows the language chosen in Profile
   const [loadedAt, setLoadedAt] = useState<number | null>(null);
   const latestLoad = useRef(0);
 
@@ -89,10 +92,11 @@ export function HelpAlertList({ asTab = false }: { asTab?: boolean }) {
   return (
     <Screen edges={asTab ? undefined : []}>
       {asTab ? (
-        <AppText variant="title" accessibilityRole="header">Help alerts</AppText>
+        <AppText variant="title" accessibilityRole="header">{t('actHelpAlerts')}</AppText>
       ) : (
         <Stack.Screen
           options={{
+            title: t('actHelpAlerts'),
             headerLeft: canGoBack
               ? undefined // normal case: the standard back arrow
               : () => (
@@ -102,7 +106,7 @@ export function HelpAlertList({ asTab = false }: { asTab?: boolean }) {
                     accessibilityLabel="Back to Home"
                     hitSlop={8}
                     style={styles.back}>
-                    <Ionicons name="arrow-back" size={24} color={colors.primary} />
+                    <Ionicons name="arrow-back" size={24} color={colors.link} />
                   </Pressable>
                 ),
           }}
@@ -112,7 +116,7 @@ export function HelpAlertList({ asTab = false }: { asTab?: boolean }) {
         {IS_SAMPLE ? <SimulatedTag text="SAMPLE DATA" /> : null}
         <AppText variant="small" color={colors.textMuted} style={styles.flex}>
           {/* Honest wording: we poll every 5 s while open — no background notifications. */}
-          {IS_SAMPLE ? 'Supabase not connected (no key). Refreshes every 5 s.' : 'Live from Supabase · refreshes every 5 s while open.'}
+          {IS_SAMPLE ? t('sampleRefresh') : t('liveRefresh')}
         </AppText>
         <Pressable
           onPress={() => load()}
@@ -121,39 +125,39 @@ export function HelpAlertList({ asTab = false }: { asTab?: boolean }) {
           accessibilityLabel="Refresh alerts"
           hitSlop={8}
           style={styles.refresh}>
-          {refreshing ? <ActivityIndicator color={colors.primary} /> : <Ionicons name="refresh" size={22} color={colors.primary} />}
+          {refreshing ? <ActivityIndicator color={colors.link} /> : <Ionicons name="refresh" size={22} color={colors.link} />}
         </Pressable>
       </View>
 
       {/* Mauritian dataset feature: read-only, separate screen, so it can never break the alert flow below. */}
-      <Button label="Find a health facility" icon="medkit" tone="secondary" onPress={() => router.push('/facilities')} />
+      <Button label={t('findFacility')} icon="medkit" tone="secondary" onPress={() => router.push('/facilities')} />
 
       {events === null && !loadError ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <AppText color={colors.textMuted}>Loading alerts…</AppText>
+          <ActivityIndicator size="large" color={colors.link} />
+          <AppText color={colors.textMuted}>{t('loadingAlerts')}</AppText>
         </View>
       ) : loadError === NOT_SIGNED_IN ? (
         // Supabase is on but nobody is signed in: RLS would return nothing, so ask for the carer account.
         <EmptyState
           icon="log-in"
-          title="Sign in to see real alerts"
-          body="Sign in with your Lakaz email and password."
-          action={<Button label="Go to log in" icon="log-in" onPress={() => resetTo('/login')} />}
+          title={t('signInForAlerts')}
+          body={t('signInForAlertsBody')}
+          action={<Button label={t('goToLogin')} icon="log-in" onPress={() => resetTo('/login')} />}
         />
       ) : loadError ? (
         <EmptyState
           icon="cloud-offline"
-          title="Couldn't load alerts"
+          title={t('couldntLoad')}
           body={loadError}
-          action={<Button label="Try again" icon="refresh" onPress={() => load()} />}
+          action={<Button label={t('tryAgain')} icon="refresh" onPress={() => load()} />}
         />
       ) : events && events.length === 0 ? (
-        <EmptyState icon="shield-checkmark" title="No help requests" body="When a band linked to your account sends a help request, it will appear here." />
+        <EmptyState icon="shield-checkmark" title={t('noHelpRequests')} body={t('noHelpRequestsBody')} />
       ) : (
         <>
           <AppText variant="title" accessibilityRole="header">
-            {waiting > 0 ? `${waiting} waiting for you` : 'All acknowledged'}
+            {waiting > 0 ? fill(t('nWaitingForYou'), { n: waiting }) : t('allAcknowledged')}
           </AppText>
           {events!.map((e) => (
             <HelpAlertCard
@@ -208,6 +212,7 @@ function HelpAlertCard({
   onViewReceipt: () => void;
 }) {
   const now = useNow();
+  const { t } = useAuth();
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const acked = !!event.acknowledged_at;
@@ -233,7 +238,7 @@ function HelpAlertCard({
       <View style={[styles.band, { backgroundColor: tone.bg }]}>
         <Ionicons name={acked ? 'checkmark-circle' : 'alert-circle'} size={22} color={colors.white} />
         <AppText variant="bodyBold" color={colors.white}>
-          {acked ? 'Acknowledged' : 'Awaiting acknowledgement'}
+          {acked ? t('stAcknowledged') : t('awaitingAckShort')}
         </AppText>
       </View>
 
@@ -243,10 +248,10 @@ function HelpAlertCard({
             <Ionicons name="megaphone" size={26} color={tone.bg} />
           </View>
           <View style={styles.flex}>
-            <AppText variant="title">Help requested</AppText>
+            <AppText variant="title">{t('helpRequested')}</AppText>
             {/* Only device_id is in the agreed shape — we don't invent a person name here. */}
             <AppText variant="small" color={colors.textMuted}>
-              From band …{event.device_id.slice(-4)}
+              {fill(t('fromBand'), { id: event.device_id.slice(-4) })}
             </AppText>
           </View>
         </View>
@@ -254,14 +259,14 @@ function HelpAlertCard({
         <View style={styles.meta}>
           <Ionicons name="time" size={18} color={colors.textMuted} />
           <AppText color={colors.textMuted}>
-            Received {clock(event.received_at)} · {timeAgo(event.received_at, now)}
+            {fill(t('receivedAt'), { time: clock(event.received_at), ago: timeAgo(event.received_at, now) })}
           </AppText>
         </View>
         {acked ? (
           <View style={styles.meta}>
             <Ionicons name="person-circle" size={18} color={statusStyles.Acknowledged.bg} />
             <AppText variant="bodyBold" color={statusStyles.Acknowledged.bg}>
-              Acknowledged at {clock(event.acknowledged_at!)} · {timeAgo(event.acknowledged_at, now)}
+              {fill(t('ackedAt'), { time: clock(event.acknowledged_at!), ago: timeAgo(event.acknowledged_at, now) })}
             </AppText>
           </View>
         ) : null}
@@ -270,14 +275,14 @@ function HelpAlertCard({
           <View style={styles.error} accessibilityLiveRegion="polite">
             <Ionicons name="warning" size={18} color={statusStyles.Critical.bg} />
             <AppText variant="small" color={colors.text} style={styles.flex}>
-              Not acknowledged. {error}
+              {fill(t('notAcked'), { err: error })}
             </AppText>
           </View>
         ) : null}
 
         {!acked ? (
           <Button
-            label={error ? 'Try again' : "I've got it — acknowledge"}
+            label={error ? t('tryAgain') : t('iveGotItAck')}
             icon="hand-left"
             tone="danger"
             size="lg"
@@ -288,7 +293,7 @@ function HelpAlertCard({
         ) : (
           // Surprise card "Prove It Works": reopenable any time, including after a refresh.
           <Button
-            label="View acknowledgement receipt"
+            label={t('viewReceipt')}
             icon="receipt"
             tone="primary"
             onPress={onViewReceipt}

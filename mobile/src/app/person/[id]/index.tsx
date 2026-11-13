@@ -124,7 +124,7 @@ export default function PersonPage() {
         onPress={() => router.push({ pathname: '/person/[id]/guardians', params: { id: p.id } })}
         accessibilityRole="button"
         style={({ pressed }) => [styles.guardRow, pressed && styles.pressed]}>
-        <Ionicons name="people" size={24} color={colors.primary} />
+        <Ionicons name="people" size={24} color={colors.link} />
         <View style={styles.flex}>
           <AppText variant="bodyBold">
             {p.guardians.length} {p.guardians.length === 1 ? 'person' : 'people'}
@@ -133,7 +133,7 @@ export default function PersonPage() {
             Primary: {primary ? `${primary.name} (${primary.relationship})` : 'none — set one!'}
           </AppText>
         </View>
-        <AppText variant="smallBold" color={colors.primary}>
+        <AppText variant="smallBold" color={colors.link}>
           Manage
         </AppText>
         <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />

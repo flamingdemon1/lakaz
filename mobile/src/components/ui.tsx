@@ -21,37 +21,56 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Glow } from '@/components/Glow';
+import { useAuth, useLang } from '@/data/auth';
+import { autoChildren, autoT } from '@/i18n-auto';
+import { STATUS_KEY } from '@/i18n';
 import { colors, MAX_WIDTH, radius, shadow, space, statusStyles, TOUCH, type } from '@/theme';
 import type { AlertStatus } from '@/types';
 
 export type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
-/** Text with the LAKAZ font. `variant` picks a size from the type scale in theme.ts. */
+/**
+ * Text with the LAKAZ font. `variant` picks a size from the type scale in theme.ts.
+ * Fixed English text is translated automatically into the chosen language (i18n-auto.ts) — so every
+ * label, button and title follows Profile → Language without each screen calling t().
+ */
 export function AppText({
   variant = 'body',
   color = colors.text,
   style,
+  children,
   ...rest
 }: TextProps & { variant?: keyof typeof type; color?: string }) {
-  return <Text {...rest} style={[type[variant], { color }, style]} />;
+  const lang = useLang();
+  return (
+    <Text {...rest} style={[type[variant], { color }, style]}>
+      {autoChildren(children, lang)}
+    </Text>
+  );
 }
 
 /**
  * Page wrapper: safe area + scroll + centred max width (so the web build looks right on a projector).
- * `scroll={false}` for screens that manage their own scrolling.
+ * `scroll={false}` for screens that manage their own scrolling. `glow={false}` hides the bottom glow
+ * (e.g. forms where it would sit behind the keyboard).
  */
 export function Screen({
   children,
   scroll = true,
   edges = ['top'],
+  glow = true,
 }: {
   children: React.ReactNode;
   scroll?: boolean;
   edges?: ('top' | 'bottom')[];
+  glow?: boolean;
 }) {
   const inner = <View style={styles.inner}>{children}</View>;
   return (
     <SafeAreaView style={styles.screen} edges={edges}>
+      {/* Decoration only, fixed to the bottom of the screen while the content scrolls over it. */}
+      {glow ? <Glow strength={0.7} /> : null}
       {/* Why: on iPhone the keyboard would otherwise cover the form fields at the bottom. */}
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {scroll ? (
@@ -70,7 +89,7 @@ export function Screen({
   );
 }
 
-/** White rounded card with a soft shadow. */
+/** Raised dark card with a thin hairline edge. */
 export function Card({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   return <View style={[styles.card, style]}>{children}</View>;
 }
@@ -100,10 +119,11 @@ export function Button({
 }) {
   const palette = {
     primary: { bg: colors.primary, fg: colors.onPrimary, border: colors.primary },
-    secondary: { bg: colors.card, fg: colors.primary, border: colors.border },
+    // White pill with dark text (the reference's "Buy" button): the clearest button on a black screen.
+    secondary: { bg: colors.white, fg: colors.ink, border: colors.white },
     danger: { bg: statusStyles.Critical.bg, fg: colors.white, border: statusStyles.Critical.bg },
     success: { bg: statusStyles.Resolved.bg, fg: colors.white, border: statusStyles.Resolved.bg },
-    ghost: { bg: 'transparent', fg: colors.primary, border: 'transparent' },
+    ghost: { bg: 'transparent', fg: colors.link, border: 'transparent' },
   }[tone];
   const inactive = disabled || loading;
   // Springy press: shrinks a little under the finger and bounces back — feels physical, not a flat flash.
@@ -146,13 +166,15 @@ export function Button({
 /** Coloured status chip with icon + word (never colour alone). */
 export function StatusPill({ status, large = false }: { status: AlertStatus; large?: boolean }) {
   const s = statusStyles[status];
+  const { t } = useAuth();
+  const label = t(STATUS_KEY[status]); // follows the language chosen in Profile
   return (
     <View
       style={[styles.pill, { backgroundColor: s.bg }, large && styles.pillLarge]}
-      accessibilityLabel={`Status: ${s.label}`}>
+      accessibilityLabel={label}>
       <Ionicons name={s.icon as IconName} size={large ? 18 : 14} color={s.fg} />
       <AppText variant={large ? 'smallBold' : 'label'} color={s.fg}>
-        {s.label.toUpperCase()}
+        {label.toUpperCase()}
       </AppText>
     </View>
   );
@@ -172,6 +194,9 @@ export function SimulatedTag({ text = 'SIMULATED' }: { text?: string }) {
 
 /** Section heading above a group of cards. */
 export function SectionTitle({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
+  const lang = useLang();
+  // Translate BEFORE upper-casing, so the lookup uses the normal English sentence.
+  if (typeof children === 'string') children = autoT(children, lang);
   return (
     <View style={styles.sectionRow}>
       <AppText variant="label" color={colors.textMuted} accessibilityRole="header">
@@ -197,7 +222,7 @@ export function EmptyState({
   return (
     <View style={styles.empty}>
       <View style={styles.emptyIcon}>
-        <Ionicons name={icon} size={32} color={colors.primary} />
+        <Ionicons name={icon} size={32} color={colors.link} />
       </View>
       <AppText variant="heading" style={styles.center}>
         {title}
@@ -246,7 +271,9 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: space.lg, ...shadow },
   button: {
     minHeight: TOUCH,
-    borderRadius: radius.md,
+    // 24 = half the 48 px height, so a one-line button is a perfect pill; a label that wraps to two lines
+    // becomes a rounded box instead of a squashed capsule.
+    borderRadius: radius.xl,
     borderWidth: 1.5,
     paddingHorizontal: space.lg,
     flexDirection: 'row',
@@ -254,7 +281,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: space.sm,
   },
-  buttonLg: { minHeight: 60, borderRadius: radius.lg },
+  buttonLg: { minHeight: 60 },
   pressed: { opacity: 0.9 }, // scale is animated in Button (springTo)
   disabled: { opacity: 0.5 },
   pill: {

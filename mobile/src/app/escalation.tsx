@@ -91,7 +91,7 @@ export default function EscalationSettings() {
                 {s.who}
               </AppText>
             </View>
-            <AppText variant="smallBold" color={colors.primary}>
+            <AppText variant="smallBold" color={colors.link}>
               {s.after}
             </AppText>
           </View>
@@ -123,7 +123,7 @@ export default function EscalationSettings() {
         />
       </Card>
       <Card style={styles.note}>
-        <Ionicons name="information-circle" size={20} color={colors.primary} />
+        <Ionicons name="information-circle" size={20} color={colors.link} />
         <AppText variant="small" style={styles.flex}>
           In the real system the server runs this ladder; this app shows it, alerts each person in the app, and lets you act.
         </AppText>
@@ -156,7 +156,7 @@ function ToggleRow({
       aria-checked={value}
       accessibilityLabel={title}
       style={[styles.toggle, !last && styles.divider]}>
-      <Ionicons name={icon} size={22} color={value ? colors.primary : colors.textMuted} />
+      <Ionicons name={icon} size={22} color={value ? colors.link : colors.textMuted} />
       <View style={styles.flex}>
         <AppText variant="bodyBold">{title}</AppText>
         <AppText variant="small" color={colors.textMuted}>

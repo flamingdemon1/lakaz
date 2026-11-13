@@ -13,8 +13,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Modal, StyleSheet, View } from 'react-native';
 
 import { SlideToConfirm } from '@/components/motion';
+import { Glow } from '@/components/Glow';
 import { AppText, Button, SimulatedTag } from '@/components/ui';
+import { useAuth } from '@/data/auth';
 import { acknowledgeAlert, fetchHelpEvents, HelpEvent, IS_SAMPLE, onHelpEventsChanged } from '@/data/helpAlert';
+import { fill } from '@/i18n';
 import { clock, timeAgo } from '@/lib/format';
 import { useAlertFeedback } from '@/lib/useAlertFeedback';
 import { useNow } from '@/lib/useNow';
@@ -33,6 +36,7 @@ export function HelpAlertTakeover() {
   const shownId = useRef<string | null>(null);
   const { play } = useAlertFeedback();
   const now = useNow();
+  const { t } = useAuth(); // the takeover speaks the carer's chosen language
   const pulse = useRef(new Animated.Value(1)).current;
 
   /** One poll: pick the newest unacknowledged, not-dismissed event. */
@@ -102,40 +106,42 @@ export function HelpAlertTakeover() {
 
   return (
     <Modal visible animationType="fade" transparent onRequestClose={onLater}>
-      <View style={[styles.backdrop, { backgroundColor: tone.bg }]}>
+      {/* Night glow: black screen with a red glow rising from the bottom — red still means emergency only. */}
+      <View style={styles.backdrop}>
+        <Glow color={tone.bg} />
         <View style={styles.sheet} accessibilityViewIsModal accessibilityLiveRegion="assertive">
           {IS_SAMPLE ? <SimulatedTag text="SAMPLE DATA" /> : null}
           <Animated.View style={[styles.iconWrap, { backgroundColor: tone.soft, transform: [{ scale: pulse }] }]}>
             <Ionicons name="megaphone" size={44} color={tone.bg} />
           </Animated.View>
           <AppText variant="label" color={tone.bg}>
-            AWAITING ACKNOWLEDGEMENT{waitingCount > 1 ? ` · ${waitingCount} WAITING` : ''}
+            {t('awaitingAck')}{waitingCount > 1 ? ` · ${fill(t('nWaitingCaps'), { n: waitingCount })}` : ''}
           </AppText>
-          <AppText variant="hero" style={styles.center}>
-            Help requested
+          <AppText variant="display" style={styles.center}>
+            {t('helpRequested')}
           </AppText>
           <AppText color={colors.textMuted} style={styles.center}>
-            The help button on band …{current.device_id.slice(-4)} was pressed.
+            {fill(t('helpPressedOnBand'), { id: current.device_id.slice(-4) })}
           </AppText>
           <AppText variant="bodyBold" style={styles.center}>
-            Received {clock(current.received_at)} · {timeAgo(current.received_at, now)}
+            {fill(t('receivedAt'), { time: clock(current.received_at), ago: timeAgo(current.received_at, now) })}
           </AppText>
           {err ? (
             <AppText variant="small" color={tone.bg} style={styles.center}>
-              Not acknowledged. {err}
+              {fill(t('notAcked'), { err })}
             </AppText>
           ) : null}
           <View style={styles.actions}>
             {/* Slide, not tap — same as the wandering takeover, so a pocket tap can't acknowledge. */}
             <SlideToConfirm
-              label={err ? 'Slide to try again' : "Slide — I've got it"}
+              label={err ? t('slideRetry') : t('slideGotIt')}
               color={tone.bg}
               loading={busy}
               onConfirm={onAck}
               accessibilityHint="Tells the other carers you are handling this help request"
             />
-            <Button label="See all help alerts" icon="list" tone="secondary" onPress={onSeeAll} />
-            <Button label="Later" tone="ghost" onPress={onLater} accessibilityHint="Closes this without acknowledging" />
+            <Button label={t('seeAllHelp')} icon="list" tone="secondary" onPress={onSeeAll} />
+            <Button label={t('later')} tone="ghost" onPress={onLater} accessibilityHint="Closes this without acknowledging" />
           </View>
         </View>
       </View>
@@ -144,11 +150,11 @@ export function HelpAlertTakeover() {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.lg },
+  backdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.lg, backgroundColor: colors.background },
   sheet: {
     width: '100%',
     maxWidth: MAX_WIDTH,
-    backgroundColor: colors.card,
+    backgroundColor: 'transparent', // content sits straight on the black screen (glow design)
     borderRadius: radius.xl,
     padding: space.xl,
     alignItems: 'center',

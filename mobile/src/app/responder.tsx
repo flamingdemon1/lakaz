@@ -62,8 +62,8 @@ export default function Responder() {
         <Button label="Tap to turn on alert sound" icon="volume-high" size="lg" onPress={unlock} />
       ) : (
         <View style={styles.soundOn}>
-          <Ionicons name="volume-high" size={18} color={colors.primary} />
-          <AppText variant="smallBold" color={colors.primary}>
+          <Ionicons name="volume-high" size={18} color={colors.link} />
+          <AppText variant="smallBold" color={colors.link}>
             Sound on — keep this page open
           </AppText>
         </View>
@@ -83,7 +83,7 @@ export default function Responder() {
           <Card style={styles.person}>
             {/* Photo placeholder: fictional person, so no real photo is ever shown. */}
             <View style={styles.photo} accessibilityLabel="Photo placeholder">
-              <AppText variant="hero" color={colors.primary}>
+              <AppText variant="hero" color={colors.link}>
                 MC
               </AppText>
               <AppText variant="label" color={colors.textMuted}>

@@ -81,7 +81,7 @@ export default function Zones() {
               accessibilityState={{ disabled }}
               accessibilityLabel={`Add ${info.label}${info.tbd ? ' (not available yet)' : ''}`}
               style={({ pressed }) => [styles.addBtn, disabled && styles.disabled, pressed && styles.pressed]}>
-              <Ionicons name={info.icon} size={24} color={disabled ? colors.textMuted : colors.primary} />
+              <Ionicons name={info.icon} size={24} color={disabled ? colors.textMuted : colors.link} />
               <AppText variant="smallBold" style={styles.center}>
                 {info.label}
               </AppText>
@@ -162,7 +162,7 @@ function ZoneCard({ zone: z }: { zone: SafeZone }) {
       style={({ pressed }) => [styles.zoneCard, pressed && styles.pressed]}>
       <View style={styles.row}>
         <View style={styles.zoneIcon}>
-          <Ionicons name={info.icon} size={22} color={colors.primary} />
+          <Ionicons name={info.icon} size={22} color={colors.link} />
         </View>
         <View style={styles.flex}>
           <AppText variant="bodyBold">{z.name}</AppText>
@@ -175,8 +175,8 @@ function ZoneCard({ zone: z }: { zone: SafeZone }) {
       <View style={styles.chips}>
         {rules.map((r) => (
           <View key={r.text} style={[styles.rule, !r.on && styles.ruleOff]}>
-            <Ionicons name={r.on ? r.icon : 'close'} size={13} color={r.on ? colors.primary : colors.textMuted} />
-            <AppText variant="label" color={r.on ? colors.primary : colors.textMuted}>
+            <Ionicons name={r.on ? r.icon : 'close'} size={13} color={r.on ? colors.link : colors.textMuted} />
+            <AppText variant="label" color={r.on ? colors.link : colors.textMuted}>
               {r.text.toUpperCase()}
             </AppText>
           </View>
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
   zoneCard: { gap: space.sm, padding: space.lg, borderRadius: radius.lg, backgroundColor: colors.card, ...shadow },
   zoneIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.muted, alignItems: 'center', justifyContent: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
-  rule: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: space.sm, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: '#E8F4F7' },
+  rule: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: space.sm, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: colors.primarySoft },
   ruleOff: { backgroundColor: colors.muted },
   addGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   addBtn: {

@@ -90,7 +90,7 @@ export function CallContacts({ personId, alertId }: { personId: string; alertId:
             accessibilityLabel={isArmed ? `Tap again to call ${c.label} on ${c.number}` : `Call ${c.label}`}
             style={({ pressed }) => [styles.row, c.real && styles.realRow, isArmed && styles.armed, pressed && styles.pressed]}>
             <View style={[styles.icon, { backgroundColor: c.real ? statusStyles.Critical.soft : colors.muted }]}>
-              <Ionicons name={c.icon} size={20} color={c.real ? statusStyles.Critical.bg : colors.primary} />
+              <Ionicons name={c.icon} size={20} color={c.real ? statusStyles.Critical.bg : colors.link} />
             </View>
             <View style={styles.flex}>
               <AppText variant="bodyBold">{isArmed ? `Tap again to call ${c.number}` : c.label}</AppText>
@@ -98,7 +98,7 @@ export function CallContacts({ personId, alertId }: { personId: string; alertId:
                 {c.sub} · {c.number}
               </AppText>
             </View>
-            <Ionicons name="call" size={22} color={isArmed ? colors.white : c.real ? statusStyles.Critical.bg : colors.primary} />
+            <Ionicons name="call" size={22} color={isArmed ? colors.white : c.real ? statusStyles.Critical.bg : colors.link} />
           </Pressable>
         );
       })}
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.card,
   },
-  realRow: { borderColor: '#F5C2C2' },
+  realRow: { borderColor: colors.danger },
   armed: { backgroundColor: statusStyles.Critical.bg, borderColor: statusStyles.Critical.bg },
   pressed: { opacity: 0.85 },
   icon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },

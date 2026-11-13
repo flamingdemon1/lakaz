@@ -98,7 +98,7 @@ export default function ZoneEdit() {
   return (
     <Screen edges={['bottom']}>
       <View style={styles.top}>
-        <Ionicons name={info.icon} size={26} color={colors.primary} />
+        <Ionicons name={info.icon} size={26} color={colors.link} />
         <AppText variant="title" style={styles.flex}>
           {existing ? 'Edit zone' : `New ${info.label.toLowerCase()} zone`}
         </AppText>
@@ -282,7 +282,7 @@ function Toggle({
 function RoundBtn({ icon, label, onPress }: { icon: 'add' | 'remove'; label: string; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={6} style={({ pressed }) => [styles.round, pressed && { opacity: 0.7 }]}>
-      <Ionicons name={icon} size={28} color={colors.primary} />
+      <Ionicons name={icon} size={28} color={colors.link} />
     </Pressable>
   );
 }

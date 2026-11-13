@@ -9,7 +9,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { PulseRings } from '@/components/motion';
 import { AppText, IconName, StatusPill } from '@/components/ui';
-import { alertTitle, clock, timeAgo } from '@/lib/format';
+import { useAuth } from '@/data/auth';
+import { ALERT_KEY, fill } from '@/i18n';
+import { clock, timeAgo } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
 import { colors, radius, shadow, space, statusStyles, TOUCH } from '@/theme';
 import type { Alert } from '@/types';
@@ -24,11 +26,13 @@ const typeIcon: Record<Alert['type'], IconName> = {
 export function AlertCard({ alert, personName = 'Marie-Claire' }: { alert: Alert; personName?: string }) {
   const now = useNow(5000);
   const s = statusStyles[alert.status];
+  const { t } = useAuth();
+  const title = t(ALERT_KEY[alert.type].title);
   return (
     <Pressable
       onPress={() => router.push({ pathname: '/alert/[id]', params: { id: alert.alert_id } })}
       accessibilityRole="button"
-      accessibilityLabel={`${alertTitle[alert.type]}, ${personName}, ${alert.status}, level ${alert.level}. Open details`}
+      accessibilityLabel={`${title}, ${personName}, ${fill(t('stepN'), { n: alert.level })}`}
       style={({ pressed }) => [styles.card, { borderLeftColor: s.bg }, pressed && styles.pressed]}>
       <View style={[styles.icon, { backgroundColor: s.soft }]}>
         {/* Radar pulse only while nobody has picked it up yet — stops the moment someone acknowledges. */}
@@ -38,13 +42,13 @@ export function AlertCard({ alert, personName = 'Marie-Claire' }: { alert: Alert
       <View style={styles.body}>
         <View style={styles.top}>
           <AppText variant="bodyBold" style={styles.flex} numberOfLines={2}>
-            {alertTitle[alert.type]}
+            {title}
           </AppText>
           <StatusPill status={alert.status} />
         </View>
         {/* Name on the second line so the alert type is never cut off next to the status pill. */}
         <AppText variant="small" color={colors.textMuted}>
-          {personName} · {clock(alert.created_at)} · {timeAgo(alert.created_at, now)} · Step {alert.level}
+          {personName} · {clock(alert.created_at)} · {timeAgo(alert.created_at, now)} · {fill(t('stepN'), { n: alert.level })}
         </AppText>
       </View>
       <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />

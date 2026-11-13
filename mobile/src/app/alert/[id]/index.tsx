@@ -132,14 +132,14 @@ export default function AlertDetail() {
 
       <SectionTitle>What to do</SectionTitle>
       <Card style={styles.advice}>
-        <Ionicons name="bulb" size={20} color={colors.primary} />
+        <Ionicons name="bulb" size={20} color={colors.link} />
         <AppText style={styles.flex}>{alertAdvice[alert.type]}</AppText>
       </Card>
 
       {/* Only emergencies climb the ladder; device warnings go to the primary caregiver only. */}
       {ESCALATING.includes(alert.type) ? (
         <>
-          <SectionTitle right={<AppText variant="smallBold" color={colors.primary} onPress={() => router.push('/escalation')}>Settings</AppText>}>
+          <SectionTitle right={<AppText variant="smallBold" color={colors.link} onPress={() => router.push('/escalation')}>Settings</AppText>}>
             Escalation
           </SectionTitle>
           <Card style={styles.gap}>
@@ -158,7 +158,7 @@ export default function AlertDetail() {
         </>
       ) : null}
 
-      <SectionTitle right={<AppText variant="smallBold" color={colors.primary} onPress={() => router.push({ pathname: '/alert/[id]/report', params: { id: alert.alert_id } })}>Report</AppText>}>
+      <SectionTitle right={<AppText variant="smallBold" color={colors.link} onPress={() => router.push({ pathname: '/alert/[id]/report', params: { id: alert.alert_id } })}>Report</AppText>}>
         Timeline
       </SectionTitle>
       <Card>
@@ -170,7 +170,7 @@ export default function AlertDetail() {
               <AppText variant="smallBold" style={styles.tlTime}>
                 {clock(e.at)}
               </AppText>
-              <Ionicons name={TL_ICON[e.kind]} size={16} color={e.kind === 'resolve' ? statusStyles.Resolved.bg : e.kind === 'ack' ? statusStyles.Acknowledged.bg : colors.primary} />
+              <Ionicons name={TL_ICON[e.kind]} size={16} color={e.kind === 'resolve' ? statusStyles.Resolved.bg : e.kind === 'ack' ? statusStyles.Acknowledged.bg : colors.link} />
               <AppText variant="small" style={styles.flex}>
                 {e.text}
               </AppText>

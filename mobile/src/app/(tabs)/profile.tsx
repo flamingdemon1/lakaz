@@ -152,7 +152,7 @@ function Row({ icon, label, onPress, last }: { icon: IconName; label: string; on
       onPress={onPress}
       accessibilityRole="button"
       style={({ pressed }) => [styles.row, !last && styles.divider, pressed && styles.pressed]}>
-      <Ionicons name={icon} size={22} color={colors.primary} />
+      <Ionicons name={icon} size={22} color={colors.link} />
       <AppText variant="bodyBold" style={styles.flex}>
         {label}
       </AppText>

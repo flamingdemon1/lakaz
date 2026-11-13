@@ -1,43 +1,46 @@
 /**
  * theme.ts — LAKAZ shared design tokens (colours, type, spacing).
- * Owner: Person 3/4 (Fahim, Zuhayr). The admin page and responder page should copy these values
- * so every screen looks like one product.
+ * Owner: Person 3/4 (Fahim, Zuhayr). Change a colour HERE, never inside a component.
  *
- * Design direction ("warm home", chosen from the UI previews): cream paper + dark ink, quiet when
- * nothing is wrong, loud only when something is. The colour CODE is strict so a glance is enough:
- *   RED    = danger / emergency only (critical alerts, SOS, 999). Never used for decoration or branding.
+ * Design direction "Night glow" (13 Nov, from the reference Zuhayr picked): near-black screens, a soft blue
+ * glow rising from the bottom (see components/Glow.tsx), big bold headings, white pill buttons.
+ * The colour CODE is unchanged and still strict, so a glance is enough:
+ *   RED    = danger / emergency only (critical alerts, SOS, 999). The emergency glow turns red.
  *   AMBER  = warning, needs attention soon (active alert, band disconnected).
  *   BLUE   = someone is handling it (acknowledged).
- *   GREEN  = she is safe / done ✓ (at home, inside a safe zone, resolved, saved). NOT for "device online".
- *   INK    = everything else (brand, buttons, links, band online, GPS fix, live) — neutral, never a status.
- * Change a colour HERE, never inside a component.
+ *   GREEN  = she is safe / done ✓ (at home, inside a safe zone, resolved, saved).
+ *   BRAND BLUE (primary) = buttons, links, the glow — never a status on its own.
+ * Why these exact hex values: each status colour is used BOTH as a fill under white text and as a text
+ * colour on the black background, so each was picked to reach ~4.4:1 or better in both directions.
  */
-import { Platform } from 'react-native';
-
 import type { AlertStatus } from '@/types';
 
 /** Base palette. Contrast checked for white text on ink and on every status colour (≥ 4.5:1). */
 export const colors = {
-  primary: '#23394B', // dark ink-blue — brand, links, primary buttons (deliberately not a status colour)
+  primary: '#3D63FF', // brand blue — buttons, links, glow. White text on it: 4.7:1
   onPrimary: '#FFFFFF',
-  background: '#FAF6EF', // warm cream "paper" — less clinical than blue-grey
-  card: '#FFFFFF',
-  text: '#2A2420', // warm near-black
-  textMuted: '#6A5D52', // warm grey — ≥ 4.5:1 on white and on the cream background
-  border: '#E9E0D4',
-  muted: '#F2EBE1',
+  background: '#07070B', // near-black "night" screen
+  card: '#13131C', // raised surface on black (light text on it: 16.8:1)
+  text: '#F4F4F8',
+  textMuted: '#A3A3B5', // 8:1 on the background, 7.4:1 on cards
+  border: '#262634',
+  muted: '#1C1C28', // quiet fill (icon circles, inset panels)
   simulated: '#7C3AED', // purple tag used ONLY for "SIMULATED" labels so they are never missed
-  offline: '#6B7280',
+  offline: '#8A8AA0',
   white: '#FFFFFF',
+  ink: '#07070B', // dark text on white pills
+  primarySoft: '#1A2150', // selected-choice background (dark brand tint)
+  link: '#9DB0FF', // brand blue lightened for TEXT on black (9.5:1) — links, ghost buttons
+  glow: '#3D4BFF', // the bottom glow colour (brand)
   // Semantic shortcuts — same values as statusStyles, named for what they MEAN.
-  danger: '#B3261E',
-  dangerSoft: '#FCEBEA',
-  warning: '#A85A08',
-  warningSoft: '#FDF1E1',
-  safe: '#1F7A4D',
-  safeSoft: '#E6F3EC',
-  info: '#1D4ED8',
-  infoSoft: '#E8EEFD',
+  danger: '#D93A30',
+  dangerSoft: '#341311', // dark tints: light text stays readable on them
+  warning: '#B8690A',
+  warningSoft: '#33220A',
+  safe: '#1E8A55',
+  safeSoft: '#0E2A1D',
+  info: '#3D6BF5',
+  infoSoft: '#141E45',
 } as const;
 
 /**
@@ -79,7 +82,8 @@ export const fonts = {
  * the web build is shown on a projector.
  */
 export const type = {
-  hero: { fontFamily: fonts.bold, fontSize: 32, lineHeight: 38 },
+  display: { fontFamily: fonts.bold, fontSize: 40, lineHeight: 44, letterSpacing: -0.8 }, // big glow-style headline
+  hero: { fontFamily: fonts.bold, fontSize: 32, lineHeight: 38, letterSpacing: -0.4 },
   title: { fontFamily: fonts.bold, fontSize: 24, lineHeight: 30 },
   heading: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 26 },
   body: { fontFamily: fonts.regular, fontSize: 18, lineHeight: 26 },
@@ -90,21 +94,9 @@ export const type = {
 } as const;
 
 /**
- * Card edge: a warm hairline + a very faint shadow. Why not a big soft shadow: floating
- * "glow cards" everywhere is the generic template look; paper-like edges feel calmer.
+ * Card edge on black: a thin cool hairline, no drop shadow (shadows don't show on near-black).
  */
-export const shadow = Platform.select({
-  web: { boxShadow: '0 1px 2px rgba(42,36,32,0.06)', borderWidth: 1, borderColor: '#E9E0D4' },
-  default: {
-    shadowColor: '#2A2420',
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
-    borderWidth: 1,
-    borderColor: '#E9E0D4',
-  },
-}) as object;
+export const shadow = { borderWidth: 1, borderColor: '#262634' } as object;
 
 /** Max width so the web build doesn't stretch across a wide projector screen. */
 export const MAX_WIDTH = 640;

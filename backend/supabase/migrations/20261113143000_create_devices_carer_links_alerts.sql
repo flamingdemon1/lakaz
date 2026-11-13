@@ -47,6 +47,8 @@ revoke all on public.devices from anon, authenticated;
 revoke insert, update, delete on public.carer_links from anon, authenticated;
 revoke insert, update, delete on public.alerts from anon, authenticated;
 
+grant select on table public.alerts, public.carer_links to authenticated;
+
 -- Allow signed-in carers to read their own device links
 create policy "carers_can_select_own_links"
     on public.carer_links

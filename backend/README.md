@@ -34,3 +34,10 @@ Agree the table and function names, input/output, and fixture IDs together first
 - Run the same flow from the real ESP32 on the demo phone. Record hardware versus sample results separately.
 - Commit small, meaningful checkpoints: docs, database and policies, intake, and integrated verification. Write what was tested in each PR; do not claim checks that have not run.
 - Record Codex and Gemini's actual uses in the main README. Once the surprise card is drawn, update the shared handoff if the interface changes and record how to prove compliance.
+
+## Live Supabase checkpoint — 13 November 2026
+
+- Deployed `device-event` to the shared Lakaz Supabase project from `backend/` with `npx supabase functions deploy device-event --remote=<project-ref>`.
+- A sample request with no device token returned HTTP 401 (`unauthorized`).
+- Two requests with the same registered test device and event UUID both returned HTTP 200. The Supabase Table Editor showed exactly one matching help alert, with acknowledgement still empty.
+- These were Command Prompt sample requests. Pending: have the linked test carer acknowledge the alert in the app, refresh to verify persistence, check access with an unlinked account, and repeat with the physical ESP32.

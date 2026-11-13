@@ -55,11 +55,11 @@ export default function RootLayout() {
         <PeopleProvider>
         <TrackingProvider>
         <ZonesProvider>
-        <StatusBar style="dark" />
+        <StatusBar style="light" />
         <Stack
           screenOptions={{
-            headerTitleStyle: { fontFamily: fonts.bold, fontSize: 20 },
-            headerTintColor: colors.primary,
+            headerTitleStyle: { fontFamily: fonts.bold, fontSize: 20, color: colors.text },
+            headerTintColor: colors.text, // white back arrow on the black header
             headerStyle: { backgroundColor: colors.background },
             headerShadowVisible: false,
             contentStyle: { backgroundColor: colors.background },

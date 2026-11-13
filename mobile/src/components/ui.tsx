@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Glow } from '@/components/Glow';
 import { colors, MAX_WIDTH, radius, shadow, space, statusStyles, TOUCH, type } from '@/theme';
 import type { AlertStatus } from '@/types';
 
@@ -38,20 +39,25 @@ export function AppText({
 
 /**
  * Page wrapper: safe area + scroll + centred max width (so the web build looks right on a projector).
- * `scroll={false}` for screens that manage their own scrolling.
+ * `scroll={false}` for screens that manage their own scrolling. `glow={false}` hides the bottom glow
+ * (e.g. forms where it would sit behind the keyboard).
  */
 export function Screen({
   children,
   scroll = true,
   edges = ['top'],
+  glow = true,
 }: {
   children: React.ReactNode;
   scroll?: boolean;
   edges?: ('top' | 'bottom')[];
+  glow?: boolean;
 }) {
   const inner = <View style={styles.inner}>{children}</View>;
   return (
     <SafeAreaView style={styles.screen} edges={edges}>
+      {/* Decoration only, fixed to the bottom of the screen while the content scrolls over it. */}
+      {glow ? <Glow strength={0.7} /> : null}
       {/* Why: on iPhone the keyboard would otherwise cover the form fields at the bottom. */}
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {scroll ? (
@@ -70,7 +76,7 @@ export function Screen({
   );
 }
 
-/** White rounded card with a soft shadow. */
+/** Raised dark card with a thin hairline edge. */
 export function Card({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   return <View style={[styles.card, style]}>{children}</View>;
 }
@@ -100,10 +106,11 @@ export function Button({
 }) {
   const palette = {
     primary: { bg: colors.primary, fg: colors.onPrimary, border: colors.primary },
-    secondary: { bg: colors.card, fg: colors.primary, border: colors.border },
+    // White pill with dark text (the reference's "Buy" button): the clearest button on a black screen.
+    secondary: { bg: colors.white, fg: colors.ink, border: colors.white },
     danger: { bg: statusStyles.Critical.bg, fg: colors.white, border: statusStyles.Critical.bg },
     success: { bg: statusStyles.Resolved.bg, fg: colors.white, border: statusStyles.Resolved.bg },
-    ghost: { bg: 'transparent', fg: colors.primary, border: 'transparent' },
+    ghost: { bg: 'transparent', fg: colors.link, border: 'transparent' },
   }[tone];
   const inactive = disabled || loading;
   // Springy press: shrinks a little under the finger and bounces back — feels physical, not a flat flash.
@@ -197,7 +204,7 @@ export function EmptyState({
   return (
     <View style={styles.empty}>
       <View style={styles.emptyIcon}>
-        <Ionicons name={icon} size={32} color={colors.primary} />
+        <Ionicons name={icon} size={32} color={colors.link} />
       </View>
       <AppText variant="heading" style={styles.center}>
         {title}
@@ -246,7 +253,9 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: space.lg, ...shadow },
   button: {
     minHeight: TOUCH,
-    borderRadius: radius.md,
+    // 24 = half the 48 px height, so a one-line button is a perfect pill; a label that wraps to two lines
+    // becomes a rounded box instead of a squashed capsule.
+    borderRadius: radius.xl,
     borderWidth: 1.5,
     paddingHorizontal: space.lg,
     flexDirection: 'row',
@@ -254,7 +263,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: space.sm,
   },
-  buttonLg: { minHeight: 60, borderRadius: radius.lg },
+  buttonLg: { minHeight: 60 },
   pressed: { opacity: 0.9 }, // scale is animated in Button (springTo)
   disabled: { opacity: 0.5 },
   pill: {

@@ -56,13 +56,13 @@ export function AckReceipt({
         {open && event ? (
           <Pressable style={styles.sheet} onPress={() => {}} accessibilityViewIsModal accessibilityLiveRegion="polite">
             {sample ? <SimulatedTag text="SAMPLE DATA" /> : null}
-            {/* Navy (brand primary) by team request: the receipt is a record, not a live status. */}
+            {/* Brand gradient tick (glow design): the receipt is a record, not a live status. */}
             <PopIn>
               <View style={styles.check}>
                 <Ionicons name="checkmark" size={40} color={colors.white} />
               </View>
             </PopIn>
-            <AppText variant="title" style={styles.center} accessibilityRole="header">
+            <AppText variant="hero" style={styles.center} accessibilityRole="header">
               Acknowledgement saved
             </AppText>
             <AppText color={colors.textMuted} style={styles.center}>
@@ -88,7 +88,7 @@ export function AckReceipt({
               </View>
             ) : null}
 
-            <Button label="Close" tone="primary" onPress={onClose} />
+            <Button label="Close" tone="secondary" onPress={onClose} />
           </Pressable>
         ) : null}
       </Pressable>
@@ -105,7 +105,7 @@ function Row({ label, value, mono = false, strong = false }: { label: string; va
       </AppText>
       <AppText
         variant={strong ? 'bodyBold' : 'body'}
-        color={strong ? colors.primary : colors.text}
+        color={strong ? colors.link : colors.text}
         style={mono ? styles.mono : undefined}
         selectable>
         {value}
@@ -115,11 +115,15 @@ function Row({ label, value, mono = false, strong = false }: { label: string; va
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(42,36,32,0.55)', alignItems: 'center', justifyContent: 'center', padding: space.lg },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center', padding: space.lg },
   sheet: {
     width: '100%',
     maxWidth: MAX_WIDTH,
-    backgroundColor: colors.card,
+    // Deep-blue frosted panel (like the reference's "Statistics" card); solid colour is the fallback.
+    backgroundColor: '#1B1F7A',
+    backgroundImage: 'linear-gradient(160deg, #23289A 0%, #15185E 100%)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
     borderRadius: radius.xl,
     padding: space.xl,
     gap: space.md,
@@ -131,11 +135,12 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 36,
     backgroundColor: colors.primary,
+    backgroundImage: 'linear-gradient(135deg, #3D63FF 0%, #8B5CF6 100%)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   center: { textAlign: 'center' },
-  rows: { borderRadius: radius.md, backgroundColor: colors.muted, padding: space.md, gap: space.sm },
+  rows: { borderRadius: radius.lg, backgroundColor: 'rgba(0,0,0,0.28)', padding: space.md, gap: space.sm },
   row: { gap: 2 },
   mono: { fontFamily: 'monospace', fontSize: 15 },
   proof: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs },

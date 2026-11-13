@@ -181,7 +181,7 @@ export function ResendCode({ onResend }: { onResend: () => Promise<void> }) {
       accessibilityRole="button"
       accessibilityState={{ disabled: waiting }}
       style={styles.resend}>
-      <AppText variant="smallBold" color={waiting ? colors.textMuted : colors.primary}>
+      <AppText variant="smallBold" color={waiting ? colors.textMuted : colors.link}>
         {waiting ? `${t('resendIn')} ${left} s` : t('resend')}
       </AppText>
     </Pressable>
@@ -192,7 +192,7 @@ export function ResendCode({ onResend }: { onResend: () => Promise<void> }) {
 export function LinkButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="link" hitSlop={8} style={styles.link}>
-      <AppText variant="bodyBold" color={colors.primary}>
+      <AppText variant="bodyBold" color={colors.link}>
         {label}
       </AppText>
     </Pressable>

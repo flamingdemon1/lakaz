@@ -90,7 +90,7 @@ export default function HelpAlertScreen() {
                   accessibilityLabel="Back to Home"
                   hitSlop={8}
                   style={styles.back}>
-                  <Ionicons name="arrow-back" size={24} color={colors.primary} />
+                  <Ionicons name="arrow-back" size={24} color={colors.link} />
                 </Pressable>
               ),
         }}
@@ -108,7 +108,7 @@ export default function HelpAlertScreen() {
           accessibilityLabel="Refresh alerts"
           hitSlop={8}
           style={styles.refresh}>
-          {refreshing ? <ActivityIndicator color={colors.primary} /> : <Ionicons name="refresh" size={22} color={colors.primary} />}
+          {refreshing ? <ActivityIndicator color={colors.link} /> : <Ionicons name="refresh" size={22} color={colors.link} />}
         </Pressable>
       </View>
 
@@ -117,7 +117,7 @@ export default function HelpAlertScreen() {
 
       {events === null && !loadError ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.link} />
           <AppText color={colors.textMuted}>Loading alerts…</AppText>
         </View>
       ) : loadError === NOT_SIGNED_IN ? (

@@ -36,7 +36,7 @@ export default function DeviceScreen() {
 
       <Card style={styles.hero}>
         <View style={[styles.ring, { borderColor: online ? colors.primary : colors.offline }]}>
-          <Ionicons name="watch" size={40} color={online ? colors.primary : colors.offline} />
+          <Ionicons name="watch" size={40} color={online ? colors.link : colors.offline} />
         </View>
         <AppText variant="heading">{online ? 'Online' : 'Offline'}</AppText>
         <AppText color={colors.textMuted}>band-01 · worn by Marie-Claire</AppText>

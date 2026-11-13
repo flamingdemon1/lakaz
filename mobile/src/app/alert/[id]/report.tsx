@@ -109,7 +109,7 @@ export default function IncidentReport() {
   return (
     <Screen edges={['bottom']}>
       <View style={styles.top}>
-        <Ionicons name="document-text" size={26} color={colors.primary} />
+        <Ionicons name="document-text" size={26} color={colors.link} />
         <AppText variant="title" style={styles.flex}>
           Incident report
         </AppText>

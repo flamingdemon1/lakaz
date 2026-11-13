@@ -10,6 +10,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Modal, StyleSheet, View } from 'react-native';
 
 import { PopIn, SlideToConfirm } from '@/components/motion';
+import { Glow } from '@/components/Glow';
 import { AppText, Button, SimulatedTag } from '@/components/ui';
 import { USE_MOCK } from '@/config';
 import { useLakaz } from '@/data/store';
@@ -106,7 +107,9 @@ export function IncomingAlert() {
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={dismissIncoming}>
-      <View style={[styles.backdrop, { backgroundColor: showingDone ? colors.safe : tone.bg }]}>
+      {/* Night glow: black screen, the alert colour rises from the bottom (red = emergency, green = handled). */}
+      <View style={styles.backdrop}>
+        <Glow color={showingDone ? colors.safe : tone.bg} />
         {showingDone ? (
           <View style={styles.sheet} accessibilityLiveRegion="polite">
             <PopIn>
@@ -114,7 +117,7 @@ export function IncomingAlert() {
                 <Ionicons name="checkmark" size={52} color={colors.white} />
               </View>
             </PopIn>
-            <AppText variant="hero" style={styles.center}>
+            <AppText variant="display" style={styles.center}>
               You've got it.
             </AppText>
             <AppText color={colors.textMuted} style={styles.center}>
@@ -130,7 +133,7 @@ export function IncomingAlert() {
           <AppText variant="label" color={tone.bg}>
             {critical ? 'CRITICAL ALERT' : 'ALERT'} · LEVEL {alert.level}
           </AppText>
-          <AppText variant="hero" style={styles.center}>
+          <AppText variant="display" style={styles.center}>
             Marie-Claire · {alertTitle[alert.type]}
           </AppText>
           <AppText color={colors.textMuted} style={styles.center}>
@@ -166,11 +169,11 @@ export function IncomingAlert() {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.lg },
+  backdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.lg, backgroundColor: colors.background },
   sheet: {
     width: '100%',
     maxWidth: MAX_WIDTH,
-    backgroundColor: colors.card,
+    backgroundColor: 'transparent', // content sits straight on the black screen (glow design)
     borderRadius: radius.xl,
     padding: space.xl,
     alignItems: 'center',

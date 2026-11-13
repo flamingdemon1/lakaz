@@ -13,6 +13,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Modal, StyleSheet, View } from 'react-native';
 
 import { SlideToConfirm } from '@/components/motion';
+import { Glow } from '@/components/Glow';
 import { AppText, Button, SimulatedTag } from '@/components/ui';
 import { acknowledgeAlert, fetchHelpEvents, HelpEvent, IS_SAMPLE, onHelpEventsChanged } from '@/data/helpAlert';
 import { clock, timeAgo } from '@/lib/format';
@@ -102,7 +103,9 @@ export function HelpAlertTakeover() {
 
   return (
     <Modal visible animationType="fade" transparent onRequestClose={onLater}>
-      <View style={[styles.backdrop, { backgroundColor: tone.bg }]}>
+      {/* Night glow: black screen with a red glow rising from the bottom — red still means emergency only. */}
+      <View style={styles.backdrop}>
+        <Glow color={tone.bg} />
         <View style={styles.sheet} accessibilityViewIsModal accessibilityLiveRegion="assertive">
           {IS_SAMPLE ? <SimulatedTag text="SAMPLE DATA" /> : null}
           <Animated.View style={[styles.iconWrap, { backgroundColor: tone.soft, transform: [{ scale: pulse }] }]}>
@@ -111,7 +114,7 @@ export function HelpAlertTakeover() {
           <AppText variant="label" color={tone.bg}>
             AWAITING ACKNOWLEDGEMENT{waitingCount > 1 ? ` · ${waitingCount} WAITING` : ''}
           </AppText>
-          <AppText variant="hero" style={styles.center}>
+          <AppText variant="display" style={styles.center}>
             Help requested
           </AppText>
           <AppText color={colors.textMuted} style={styles.center}>
@@ -144,11 +147,11 @@ export function HelpAlertTakeover() {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.lg },
+  backdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.lg, backgroundColor: colors.background },
   sheet: {
     width: '100%',
     maxWidth: MAX_WIDTH,
-    backgroundColor: colors.card,
+    backgroundColor: 'transparent', // content sits straight on the black screen (glow design)
     borderRadius: radius.xl,
     padding: space.xl,
     alignItems: 'center',

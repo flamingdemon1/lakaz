@@ -27,10 +27,10 @@ export default function TabsLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: colors.primary,
+          tabBarActiveTintColor: colors.white,
           tabBarInactiveTintColor: colors.textMuted,
           tabBarLabelStyle: { fontFamily: fonts.bold, fontSize: 13 },
-          tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border, minHeight: 64, paddingTop: 6 },
+          tabBarStyle: { backgroundColor: '#0B0B11', borderTopColor: colors.border, minHeight: 64, paddingTop: 6 },
         }}>
         <Tabs.Screen
           name="index"

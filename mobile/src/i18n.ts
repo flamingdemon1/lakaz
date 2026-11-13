@@ -15,6 +15,7 @@ export const LANG_NAMES: Record<Lang, string> = { en: 'English', fr: 'Français'
 
 const en = {
   appTagline: 'When they leave, you know.',
+  loginHeadline: 'Notice.\nRespond.\nBring home.',
   login: 'Log in',
   loginTitle: 'Welcome back',
   emailOrPhone: 'Email or phone',
@@ -86,6 +87,7 @@ export type TKey = keyof typeof en;
 
 const fr: Record<TKey, string> = {
   appTagline: 'Quand ils sortent, vous le savez.',
+  loginHeadline: 'Voir.\nAgir.\nRamener.', // to check with a native speaker
   login: 'Se connecter',
   loginTitle: 'Bon retour',
   emailOrPhone: 'E-mail ou téléphone',
@@ -155,6 +157,7 @@ const fr: Record<TKey, string> = {
 
 const mfe: Record<TKey, string> = {
   appTagline: 'Kan li sorti, ou kone.',
+  loginHeadline: 'Trouve.\nReponn.\nRamenn lakaz.', // to check with a native speaker
   login: 'Konekte',
   loginTitle: 'Bonzour ankor',
   emailOrPhone: 'Imel ouswa telefonn',

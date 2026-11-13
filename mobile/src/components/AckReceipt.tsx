@@ -17,7 +17,7 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { PopIn } from '@/components/motion';
 import { AppText, Button, SimulatedTag } from '@/components/ui';
 import type { HelpEvent } from '@/data/helpAlert';
-import { colors, MAX_WIDTH, radius, space, statusStyles } from '@/theme';
+import { colors, MAX_WIDTH, radius, space } from '@/theme';
 
 /**
  * Full date + time with seconds, e.g. "13 Nov 2026, 20:41:07".
@@ -56,7 +56,7 @@ export function AckReceipt({
         {open && event ? (
           <Pressable style={styles.sheet} onPress={() => {}} accessibilityViewIsModal accessibilityLiveRegion="polite">
             {sample ? <SimulatedTag text="SAMPLE DATA" /> : null}
-            {/* Green = done ✓ (theme colour code). */}
+            {/* Navy (brand primary) by team request: the receipt is a record, not a live status. */}
             <PopIn>
               <View style={styles.check}>
                 <Ionicons name="checkmark" size={40} color={colors.white} />
@@ -88,7 +88,7 @@ export function AckReceipt({
               </View>
             ) : null}
 
-            <Button label="Close" tone="secondary" onPress={onClose} />
+            <Button label="Close" tone="primary" onPress={onClose} />
           </Pressable>
         ) : null}
       </Pressable>
@@ -105,7 +105,7 @@ function Row({ label, value, mono = false, strong = false }: { label: string; va
       </AppText>
       <AppText
         variant={strong ? 'bodyBold' : 'body'}
-        color={strong ? statusStyles.Resolved.bg : colors.text}
+        color={strong ? colors.primary : colors.text}
         style={mono ? styles.mono : undefined}
         selectable>
         {value}
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: statusStyles.Resolved.bg,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },

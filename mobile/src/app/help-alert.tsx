@@ -8,7 +8,7 @@
  * Data is a labelled SAMPLE until Supabase is ready (see src/data/helpAlert.ts).
  */
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Card, EmptyState, Screen, SimulatedTag } from '@/components/ui';
@@ -18,8 +18,10 @@ import {
   fetchHelpEvents,
   HelpEvent,
   IS_SAMPLE,
+  onHelpEventsChanged,
   resetSampleHelpEvents,
 } from '@/data/helpAlert';
+import { usePolling } from '@/lib/usePolling';
 import { clock, timeAgo } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
 import { colors, radius, space, statusStyles, TOUCH } from '@/theme';
@@ -32,21 +34,27 @@ export default function HelpAlertScreen() {
   const [failNext, setFailNext] = useState(false); // sample-only switch to test the error state
 
   /** (Re)loads from the "server". Used on open and by Refresh, to prove the acknowledgement was saved. */
-  const load = useCallback(async () => {
-    setRefreshing(true);
-    setLoadError(null);
+  const load = useCallback(async (silent = false) => {
+    // Why `silent`: background polls shouldn't flash the spinner every 5 s.
+    if (!silent) setRefreshing(true);
     try {
       setEvents(await fetchHelpEvents());
+      setLoadError(null);
     } catch (e) {
       setLoadError((e as Error).message);
     } finally {
-      setRefreshing(false);
+      if (!silent) setRefreshing(false);
     }
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Auto-refresh every 5 s while this screen is open (first run is immediate, with spinner).
+  const first = useRef(true);
+  usePolling(() => {
+    load(!first.current);
+    first.current = false;
+  }, 5000);
+  // Instant update when this phone acknowledges / adds / resets.
+  useEffect(() => onHelpEventsChanged(() => load(true)), [load]);
 
   /** Replaces one row with the server's updated copy. */
   const onUpdated = (row: HelpEvent) =>
@@ -60,10 +68,10 @@ export default function HelpAlertScreen() {
         {IS_SAMPLE ? <SimulatedTag text="SAMPLE DATA" /> : null}
         <AppText variant="small" color={colors.textMuted} style={styles.flex}>
           {/* Honest wording: polling isn't built yet, so we don't claim automatic updates. */}
-          {IS_SAMPLE ? 'Supabase not connected yet. Tap refresh to reload.' : 'Updates while the app is open.'}
+          {IS_SAMPLE ? 'Supabase not connected yet. Refreshes every 5 s.' : 'Refreshes every 5 s while open.'}
         </AppText>
         <Pressable
-          onPress={load}
+          onPress={() => load()}
           disabled={refreshing}
           accessibilityRole="button"
           accessibilityLabel="Refresh alerts"
@@ -83,7 +91,7 @@ export default function HelpAlertScreen() {
           icon="cloud-offline"
           title="Couldn't load alerts"
           body={loadError}
-          action={<Button label="Try again" icon="refresh" onPress={load} />}
+          action={<Button label="Try again" icon="refresh" onPress={() => load()} />}
         />
       ) : events && events.length === 0 ? (
         <EmptyState icon="shield-checkmark" title="No help requests" body="You'll see an alert here when the band's help button is pressed." />
@@ -104,14 +112,14 @@ export default function HelpAlertScreen() {
           <AppText variant="small" color={colors.textMuted}>
             For building and rehearsing only. Hidden once Supabase is connected.
           </AppText>
-          <Button label="Add a help request" icon="add-circle" tone="secondary" onPress={() => { addSampleHelpEvent(); load(); }} />
+          <Button label="Add a help request" icon="add-circle" tone="secondary" onPress={addSampleHelpEvent} />
           <Button
             label={failNext ? 'Next acknowledge will FAIL (on)' : 'Make next acknowledge fail'}
             icon="bug"
             tone="secondary"
             onPress={() => setFailNext((v) => !v)}
           />
-          <Button label="Reset sample" icon="refresh" tone="ghost" onPress={() => { resetSampleHelpEvents(); load(); }} />
+          <Button label="Reset sample" icon="refresh" tone="ghost" onPress={resetSampleHelpEvents} />
         </Card>
       ) : null}
     </Screen>

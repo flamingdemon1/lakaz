@@ -47,6 +47,23 @@ let sampleDb: HelpEvent[] = initialSample();
 /** Simulated network delay, so the loading state is visible like on a real hotspot. */
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// ---- Change listeners ----
+// Why: the takeover and the list screen each poll every 5 s. When THIS phone acknowledges,
+// we tell every open screen at once so they don't disagree for up to 5 s.
+type Listener = () => void;
+const listeners = new Set<Listener>();
+
+/** Subscribe to "help events changed on this phone". Returns an unsubscribe function. */
+export function onHelpEventsChanged(fn: Listener): () => void {
+  listeners.add(fn);
+  return () => {
+    listeners.delete(fn);
+  };
+}
+
+/** Tells all subscribers to reload. */
+const notify = () => listeners.forEach((fn) => fn());
+
 /**
  * Loads the carer's help events, newest first.
  * SWAP FOR SUPABASE: select from the events table/view the backend exposes (polling while the app is open).
@@ -71,6 +88,7 @@ export async function acknowledgeAlert(p_device_id: string, p_event_id: string, 
   const row = sampleDb.find((e) => e.device_id === p_device_id && e.event_id === p_event_id);
   if (!row) throw new Error('Alert not found for this device.');
   if (!row.acknowledged_at) row.acknowledged_at = new Date().toISOString(); // server time in the real RPC
+  notify();
   return { ...row };
 }
 
@@ -84,9 +102,11 @@ export function addSampleHelpEvent(): void {
     received_at: new Date().toISOString(),
     acknowledged_at: null,
   });
+  notify();
 }
 
 /** SAMPLE ONLY: back to the starting state for rehearsals. */
 export function resetSampleHelpEvents(): void {
   sampleDb = initialSample();
+  notify();
 }

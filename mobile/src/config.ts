@@ -35,18 +35,16 @@ export const OFFLINE_MS = 20_000;
 export const DEMO_LADDER_S = { l1: 10, l2: 25, l3: 45 } as const;
 
 /**
- * Supabase project (backend owned by Shihad & Inshiraah). Put both in mobile/.env — never in code or git.
- * The anon/publishable key is designed to ship inside apps; row-level security protects the data.
- * NEVER put the service_role key in the app.
+ * The shared Lakaz project is the default for local runs. Only publishable
+ * credentials belong in the client. Supabase policies control data access.
+ * Set both environment variables to empty strings to run the sample flows.
  */
-export const SUPABASE_URL = (process.env.EXPO_PUBLIC_SUPABASE_URL ?? '').replace(/\/$/, '');
-export const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+const LAKAZ_SUPABASE_URL = 'https://vzujmdgfybhjytppcmcc.supabase.co';
+const LAKAZ_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_mzSQT1alDmGT9_OiyQILQA_NE7YXvvV';
 
-/**
- * true = help alerts come from the real Supabase project (carer must sign in).
- * false = SAMPLE data, as before. Why the placeholder check: the first message we got still said
- * "[PASTE_ANON_KEY_HERE]" — that must not count as a real key.
- */
+export const SUPABASE_URL = (process.env.EXPO_PUBLIC_SUPABASE_URL ?? LAKAZ_SUPABASE_URL).replace(/\/$/, '');
+export const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? LAKAZ_SUPABASE_PUBLISHABLE_KEY;
+
 export const SUPABASE_ENABLED =
   SUPABASE_URL.startsWith('https://') && SUPABASE_ANON_KEY.length > 20 && !SUPABASE_ANON_KEY.includes('PASTE');
 

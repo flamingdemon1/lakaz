@@ -8,7 +8,7 @@
  * Data is a labelled SAMPLE until Supabase is ready (see src/data/helpAlert.ts).
  */
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
@@ -82,9 +82,32 @@ export function HelpAlertList({ asTab = false }: { asTab?: boolean }) {
   const waiting = (events ?? []).filter((e) => !e.acknowledged_at).length;
   const receiptEvent = (events ?? []).find((e) => eventKey(e) === receiptId) ?? null;
 
+  // Why: with no screen behind this one (opened by direct link, or the web page was reloaded here) the header
+  // has no back arrow and the carer is stuck. Then we show our own arrow that goes to Home instead.
+  const canGoBack = router.canGoBack();
+
   return (
     <Screen edges={asTab ? undefined : []}>
-      {asTab && <AppText variant="title" accessibilityRole="header">Help alerts</AppText>}
+      {asTab ? (
+        <AppText variant="title" accessibilityRole="header">Help alerts</AppText>
+      ) : (
+        <Stack.Screen
+          options={{
+            headerLeft: canGoBack
+              ? undefined // normal case: the standard back arrow
+              : () => (
+                  <Pressable
+                    onPress={() => router.replace('/')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Back to Home"
+                    hitSlop={8}
+                    style={styles.back}>
+                    <Ionicons name="arrow-back" size={24} color={colors.primary} />
+                  </Pressable>
+                ),
+          }}
+        />
+      )}
       <View style={styles.topRow}>
         {IS_SAMPLE ? <SimulatedTag text="SAMPLE DATA" /> : null}
         <AppText variant="small" color={colors.textMuted} style={styles.flex}>
@@ -267,7 +290,7 @@ function HelpAlertCard({
           <Button
             label="View acknowledgement receipt"
             icon="receipt"
-            tone="secondary"
+            tone="primary"
             onPress={onViewReceipt}
             accessibilityHint="Shows the alert reference and the saved date and time"
           />
@@ -280,6 +303,7 @@ function HelpAlertCard({
 const styles = StyleSheet.create({
   topRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm },
   refresh: { width: TOUCH, height: TOUCH, alignItems: 'center', justifyContent: 'center' },
+  back: { width: TOUCH, height: TOUCH, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1 },
   center: { alignItems: 'center', gap: space.md, paddingVertical: space.xxxl },
   card: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 2, overflow: 'hidden' },

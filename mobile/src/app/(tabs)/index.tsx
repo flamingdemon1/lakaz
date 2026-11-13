@@ -15,6 +15,7 @@ import { LocationCard } from '@/components/LocationCard';
 import { FadeIn } from '@/components/motion';
 import { PersonHero } from '@/components/PersonHero';
 import { AppText, Button, Card, Screen, SectionTitle } from '@/components/ui';
+import { SUPABASE_ENABLED } from '@/config';
 import { isOpen, useLakaz } from '@/data/store';
 import { isOnline } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
@@ -58,7 +59,7 @@ export default function Home() {
 
           {/* Shortcut to the checkpoint flow agreed with the backend: help alert + acknowledge. */}
           <FadeIn delay={motion.stagger * 2}>
-            <Button label="Help alerts (sample)" icon="megaphone" tone="secondary" onPress={() => router.push('/help-alert')} />
+            <Button label={SUPABASE_ENABLED ? 'Help alerts' : 'Help alerts (sample)'} icon="megaphone" tone="secondary" onPress={() => router.push('/help-alert')} />
           </FadeIn>
 
           {main ? (

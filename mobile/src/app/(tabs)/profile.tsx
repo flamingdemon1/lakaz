@@ -10,6 +10,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { FormError, LanguagePicker, TextField } from '@/components/forms';
 import { AppText, Button, Card, IconName, Screen, SectionTitle, SimulatedTag } from '@/components/ui';
+import { SUPABASE_ENABLED } from '@/config';
 import { useAuth } from '@/data/auth';
 import { resetTo } from '@/lib/nav';
 import { checkEmail, checkName, checkPhone } from '@/lib/validate';
@@ -76,12 +77,17 @@ export default function Profile() {
         </View>
         <View style={styles.flex}>
           <AppText variant="title">{user?.name ?? '—'}</AppText>
-          <SimulatedTag text="SAMPLE ACCOUNT" />
+          {!SUPABASE_ENABLED && <SimulatedTag text="SAMPLE ACCOUNT" />}
         </View>
       </View>
 
       <SectionTitle>{t('personalInfo')}</SectionTitle>
-      <Card style={styles.gap}>
+      {SUPABASE_ENABLED ? (
+        <Card style={styles.gap}>
+          <AppText>{user?.email}</AppText>
+          <VerifiedBadge ok={!!user?.email_verified} />
+        </Card>
+      ) : <Card style={styles.gap}>
         <TextField label={t('fullName')} value={f.name} onChangeText={set('name')} error={tried ? errs.name : null} />
         <TextField
           label={t('email')}
@@ -109,7 +115,7 @@ export default function Profile() {
           disabled={!dirty && !saved}
           onPress={onSave}
         />
-      </Card>
+      </Card>}
 
       <LanguagePicker />
 

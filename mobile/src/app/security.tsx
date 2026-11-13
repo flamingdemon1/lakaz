@@ -7,7 +7,9 @@ import { StyleSheet } from 'react-native';
 
 import { FormError, PasswordField } from '@/components/forms';
 import { AppText, Button, Card, Screen, SectionTitle } from '@/components/ui';
+import { SUPABASE_ENABLED } from '@/config';
 import { useAuth } from '@/data/auth';
+import { router } from 'expo-router';
 import { resetTo } from '@/lib/nav';
 import { checkPassword } from '@/lib/validate';
 import { colors, space, statusStyles } from '@/theme';
@@ -58,7 +60,11 @@ export default function Security() {
   return (
     <Screen edges={['bottom']}>
       <SectionTitle>{t('changePassword')}</SectionTitle>
-      <Card style={styles.gap}>
+      {SUPABASE_ENABLED ? (
+        <Card style={styles.gap}>
+          <Button label={t('forgotPassword')} icon="mail" tone="secondary" onPress={() => router.push('/forgot-password')} />
+        </Card>
+      ) : <Card style={styles.gap}>
         <PasswordField label={t('currentPassword')} value={f.current} onChangeText={set('current')} autoComplete="current-password" error={tried ? errs.current : null} />
         <PasswordField
           label={t('newPassword')}
@@ -76,15 +82,17 @@ export default function Security() {
           </AppText>
         ) : null}
         <Button label={t('changePassword')} icon="key" loading={busy} onPress={onChange} />
-      </Card>
+      </Card>}
 
       <SectionTitle>{t('logout')}</SectionTitle>
       <Card style={styles.gap}>
         <Button label={t('logout')} icon="log-out" tone="secondary" onPress={onLogout} />
+        {!SUPABASE_ENABLED && <>
         <Button label={t('logoutAll')} icon="phone-portrait" tone="danger" onPress={onLogout} />
         <AppText variant="small" color={colors.textMuted}>
           Use this if you lost your phone. (SAMPLE: same as log out for now.)
         </AppText>
+        </>}
       </Card>
     </Screen>
   );

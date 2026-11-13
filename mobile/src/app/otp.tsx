@@ -2,12 +2,14 @@
  * app/otp.tsx — LOG IN WITH A ONE-TIME CODE (OTP) sent by SMS. Two steps: phone → code.
  * Owner: Person 3/4 (Zuhayr). SAMPLE: no SMS is sent; the code is shown in the purple hint.
  */
+import { Redirect } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { AuthHeader } from '@/components/AuthHeader';
 import { CodeField, FormError, LinkButton, ResendCode, SampleCodeHint, TextField } from '@/components/forms';
 import { Button, Card, Screen } from '@/components/ui';
+import { SUPABASE_ENABLED } from '@/config';
 import { useAuth } from '@/data/auth';
 import { resetTo } from '@/lib/nav';
 import { checkCode, checkPhone } from '@/lib/validate';
@@ -55,6 +57,8 @@ export default function OtpLogin() {
       setBusy(false);
     }
   };
+
+  if (SUPABASE_ENABLED) return <Redirect href="/login" />;
 
   return (
     <Screen edges={['bottom']}>

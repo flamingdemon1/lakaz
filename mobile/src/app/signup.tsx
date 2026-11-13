@@ -1,6 +1,6 @@
 /**
  * app/signup.tsx — CREATE ACCOUNT: name, email, Mauritian phone, password (+ confirm), language, consent.
- * Owner: Person 3/4 (Zuhayr). On success goes to /verify (email + phone codes). SAMPLE only.
+ * Uses email verification in live mode and email + phone verification in sample mode.
  */
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
@@ -9,6 +9,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AuthHeader } from '@/components/AuthHeader';
 import { FormError, LanguagePicker, LinkButton, PasswordField, TextField } from '@/components/forms';
 import { AppText, Button, Card, Screen } from '@/components/ui';
+import { SUPABASE_ENABLED } from '@/config';
 import { useAuth } from '@/data/auth';
 import { resetTo } from '@/lib/nav';
 import { checkEmail, checkName, checkPassword, checkPhone } from '@/lib/validate';
@@ -26,7 +27,7 @@ export default function SignUp() {
   const errs = {
     name: checkName(f.name),
     email: checkEmail(f.email),
-    phone: checkPhone(f.phone),
+    phone: SUPABASE_ENABLED ? null : checkPhone(f.phone),
     password: checkPassword(f.password),
     confirm: f.confirm === f.password ? null : 'Passwords do not match.',
     agree: agree ? null : 'Please tick the box to continue.',
@@ -36,15 +37,15 @@ export default function SignUp() {
   const show = (k: keyof typeof errs) => (tried ? errs[k] : null);
   const set = (k: keyof typeof f) => (v: string) => setF((s) => ({ ...s, [k]: v }));
 
-  /** Validates, creates the (sample) account, then goes to code verification. */
+  /** Validates, creates the account, then goes to code verification if required. */
   const onSubmit = async () => {
     setTried(true);
     if (!valid) return;
     setBusy(true);
     setError(null);
     try {
-      await signUp(f);
-      resetTo('/verify');
+      const result = await signUp(f);
+      resetTo(result === 'ok' ? '/' : '/verify');
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -68,7 +69,7 @@ export default function SignUp() {
           textContentType="emailAddress"
           error={show('email')}
         />
-        <TextField
+        {!SUPABASE_ENABLED && <TextField
           label={t('phone')}
           value={f.phone}
           onChangeText={set('phone')}
@@ -78,7 +79,7 @@ export default function SignUp() {
           placeholder="5xxx xxxx"
           helper="Mauritius mobile, 8 digits. +230 is added for you."
           error={show('phone')}
-        />
+        />}
         <PasswordField
           label={t('password')}
           value={f.password}

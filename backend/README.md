@@ -4,6 +4,24 @@
 
 The ESP32 sends a help request; Supabase stores it; the linked carer sees and acknowledges it; the acknowledgement stays saved after refresh. Stack: Supabase/PostgreSQL (SQL), with TypeScript for the Supabase Edge Function. See the [main README](../README.md) and [team handoff](../docs/handoff.md). The shared Supabase project has both migrations applied and the device endpoint deployed.
 
+## Carer accounts and email
+
+The app uses Supabase Auth for email signup, confirmation, sign-in and password recovery. Supabase stores the password hash. The app keeps the signed-in session in memory, so closing and reopening the app requires signing in again.
+
+1. In **Authentication → Sign In / Providers**, enable the Email provider, new user signups and **Confirm email**.
+2. In **Authentication → Email Templates**, include `{{ .Token }}` in both **Confirm signup** and **Reset password**. For example, use `<p>Your Lakaz code is {{ .Token }}</p>` in each template. The app expects the six-digit code entered in the same screen on web or mobile.
+3. For a demo with the default Supabase mailer, use a project team member's email. The default limit is two messages per hour across the project. Configure custom SMTP in Supabase for delivery to other addresses. Keep the SMTP credentials in the Supabase dashboard.
+4. After the test account verifies its email, copy its user ID from **Authentication → Users**. Find the intended demo band ID in **Table Editor → devices**, then link that account to the band in **SQL Editor** as a project admin:
+
+   ```sql
+   insert into public.carer_links (carer_id, device_id)
+   values ('REPLACE_WITH_AUTH_USER_UUID', 'REPLACE_WITH_DEMO_BAND_UUID')
+   on conflict (device_id, carer_id) do nothing;
+   ```
+
+   Before linking, confirm that the account sees no band alerts. After linking, trigger a fresh event, acknowledge it from the main **Alerts** tab, then refresh and open the receipt. The same timestamp should appear in **Help alerts**.
+5. Reopen the app and log in again with the signup password. Use **Forgot password**, enter the emailed recovery code and set a new password. Check that the old password is rejected and the new one works.
+
 ## Interface to agree before coding
 
 - **Device intake:** Proposed `POST /functions/v1/device-event` over HTTPS. The device sends a unique `event_id` and `kind: "help_requested"`. The function validates a dedicated device credential, resolves the device server-side and records server time. Retrying the same device/event pair must return the existing event without creating another.

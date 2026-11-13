@@ -1,13 +1,4 @@
-/**
- * auth.tsx — SAMPLE account system: sign-up, verification, log in (password or one-time code),
- * forgot password, profile, language, security. (Guardians per person live in src/data/people.tsx.)
- * Owner: Person 3/4 (Zuhayr). Real auth = Supabase Auth (Person 2: Shihad, Inshiraah).
- *
- * NOTHING HERE IS REAL: accounts live in memory (reset when the app reloads), no email or SMS is sent,
- * and every code is the fixed SAMPLE_CODE shown on screen. Each function marked "SWAP FOR SUPABASE"
- * is the only place that changes when the backend is ready; the screens stay the same.
- * Fictional data only (section 7.5). Never put real people's details here.
- */
+/** Live email accounts use Supabase Auth. The in-memory accounts below are for sample mode. */
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 import { SUPABASE_ENABLED } from '@/config';
@@ -50,6 +41,19 @@ const wait = (ms = 600) => new Promise((r) => setTimeout(r, ms));
 /** Strips the password before an account leaves the "server". */
 const publicAccount = ({ password: _p, ...a }: Account & { password: string }): Account => ({ ...a });
 
+function liveAccount(user: supa.SupaUser, lang: Lang, identifier: string): Account {
+  const email = user.email ?? identifier.trim().toLowerCase();
+  return {
+    id: user.id,
+    name: user.user_metadata?.name ?? user.user_metadata?.full_name ?? email.split('@')[0],
+    email,
+    phone: user.phone ? `+${user.phone.replace(/^\+/, '')}` : '',
+    email_verified: !!user.email_confirmed_at,
+    phone_verified: !!user.phone_confirmed_at,
+    lang,
+  };
+}
+
 interface AuthCtx {
   user: Account | null;
   /** Account waiting for its email/phone codes after sign-up or an unverified log in. */
@@ -57,9 +61,10 @@ interface AuthCtx {
   lang: Lang;
   setLang: (l: Lang) => void;
   t: (k: TKey) => string;
-  signUp: (p: { name: string; email: string; phone: string; password: string }) => Promise<void>;
+  signUp: (p: { name: string; email: string; phone: string; password: string }) => Promise<'ok' | 'needs_verification'>;
   verifyAccount: (emailCode: string, phoneCode: string) => Promise<void>;
   resendCode: () => Promise<void>;
+  beginEmailVerification: (email: string) => Promise<void>;
   login: (identifier: string, password: string) => Promise<'ok' | 'needs_verification'>;
   requestOtp: (phone: string) => Promise<void>;
   loginWithOtp: (phone: string, code: string) => Promise<void>;
@@ -114,8 +119,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       t: (k) => STRINGS[lang][k] ?? STRINGS.en[k],
 
-      // SWAP FOR SUPABASE: supabase.auth.signUp({ email, password, phone, options: { data: { name } } })
+      beginEmailVerification: async (email) => {
+        await supa.resendSignupCode(email);
+        setPending({ id: '', name: '', email: email.trim().toLowerCase(), phone: '', email_verified: false, phone_verified: false, lang });
+      },
       signUp: async ({ name, email, phone, password }) => {
+        if (SUPABASE_ENABLED) {
+          const signedIn = await supa.signUp(email, password, name.trim());
+          if (signedIn) {
+            signIn(liveAccount(signedIn, lang, email));
+            return 'ok';
+          }
+          setPending({ id: '', name: name.trim(), email: email.trim().toLowerCase(), phone: '', email_verified: false, phone_verified: false, lang });
+          return 'needs_verification';
+        }
         await wait();
         if (find(email)) throw new Error('An account with this email already exists. Try logging in.');
         const p = normalisePhone(phone)!;
@@ -123,20 +140,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const acc = { id: `c-${Date.now()}`, name: name.trim(), email: email.trim().toLowerCase(), phone: p, email_verified: false, phone_verified: false, lang, password };
         accounts.push(acc);
         setPending(publicAccount(acc));
+        return 'needs_verification';
       },
 
-      // SWAP FOR SUPABASE: supabase.auth.verifyOtp({ email, token, type: 'signup' }) + ({ phone, token, type: 'sms' })
       verifyAccount: async (emailCode, phoneCode) => {
-        await wait();
         if (!pending) throw new Error('Nothing to verify. Please log in again.');
+        if (SUPABASE_ENABLED) {
+          const verified = await supa.verifyEmail(pending.email, emailCode);
+          signIn(liveAccount(verified, lang, pending.email));
+          return;
+        }
+        await wait();
         if (emailCode !== SAMPLE_CODE) throw new Error('The email code is not right. Check it, or send a new one.');
         if (phoneCode !== SAMPLE_CODE) throw new Error('The phone code is not right. Check it, or send a new one.');
         accounts = accounts.map((a) => (a.id === pending.id ? { ...a, email_verified: true, phone_verified: true } : a));
         signIn({ ...pending, email_verified: true, phone_verified: true });
       },
 
-      // SWAP FOR SUPABASE: supabase.auth.resend({ type: 'signup', email }) / phone OTP resend
       resendCode: async () => {
+        if (SUPABASE_ENABLED && pending) {
+          await supa.resendSignupCode(pending.email);
+          return;
+        }
         await wait(400);
       },
 
@@ -145,16 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (SUPABASE_ENABLED) {
           if (!identifier.includes('@')) throw new Error('Use the email of your carer account.');
           const u = await supa.signIn(identifier, password);
-          const email = u.email ?? identifier.trim().toLowerCase();
-          signIn({
-            id: u.id,
-            name: u.user_metadata?.name ?? u.user_metadata?.full_name ?? email.split('@')[0],
-            email,
-            phone: u.phone ? `+${u.phone.replace(/^\+/, '')}` : '',
-            email_verified: true, // Supabase only lets confirmed users sign in (when confirmation is on)
-            phone_verified: !!u.phone,
-            lang,
-          });
+          signIn(liveAccount(u, lang, identifier));
           return 'ok';
         }
         // SAMPLE accounts below.
@@ -185,12 +201,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn(publicAccount({ ...acc, phone_verified: true }));
       },
 
-      // SWAP FOR SUPABASE: supabase.auth.resetPasswordForEmail(email)
-      requestPasswordReset: async () => {
+      requestPasswordReset: async (email) => {
+        if (SUPABASE_ENABLED) {
+          await supa.requestPasswordReset(email);
+          return;
+        }
         await wait();
       },
 
-      // SWAP FOR SUPABASE: verifyOtp({ email, token, type: 'recovery' }) then auth.updateUser({ password })
       resetPassword: async (email, code, newPassword) => {
         await wait();
         const acc = find(email);
@@ -226,7 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         acc.password = next;
       },
 
-      // LIVE: also ends the Supabase session (scope 'global' for "all devices" is a later improvement).
+      // Also ends the live session for this device.
       logout: () => {
         if (SUPABASE_ENABLED) void supa.signOut();
         setUser(null);

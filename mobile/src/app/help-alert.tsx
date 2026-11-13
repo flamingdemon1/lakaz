@@ -32,28 +32,37 @@ import { colors, radius, space, statusStyles, TOUCH } from '@/theme';
 
 /** Screen: loads events, shows loading / error / empty / list states. */
 export default function HelpAlertScreen() {
+  return <HelpAlertList />;
+}
+
+const eventKey = (event: HelpEvent) => `${event.device_id}:${event.event_id}`;
+
+export function HelpAlertList({ asTab = false }: { asTab?: boolean }) {
   const [events, setEvents] = useState<HelpEvent[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [failNext, setFailNext] = useState(false); // sample-only switch to test the error state
   // Receipt (surprise card "Prove It Works"): which event's receipt is open, and when the list was last
-  // read from the server. We store the event_id, not the row, so the receipt always shows the NEWEST
-  // server copy — after a refresh it re-reads acknowledged_at from Supabase.
+  // read from the server. The receipt uses the composite key to find the current row after each refresh.
   const [receiptId, setReceiptId] = useState<string | null>(null);
   const [loadedAt, setLoadedAt] = useState<number | null>(null);
+  const latestLoad = useRef(0);
 
   /** (Re)loads from the "server". Used on open and by Refresh, to prove the acknowledgement was saved. */
   const load = useCallback(async (silent = false) => {
     // Why `silent`: background polls shouldn't flash the spinner every 5 s.
+    const request = ++latestLoad.current;
     if (!silent) setRefreshing(true);
     try {
-      setEvents(await fetchHelpEvents());
+      const rows = await fetchHelpEvents();
+      if (request !== latestLoad.current) return;
+      setEvents(rows);
       setLoadedAt(Date.now());
       setLoadError(null);
     } catch (e) {
-      setLoadError((e as Error).message);
+      if (request === latestLoad.current) setLoadError((e as Error).message);
     } finally {
-      if (!silent) setRefreshing(false);
+      if (request === latestLoad.current) setRefreshing(false);
     }
   }, []);
 
@@ -68,13 +77,14 @@ export default function HelpAlertScreen() {
 
   /** Replaces one row with the server's updated copy. */
   const onUpdated = (row: HelpEvent) =>
-    setEvents((list) => (list ?? []).map((e) => (e.event_id === row.event_id ? row : e)));
+    setEvents((list) => (list ?? []).map((e) => (eventKey(e) === eventKey(row) ? row : e)));
 
   const waiting = (events ?? []).filter((e) => !e.acknowledged_at).length;
-  const receiptEvent = (events ?? []).find((e) => e.event_id === receiptId) ?? null;
+  const receiptEvent = (events ?? []).find((e) => eventKey(e) === receiptId) ?? null;
 
   return (
-    <Screen edges={[]}>
+    <Screen edges={asTab ? undefined : []}>
+      {asTab && <AppText variant="title" accessibilityRole="header">Help alerts</AppText>}
       <View style={styles.topRow}>
         {IS_SAMPLE ? <SimulatedTag text="SAMPLE DATA" /> : null}
         <AppText variant="small" color={colors.textMuted} style={styles.flex}>
@@ -105,7 +115,7 @@ export default function HelpAlertScreen() {
         <EmptyState
           icon="log-in"
           title="Sign in to see real alerts"
-          body="Use the carer account the backend team created for you."
+          body="Sign in with your Lakaz email and password."
           action={<Button label="Go to log in" icon="log-in" onPress={() => resetTo('/login')} />}
         />
       ) : loadError ? (
@@ -116,7 +126,7 @@ export default function HelpAlertScreen() {
           action={<Button label="Try again" icon="refresh" onPress={() => load()} />}
         />
       ) : events && events.length === 0 ? (
-        <EmptyState icon="shield-checkmark" title="No help requests" body="You'll see an alert here when the band's help button is pressed." />
+        <EmptyState icon="shield-checkmark" title="No help requests" body="When a band linked to your account sends a help request, it will appear here." />
       ) : (
         <>
           <AppText variant="title" accessibilityRole="header">
@@ -124,12 +134,12 @@ export default function HelpAlertScreen() {
           </AppText>
           {events!.map((e) => (
             <HelpAlertCard
-              key={e.event_id}
+              key={eventKey(e)}
               event={e}
               failNext={failNext}
               onUpdated={onUpdated}
               onFailUsed={() => setFailNext(false)}
-              onViewReceipt={() => setReceiptId(e.event_id)}
+              onViewReceipt={() => setReceiptId(eventKey(e))}
             />
           ))}
         </>

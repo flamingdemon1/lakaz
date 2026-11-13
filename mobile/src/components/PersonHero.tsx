@@ -19,7 +19,7 @@ import { AppText, IconName } from '@/components/ui';
 import { useAuth } from '@/data/auth';
 import { MOCK_PERSON } from '@/data/mock';
 import { fill } from '@/i18n';
-import { homeStatusWords, timeAgo } from '@/lib/format';
+import { duration, homeStatusWords } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
 import { colors, radius, space, TOUCH } from '@/theme';
 import type { DeviceStatus } from '@/types';
@@ -34,7 +34,7 @@ export function PersonHero({ status }: { status: DeviceStatus | null }) {
 
   // Same rule as the alert itself (statusStyles): Active = amber while the ladder climbs,
   // Critical = red at step 3 (community). Keeps Home and the takeover in agreement.
-  const since = status ? timeAgo(status.since, now).replace(' ago', '') : '';
+  const since = status ? duration(status.since, now) : '';
   const out = words.tone === 'alert';
   const critical = out && (status?.level ?? 0) >= 3;
   const tone =

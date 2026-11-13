@@ -22,21 +22,32 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Glow } from '@/components/Glow';
-import { useAuth } from '@/data/auth';
+import { useAuth, useLang } from '@/data/auth';
+import { autoChildren, autoT } from '@/i18n-auto';
 import { STATUS_KEY } from '@/i18n';
 import { colors, MAX_WIDTH, radius, shadow, space, statusStyles, TOUCH, type } from '@/theme';
 import type { AlertStatus } from '@/types';
 
 export type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
-/** Text with the LAKAZ font. `variant` picks a size from the type scale in theme.ts. */
+/**
+ * Text with the LAKAZ font. `variant` picks a size from the type scale in theme.ts.
+ * Fixed English text is translated automatically into the chosen language (i18n-auto.ts) — so every
+ * label, button and title follows Profile → Language without each screen calling t().
+ */
 export function AppText({
   variant = 'body',
   color = colors.text,
   style,
+  children,
   ...rest
 }: TextProps & { variant?: keyof typeof type; color?: string }) {
-  return <Text {...rest} style={[type[variant], { color }, style]} />;
+  const lang = useLang();
+  return (
+    <Text {...rest} style={[type[variant], { color }, style]}>
+      {autoChildren(children, lang)}
+    </Text>
+  );
 }
 
 /**
@@ -183,6 +194,9 @@ export function SimulatedTag({ text = 'SIMULATED' }: { text?: string }) {
 
 /** Section heading above a group of cards. */
 export function SectionTitle({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
+  const lang = useLang();
+  // Translate BEFORE upper-casing, so the lookup uses the normal English sentence.
+  if (typeof children === 'string') children = autoT(children, lang);
   return (
     <View style={styles.sectionRow}>
       <AppText variant="label" color={colors.textMuted} accessibilityRole="header">

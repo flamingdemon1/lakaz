@@ -28,6 +28,7 @@ import { NotificationBanner } from '@/components/NotificationBanner';
 import { NotifyProvider } from '@/data/notify';
 import { EscalationProvider } from '@/data/escalation';
 import { EscalationBridge } from '@/components/EscalationBridge';
+import { AppText } from '@/components/ui';
 import { colors, fonts } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -62,6 +63,12 @@ export default function RootLayout() {
             headerTintColor: colors.text, // white back arrow on the black header
             headerStyle: { backgroundColor: colors.background },
             headerShadowVisible: false,
+            // Header titles go through AppText so they follow the chosen language too (i18n-auto.ts).
+            headerTitle: ({ children }) => (
+              <AppText variant="heading" numberOfLines={1}>
+                {children}
+              </AppText>
+            ),
             contentStyle: { backgroundColor: colors.background },
           }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

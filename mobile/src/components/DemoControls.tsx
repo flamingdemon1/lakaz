@@ -9,7 +9,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Card, SimulatedTag } from '@/components/ui';
 import { USE_MOCK } from '@/config';
-import { addSampleHelpEvent, resetSampleHelpEvents } from '@/data/helpAlert';
+import { addSampleHelpEvent, IS_SAMPLE, resetSampleHelpEvents } from '@/data/helpAlert';
 import { useLakaz } from '@/data/store';
 import { colors, space } from '@/theme';
 
@@ -35,10 +35,12 @@ export function DemoControls() {
         <View style={styles.cell}>
           <Button label="Back home" icon="home" tone="secondary" onPress={sim.backHome} />
         </View>
-        <View style={styles.cell}>
-          {/* Fakes the band's help button → the help-alert takeover pops up (sample data). */}
-          <Button label="Help button" icon="hand-left" tone="secondary" onPress={addSampleHelpEvent} />
-        </View>
+        {/* Fakes the band's help button → takeover pops up. Hidden when real Supabase alerts are on. */}
+        {IS_SAMPLE ? (
+          <View style={styles.cell}>
+            <Button label="Help button" icon="hand-left" tone="secondary" onPress={addSampleHelpEvent} />
+          </View>
+        ) : null}
         {/* Device warnings (section E): banner + alert in the list, no escalation ladder. */}
         <View style={styles.cell}>
           <Button label="Low battery" icon="battery-dead" tone="secondary" onPress={sim.lowBattery} />

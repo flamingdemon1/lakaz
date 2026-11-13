@@ -6,9 +6,14 @@
  * Acknowledge = Supabase RPC acknowledge_alert(p_device_id, p_event_id). We do NOT send acknowledged_by:
  * Supabase uses the signed-in carer's identity and checks they are linked to the device.
  *
- * RIGHT NOW THIS IS A SAMPLE: data lives in this file and the "server" is simulated.
- * When Supabase is ready, only the two functions marked "SWAP FOR SUPABASE" change; the screen stays the same.
+ * Two modes, picked automatically from mobile/.env (see config.ts SUPABASE_ENABLED):
+ *  - LIVE: real rows from Supabase table public.alerts + RPC acknowledge_alert (carer must be signed in).
+ *  - SAMPLE: fictional rows in this file (when the Supabase key isn't set).
+ * The screens are identical in both modes.
  */
+import { SUPABASE_ENABLED } from '@/config';
+import * as supa from '@/data/supabase';
+
 
 /** One help request from the band (field names are the backend's — never rename). */
 export interface HelpEvent {
@@ -23,8 +28,11 @@ export interface HelpEvent {
   acknowledged_at: string | null;
 }
 
-/** true = the screen shows a "SAMPLE" label. Flip to false only once Supabase is wired in. */
-export const IS_SAMPLE = true;
+/**
+ * true = SAMPLE data (label shown). false = real Supabase data.
+ * Automatic: real only when mobile/.env has a valid EXPO_PUBLIC_SUPABASE_URL + EXPO_PUBLIC_SUPABASE_ANON_KEY.
+ */
+export const IS_SAMPLE = !SUPABASE_ENABLED;
 
 /** Fictional sample rows (clearly labelled in the UI). UUIDs are made up. */
 function initialSample(): HelpEvent[] {
@@ -66,12 +74,20 @@ const notify = () => listeners.forEach((fn) => fn());
 
 /**
  * Loads the carer's help events, newest first.
- * SWAP FOR SUPABASE: select from the events table/view the backend exposes (polling while the app is open).
+ * LIVE: public.alerts — row-level security returns ONLY alerts of bands linked to this carer.
+ * Why limit=50: the list screen never needs more, and it keeps each 5 s poll small on a hotspot.
  */
 export async function fetchHelpEvents(): Promise<HelpEvent[]> {
+  if (!IS_SAMPLE) {
+    if (!supa.isSignedIn()) throw new Error(NOT_SIGNED_IN);
+    return supa.select<HelpEvent[]>('alerts?select=device_id,event_id,kind,received_at,acknowledged_at&order=received_at.desc&limit=50');
+  }
   await wait(400);
   return [...sampleDb].sort((a, b) => b.received_at.localeCompare(a.received_at)).map((e) => ({ ...e }));
 }
+
+/** Message shown when Supabase is on but no carer is signed in. */
+export const NOT_SIGNED_IN = 'Sign in with your carer account to see real alerts.';
 
 /**
  * Acknowledges one event and returns the UPDATED row from the "server".
@@ -79,10 +95,17 @@ export async function fetchHelpEvents(): Promise<HelpEvent[]> {
  * Throws if the operation fails — the caller must only show "Acknowledged" after this resolves.
  * A second call keeps the ORIGINAL acknowledged_at (backend rule: a retry must not reset the timestamp).
  *
- * SWAP FOR SUPABASE: supabase.rpc('acknowledge_alert', { p_device_id, p_event_id }).
+ * LIVE: RPC acknowledge_alert(p_device_id, p_event_id) — no acknowledged_by is sent; Supabase uses the
+ * signed-in carer (auth.uid()) and rejects carers not linked to the band.
  * `failNext` exists only to test the error state in the sample.
  */
 export async function acknowledgeAlert(p_device_id: string, p_event_id: string, failNext = false): Promise<HelpEvent> {
+  if (!IS_SAMPLE) {
+    if (!supa.isSignedIn()) throw new Error(NOT_SIGNED_IN);
+    const row = await supa.rpc<HelpEvent>('acknowledge_alert', { p_device_id, p_event_id });
+    notify();
+    return row;
+  }
   await wait(700);
   if (failNext) throw new Error('Sample failure: the server did not confirm. Nothing was saved.');
   const row = sampleDb.find((e) => e.device_id === p_device_id && e.event_id === p_event_id);

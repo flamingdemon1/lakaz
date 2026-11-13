@@ -10,7 +10,9 @@
  */
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
+import { SUPABASE_ENABLED } from '@/config';
 import { useLakaz } from '@/data/store';
+import * as supa from '@/data/supabase';
 import { Lang, STRINGS, TKey } from '@/i18n';
 import { normalisePhone } from '@/lib/validate';
 
@@ -138,8 +140,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await wait(400);
       },
 
-      // SWAP FOR SUPABASE: supabase.auth.signInWithPassword({ email | phone, password })
       login: async (identifier, password) => {
+        // LIVE: real carer account in Supabase Auth (email + password). Needed for real alerts + acknowledge.
+        if (SUPABASE_ENABLED) {
+          if (!identifier.includes('@')) throw new Error('Use the email of your carer account.');
+          const u = await supa.signIn(identifier, password);
+          const email = u.email ?? identifier.trim().toLowerCase();
+          signIn({
+            id: u.id,
+            name: u.user_metadata?.name ?? u.user_metadata?.full_name ?? email.split('@')[0],
+            email,
+            phone: u.phone ? `+${u.phone.replace(/^\+/, '')}` : '',
+            email_verified: true, // Supabase only lets confirmed users sign in (when confirmation is on)
+            phone_verified: !!u.phone,
+            lang,
+          });
+          return 'ok';
+        }
+        // SAMPLE accounts below.
         await wait();
         const acc = find(identifier);
         // Why one vague message: don't reveal whether an email has an account (basic account security).
@@ -208,8 +226,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         acc.password = next;
       },
 
-      // SWAP FOR SUPABASE: supabase.auth.signOut() (scope 'global' for "all devices")
+      // LIVE: also ends the Supabase session (scope 'global' for "all devices" is a later improvement).
       logout: () => {
+        if (SUPABASE_ENABLED) void supa.signOut();
         setUser(null);
         setPending(null);
         lakaz.logout();

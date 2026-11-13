@@ -206,7 +206,7 @@ void loop() {
   if (!scan->isScanning()) scan->start(0, false, true);
 
   static bool home = true;
-  static unsigned long strongSince = 0, weakSince = 0, lastRetry = 0, lastPrint = 0, lastPing = 0;
+  static unsigned long strongSince = 0, weakSince = 0, lastRetry = 0, lastPrint = 0;
   unsigned long now = millis();
   int rssi = currentRssi();
 
@@ -227,7 +227,7 @@ void loop() {
   }
 
   if (now - lastRetry >= 5000) { lastRetry = now; retryHelp(); }
-  if (now - lastPing >= 5000)  { lastPing = now;  tellLaptop("heartbeat"); }   // laptop only: keeps "Band online" in the app
+  // No heartbeat (team decision): the band only sends real events, so "online" is not reported between them.
 
   if (now - lastPrint >= 2000) {
     lastPrint = now;

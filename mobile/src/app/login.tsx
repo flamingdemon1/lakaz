@@ -48,6 +48,8 @@ export default function Login() {
         <Button label="Continue as demo caregiver" icon="log-in" size="lg" onPress={onLogin} />
       </Card>
 
+      {/* Checkpoint flow (help alert + acknowledge) — reachable before login while Supabase Auth isn't ready. */}
+      <Button label="Help alert (sample)" icon="megaphone" tone="secondary" onPress={() => router.push('/help-alert')} />
       <Button label="Open community responder page" icon="people" tone="ghost" onPress={() => router.push('/responder')} />
     </Screen>
   );

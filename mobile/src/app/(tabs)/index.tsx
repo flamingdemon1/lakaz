@@ -13,7 +13,7 @@ import { ConnectionBanner } from '@/components/ConnectionBanner';
 import { DemoControls } from '@/components/DemoControls';
 import { LocationCard } from '@/components/LocationCard';
 import { PersonHero } from '@/components/PersonHero';
-import { AppText, Card, Screen, SectionTitle } from '@/components/ui';
+import { AppText, Button, Card, Screen, SectionTitle } from '@/components/ui';
 import { isOpen, useLakaz } from '@/data/store';
 import { isOnline, timeAgo } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
@@ -44,6 +44,9 @@ export default function Home() {
       ) : (
         <>
           <PersonHero status={status} />
+
+          {/* Shortcut to the checkpoint flow agreed with the backend: help alert + acknowledge. */}
+          <Button label="Help alerts (sample)" icon="megaphone" tone="secondary" onPress={() => router.push('/help-alert')} />
 
           {main ? (
             <>

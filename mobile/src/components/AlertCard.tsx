@@ -52,6 +52,9 @@ export function AlertCard({ alert, personName = 'Marie-Claire' }: { alert: Alert
           {personName} · {clock(alert.created_at)} · {timeAgo(alert.created_at, now)}
           {/* Real help alerts have no ladder step (the backend has no escalation yet). */}
           {alert.type === 'help_requested' ? '' : ` · ${fill(t('stepN'), { n: alert.level })}`}
+          {/* Left-home alerts closed by the band coming back show WHEN she returned (Kavish, #29). Never on help
+              requests: those are closed by a carer with "She is safe", not by coming home. */}
+          {alert.type === 'unexpected_exit' && alert.resolved_at ? ` · ${fill(t('backHomeAt'), { time: clock(alert.resolved_at) })}` : ''}
         </AppText>
       </View>
       <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />

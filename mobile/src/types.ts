@@ -41,6 +41,7 @@ export interface Alert {
   location_fresh: boolean;
   /** Server times from Supabase (live help alerts only; used for the real incident timeline). */
   acknowledged_at?: string | null;
+  /** Closed time. For a left-home alert (Kavish, #29) this is when the band was heard at home again. */
   resolved_at?: string | null;
   resolved_by?: string | null;
 }

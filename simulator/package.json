@@ -1,0 +1,10 @@
+{
+  "name": "lakaz-laptop-server",
+  "private": true,
+  "description": "Demo server: band home/away events -> app (REST + Socket.IO, contract section 7)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "socket.io": "^4.8.1"
+  }
+}

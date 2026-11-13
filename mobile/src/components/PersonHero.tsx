@@ -2,11 +2,12 @@
  * PersonHero.tsx — the top of Home: who, where (home / left home), since when. "Night glow" design.
  * Owner: Person 3/4 (Zuhayr).
  *
- * Layout (like a banking app's "Balance" block): avatar tile + shortcuts, a small name line, then ONE huge
- * word for where she is ("At home" / "Left home") with a status pill beside it. A stressed or older
- * caregiver gets the answer from the biggest text on the screen.
+ * A status card (Zuhayr asked to keep the "rectangle" from the earlier design): avatar tile, status label,
+ * age · area, then ONE huge word for where she is ("At home" / "Left home") with a pill for how long.
+ * The card is tinted and outlined in the status colour, so the answer is readable from across a room.
  * Colour code (theme.ts): GREEN = safe at home, AMBER = left home (ladder climbing), RED = critical
  * (step 3), GREY = unknown. Motion: the avatar "breathes" while she is safe; rings pulse while she is out.
+ * All words come from i18n.ts, so the card follows the language chosen in Profile.
  */
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -15,7 +16,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Breathe, PulseRings } from '@/components/motion';
 import { AppText, IconName } from '@/components/ui';
+import { useAuth } from '@/data/auth';
 import { MOCK_PERSON } from '@/data/mock';
+import { fill } from '@/i18n';
 import { homeStatusWords, timeAgo } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
 import { colors, radius, space, TOUCH } from '@/theme';
@@ -24,66 +27,95 @@ import type { DeviceStatus } from '@/types';
 /** Input: device status from GET /api/devices/:id/status or `status:update`. */
 export function PersonHero({ status }: { status: DeviceStatus | null }) {
   const now = useNow();
+  const { t } = useAuth();
   const words = homeStatusWords(status?.status);
   const name = status?.person_name ?? MOCK_PERSON.name;
   const first = name.split(' ')[0];
 
   // Same rule as the alert itself (statusStyles): Active = amber while the ladder climbs,
   // Critical = red at step 3 (community). Keeps Home and the takeover in agreement.
-  const since = status ? timeAgo(status.since, now).replace(' ago', '') : null;
+  const since = status ? timeAgo(status.since, now).replace(' ago', '') : '';
+  const out = words.tone === 'alert';
+  const critical = out && (status?.level ?? 0) >= 3;
   const tone =
     words.tone === 'calm'
-      ? { fg: colors.safe, big: 'At home', pill: `Safe ${since ?? ''}`.trim(), icon: 'checkmark' as IconName }
-      : words.tone === 'alert'
-        ? (status?.level ?? 0) >= 3
-          ? { fg: colors.danger, big: 'Left home', pill: `Out ${since ?? ''}`.trim(), icon: 'alert' as IconName }
-          : { fg: colors.warning, big: 'Left home', pill: `Out ${since ?? ''}`.trim(), icon: 'walk' as IconName }
-        : { fg: colors.offline, big: 'Waiting…', pill: 'No status', icon: 'help' as IconName };
+      ? { fg: colors.safe, soft: colors.safeSoft, label: t('heroLabelSafe'), big: t('heroAtHome'), pill: fill(t('heroSafeFor'), { t: since }), icon: 'home' as IconName }
+      : out
+        ? {
+            fg: critical ? colors.danger : colors.warning,
+            soft: critical ? colors.dangerSoft : colors.warningSoft,
+            label: t(critical ? 'heroLabelCritical' : 'heroLabelOut'),
+            big: t('heroLeftHome'),
+            pill: fill(t('heroOutFor'), { t: since }),
+            icon: 'walk' as IconName,
+          }
+        : { fg: colors.offline, soft: colors.muted, label: t('heroLabelUnknown'), big: t('heroWaiting'), pill: t('heroNoStatus'), icon: 'help-circle' as IconName };
 
   const sub =
     words.tone === 'calm'
-      ? 'Nothing needs you right now.'
-      : words.tone === 'alert'
-        ? `${status?.level != null ? `Escalation step ${status.level}. ` : ''}Open the alert below.`
-        : `Status appears as soon as ${first}'s band checks in.`;
+      ? t('heroSubSafe')
+      : out
+        ? `${status?.level != null ? fill(t('heroStep'), { n: status.level }) + ' ' : ''}${t('heroSubOut')}`
+        : fill(t('heroSubWaiting'), { name: first });
 
   return (
-    <View style={styles.wrap} accessibilityLabel={`${first}: ${tone.big}. ${tone.pill}. ${sub}`} accessibilityLiveRegion="polite">
+    <View style={styles.wrap}>
+      {/* Brand line + two shortcuts above the card. */}
       <View style={styles.top}>
-        {/* Initials avatar tile — never a real photo in the demo (fictional person). */}
-        <View style={styles.avatarWrap}>
-          {words.tone === 'alert' ? <PulseRings color={tone.fg} size={56} /> : null}
-          <Breathe active={words.tone === 'calm'}>
-            <View style={styles.avatar}>
-              <AppText variant="heading" color={colors.white}>
-                MC
-              </AppText>
-            </View>
-          </Breathe>
-        </View>
+        <AppText variant="heading" color={colors.text}>
+          LAKAZ
+        </AppText>
         <View style={styles.icons}>
           <IconLink icon="notifications-outline" label="Notification settings" to="/notifications" />
           <IconLink icon="grid-outline" label="People" to="/people" />
         </View>
       </View>
 
-      <AppText color={colors.textMuted}>
-        {name}, {MOCK_PERSON.age} · {MOCK_PERSON.area}
-      </AppText>
-      <View style={styles.bigRow}>
-        <AppText variant="display" style={styles.flex} numberOfLines={1} adjustsFontSizeToFit>
-          {tone.big}
-        </AppText>
-        <View style={[styles.pill, { backgroundColor: tone.fg }]}>
-          <Ionicons name={tone.icon} size={14} color={colors.white} />
-          <AppText variant="smallBold" color={colors.white}>
-            {tone.pill}
-          </AppText>
+      <View
+        style={[styles.card, { backgroundColor: tone.soft, borderColor: tone.fg }]}
+        accessibilityLabel={`${name}: ${tone.big}. ${tone.pill}. ${sub}`}
+        accessibilityLiveRegion="polite">
+        <View style={styles.cardTop}>
+          {/* Initials avatar tile — never a real photo in the demo (fictional person). */}
+          <View style={styles.avatarWrap}>
+            {out ? <PulseRings color={tone.fg} size={56} /> : null}
+            <Breathe active={words.tone === 'calm'}>
+              <View style={styles.avatar}>
+                <AppText variant="heading" color={colors.white}>
+                  MC
+                </AppText>
+              </View>
+            </Breathe>
+          </View>
+          <View style={styles.flex}>
+            <View style={styles.labelRow}>
+              <Ionicons name={tone.icon} size={16} color={tone.fg} />
+              <AppText variant="label" color={tone.fg === colors.offline ? colors.textMuted : colors.text}>
+                {tone.label}
+              </AppText>
+            </View>
+            <AppText variant="small" color={colors.textMuted}>
+              {name}, {MOCK_PERSON.age} · {MOCK_PERSON.area}
+            </AppText>
+          </View>
         </View>
+
+        <View style={styles.bigRow}>
+          {/* No truncation: in French/Kreol the word is longer, so the pill wraps under it instead. */}
+          <AppText variant="display" style={styles.bigWord}>
+            {tone.big}
+          </AppText>
+          <View style={[styles.pill, { backgroundColor: tone.fg }]}>
+            <Ionicons name={words.tone === 'calm' ? 'checkmark' : tone.icon} size={14} color={colors.white} />
+            <AppText variant="smallBold" color={colors.white}>
+              {tone.pill}
+            </AppText>
+          </View>
+        </View>
+        <AppText variant="small" color={colors.textMuted}>
+          {sub}
+        </AppText>
       </View>
-      <AppText variant="small" color={colors.textMuted}>
-        {sub}
-      </AppText>
     </View>
   );
 }
@@ -98,8 +130,12 @@ function IconLink({ icon, label, to }: { icon: IconName; label: string; to: '/no
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: space.xs },
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.md },
+  wrap: { gap: space.sm },
+  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  icons: { flexDirection: 'row', gap: space.xs },
+  iconBtn: { width: TOUCH, height: TOUCH, alignItems: 'center', justifyContent: 'center' },
+  card: { borderRadius: radius.xl, borderWidth: 1.5, padding: space.xl, gap: space.sm },
+  cardTop: { flexDirection: 'row', alignItems: 'center', gap: space.lg, marginBottom: space.sm },
   avatarWrap: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center' },
   avatar: {
     width: 56,
@@ -110,10 +146,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     // Brand gradient tile (React Native 0.88 draws CSS gradients natively; solid primary is the fallback).
     backgroundImage: 'linear-gradient(135deg, #3D63FF 0%, #8B5CF6 100%)',
-  } as object,
-  icons: { flexDirection: 'row', gap: space.xs },
-  iconBtn: { width: TOUCH, height: TOUCH, alignItems: 'center', justifyContent: 'center' },
-  bigRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  bigRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.md, rowGap: space.xs },
+  bigWord: { flexShrink: 1 },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',

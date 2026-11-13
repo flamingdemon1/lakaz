@@ -15,7 +15,9 @@ import { Animated, Easing, Modal, StyleSheet, View } from 'react-native';
 import { SlideToConfirm } from '@/components/motion';
 import { Glow } from '@/components/Glow';
 import { AppText, Button, SimulatedTag } from '@/components/ui';
+import { useAuth } from '@/data/auth';
 import { acknowledgeAlert, fetchHelpEvents, HelpEvent, IS_SAMPLE, onHelpEventsChanged } from '@/data/helpAlert';
+import { fill } from '@/i18n';
 import { clock, timeAgo } from '@/lib/format';
 import { useAlertFeedback } from '@/lib/useAlertFeedback';
 import { useNow } from '@/lib/useNow';
@@ -34,6 +36,7 @@ export function HelpAlertTakeover() {
   const shownId = useRef<string | null>(null);
   const { play } = useAlertFeedback();
   const now = useNow();
+  const { t } = useAuth(); // the takeover speaks the carer's chosen language
   const pulse = useRef(new Animated.Value(1)).current;
 
   /** One poll: pick the newest unacknowledged, not-dismissed event. */
@@ -112,33 +115,33 @@ export function HelpAlertTakeover() {
             <Ionicons name="megaphone" size={44} color={tone.bg} />
           </Animated.View>
           <AppText variant="label" color={tone.bg}>
-            AWAITING ACKNOWLEDGEMENT{waitingCount > 1 ? ` · ${waitingCount} WAITING` : ''}
+            {t('awaitingAck')}{waitingCount > 1 ? ` · ${fill(t('nWaitingCaps'), { n: waitingCount })}` : ''}
           </AppText>
           <AppText variant="display" style={styles.center}>
-            Help requested
+            {t('helpRequested')}
           </AppText>
           <AppText color={colors.textMuted} style={styles.center}>
-            The help button on band …{current.device_id.slice(-4)} was pressed.
+            {fill(t('helpPressedOnBand'), { id: current.device_id.slice(-4) })}
           </AppText>
           <AppText variant="bodyBold" style={styles.center}>
-            Received {clock(current.received_at)} · {timeAgo(current.received_at, now)}
+            {fill(t('receivedAt'), { time: clock(current.received_at), ago: timeAgo(current.received_at, now) })}
           </AppText>
           {err ? (
             <AppText variant="small" color={tone.bg} style={styles.center}>
-              Not acknowledged. {err}
+              {fill(t('notAcked'), { err })}
             </AppText>
           ) : null}
           <View style={styles.actions}>
             {/* Slide, not tap — same as the wandering takeover, so a pocket tap can't acknowledge. */}
             <SlideToConfirm
-              label={err ? 'Slide to try again' : "Slide — I've got it"}
+              label={err ? t('slideRetry') : t('slideGotIt')}
               color={tone.bg}
               loading={busy}
               onConfirm={onAck}
               accessibilityHint="Tells the other carers you are handling this help request"
             />
-            <Button label="See all help alerts" icon="list" tone="secondary" onPress={onSeeAll} />
-            <Button label="Later" tone="ghost" onPress={onLater} accessibilityHint="Closes this without acknowledging" />
+            <Button label={t('seeAllHelp')} icon="list" tone="secondary" onPress={onSeeAll} />
+            <Button label={t('later')} tone="ghost" onPress={onLater} accessibilityHint="Closes this without acknowledging" />
           </View>
         </View>
       </View>

@@ -22,6 +22,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Glow } from '@/components/Glow';
+import { useAuth } from '@/data/auth';
+import { STATUS_KEY } from '@/i18n';
 import { colors, MAX_WIDTH, radius, shadow, space, statusStyles, TOUCH, type } from '@/theme';
 import type { AlertStatus } from '@/types';
 
@@ -153,13 +155,15 @@ export function Button({
 /** Coloured status chip with icon + word (never colour alone). */
 export function StatusPill({ status, large = false }: { status: AlertStatus; large?: boolean }) {
   const s = statusStyles[status];
+  const { t } = useAuth();
+  const label = t(STATUS_KEY[status]); // follows the language chosen in Profile
   return (
     <View
       style={[styles.pill, { backgroundColor: s.bg }, large && styles.pillLarge]}
-      accessibilityLabel={`Status: ${s.label}`}>
+      accessibilityLabel={label}>
       <Ionicons name={s.icon as IconName} size={large ? 18 : 14} color={s.fg} />
       <AppText variant={large ? 'smallBold' : 'label'} color={s.fg}>
-        {s.label.toUpperCase()}
+        {label.toUpperCase()}
       </AppText>
     </View>
   );

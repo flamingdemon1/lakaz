@@ -16,7 +16,9 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { PopIn } from '@/components/motion';
 import { AppText, Button, SimulatedTag } from '@/components/ui';
+import { useAuth } from '@/data/auth';
 import type { HelpEvent } from '@/data/helpAlert';
+import { fill } from '@/i18n';
 import { colors, MAX_WIDTH, radius, space } from '@/theme';
 
 /**
@@ -49,6 +51,7 @@ export function AckReceipt({
   onClose: () => void;
 }) {
   const open = !!event?.acknowledged_at;
+  const { t } = useAuth(); // follows the language chosen in Profile
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       {/* Tap outside to close; the sheet itself swallows taps. */}
@@ -63,17 +66,17 @@ export function AckReceipt({
               </View>
             </PopIn>
             <AppText variant="hero" style={styles.center} accessibilityRole="header">
-              Acknowledgement saved
+              {t('ackSaved')}
             </AppText>
             <AppText color={colors.textMuted} style={styles.center}>
-              {sample ? 'Saved in the sample database on this device.' : 'Saved in Lakaz (Supabase). Other carers see it as handled.'}
+              {sample ? t('savedInSample') : t('savedInLakaz')}
             </AppText>
 
             <View style={styles.rows}>
-              <Row label="Alert reference" value={event.event_id} mono />
-              <Row label="Band" value={`…${event.device_id.slice(-4)}`} />
-              <Row label="Help requested" value={fullStamp(event.received_at)} />
-              <Row label="Acknowledged at" value={fullStamp(event.acknowledged_at!)} strong />
+              <Row label={t('rcRef')} value={event.event_id} mono />
+              <Row label={t('bandTitle')} value={`…${event.device_id.slice(-4)}`} />
+              <Row label={t('rcRequested')} value={fullStamp(event.received_at)} />
+              <Row label={t('rcAckAt')} value={fullStamp(event.acknowledged_at!)} strong />
             </View>
 
             {loadedAt ? (
@@ -82,13 +85,12 @@ export function AckReceipt({
                 {/* Honest: says when we last READ this from the server, so a refresh visibly changes this line
                     while the saved time above stays the same. */}
                 <AppText variant="small" color={colors.textMuted} style={styles.flex}>
-                  Read from {sample ? 'the sample database' : 'Supabase'} at {fullStamp(new Date(loadedAt).toISOString())}. The
-                  acknowledged time is the server's.
+                  {fill(t('rcReadFrom'), { src: sample ? t('rcSampleDb') : 'Supabase', time: fullStamp(new Date(loadedAt).toISOString()) })}
                 </AppText>
               </View>
             ) : null}
 
-            <Button label="Close" tone="secondary" onPress={onClose} />
+            <Button label={t('close')} tone="secondary" onPress={onClose} />
           </Pressable>
         ) : null}
       </Pressable>

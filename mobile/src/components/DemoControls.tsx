@@ -9,6 +9,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Card, SimulatedTag } from '@/components/ui';
 import { USE_MOCK } from '@/config';
+import { addSampleHelpEvent, resetSampleHelpEvents } from '@/data/helpAlert';
 import { useLakaz } from '@/data/store';
 import { colors, space } from '@/theme';
 
@@ -35,7 +36,11 @@ export function DemoControls() {
           <Button label="Back home" icon="home" tone="secondary" onPress={sim.backHome} />
         </View>
         <View style={styles.cell}>
-          <Button label="Reset" icon="refresh" tone="ghost" onPress={sim.reset} />
+          {/* Fakes the band's help button → the help-alert takeover pops up (sample data). */}
+          <Button label="Help button" icon="hand-left" tone="secondary" onPress={addSampleHelpEvent} />
+        </View>
+        <View style={styles.cell}>
+          <Button label="Reset" icon="refresh" tone="ghost" onPress={() => { sim.reset(); resetSampleHelpEvents(); }} />
         </View>
       </View>
     </Card>

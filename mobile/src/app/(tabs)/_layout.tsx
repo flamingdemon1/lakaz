@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
 
+import { HelpAlertTakeover } from '@/components/HelpAlertTakeover';
 import { IncomingAlert } from '@/components/IncomingAlert';
 import { isOpen, useLakaz } from '@/data/store';
 import { colors, fonts, statusStyles } from '@/theme';
@@ -48,6 +49,8 @@ export default function TabsLayout() {
         />
       </Tabs>
       <IncomingAlert />
+      {/* Help-button alerts (backend handoff flow) — polls every 5 s while the app is open. */}
+      <HelpAlertTakeover />
     </>
   );
 }

@@ -40,6 +40,8 @@ The backend and frontend files are starters for their owners to complete as impl
 
 1. Clone this repo and switch to the branch you need. Install Git, Node.js/npm for the app, Arduino IDE and the ESP32 board support for firmware. Use a phone with the team’s chosen Expo test setup.
 2. For web signup, run `npm ci` and `npm run web` in `mobile`. Open the localhost address Expo prints and add `/signup`. The shared Supabase project is configured by default. See the [mobile README](mobile/README.md#run-locally).
+The app uses simulated sample data only when both `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` are set to empty strings in the local environment. There is no `USE_MOCK` switch. Restart Expo after changing environment variables.
+
 3. Backend: apply the committed SQL migrations to the team’s Supabase project in order and configure the device endpoint and server-side secrets. Use a dedicated test wearer and carer. Backend owners must replace this line with the exact migration and deployment steps after the first successful run.
 4. Firmware: open the committed sketch, select the team’s actual ESP32 board and serial port, set Wi-Fi and device credentials locally, upload and open Serial Monitor. Press the button and verify that the event appears in the app, then acknowledge and refresh.
 5. Before submitting, update these steps with actual paths, board settings, and a tested APK or Expo/test link. Verify on a second phone/account.
@@ -50,15 +52,28 @@ Never commit Wi-Fi credentials, device tokens, privileged Supabase keys, real we
 
 | Tool used | What it was used for |
 |---|---|
-| OpenAI ChatGPT / Codex | Drafted the kick-off README, collaboration instructions, proposed interface and submission checklist. Also converted and checked the facilities CSV, integrated email accounts with Supabase Auth, connected the Alerts tab to live help alerts, set up local runs against the shared project, and implemented carer profiles and account security. |
-| Anthropic Claude | Team tool; specific uses to be recorded by its users. |
+| OpenAI ChatGPT / Codex | Drafted the kick-off README, collaboration instructions, proposed interface and submission checklist. Also converted and checked the facilities CSV, integrated email accounts with Supabase Auth, connected the Alerts tab to live help alerts, set up local runs against the shared project, and implemented carer profiles and account security. Added wearer fallback, translation corrections, and the decision log and README updates. |
+| Anthropic Claude | Claude Code (desktop app): Night glow dark UI and animations, EN/FR/Kreol translation system, acknowledgement receipt (surprise card), live alert lifecycle (Home and Incident from Supabase, She is safe), who acknowledged, band names, Link a band, SQL migrations 20261114013000 and 20261114020000 (reviewed and applied by Shihad). Owners reviewed every change. |
 | Google Gemini | Team tool; drafted, verified and committed database schema migration with RLS policies, acknowledge_alert and submit_device_event RPCs on feat/backend-db. |
 
 Append actual uses as work happens, including code, UI, data cleaning or pitch assistance. Each teammate should be able to explain and change their own work in Q&A.
 
 ## Surprise card
 
-**Status: not drawn.** Shihad records the exact wording and Mauritius time as soon as the card is drawn. The team agrees what must be added, removed or constrained, updates the affected owners and interface, and defines one visible check that proves compliance. Put the decision in the [log](docs/decision-log.md); update this section with what changed, how it was tested and where the judges will see it. Keep the core flow working and integrate the constraint before polishing optional features.
+**Prove It Works.** The app now shows an acknowledgement receipt with “Acknowledgement saved”, the alert reference, and the server date and time.
+
+Judges see it under **Help alerts → View acknowledgement receipt**. Prove persistence by acknowledging a request, opening its receipt, refreshing the app, and reopening the receipt. The server timestamp must remain the same. PR #17 introduced the receipt. Phone and hardware verification remain pending.
+
+## What is live vs simulated
+
+| Mode | Features |
+|---|---|
+| Live through Supabase | Accounts and profile, help alerts, acknowledge, receipt, She is safe, incident timeline, who acknowledged, band name, Link a band, wearer details, band online/offline through heartbeat, facility lookup |
+| Simulated and labelled | Location and live tracking, safe zones, escalation ladder and community alerts, push notifications while the app is closed, several people and medical notes |
+
+Live means the app has Supabase integration. Wearer and heartbeat data require Shihad’s migration and deployed device endpoint, with Kavish’s band sending heartbeats. A physical online/offline check is still required. Closed-app push is roadmap only.
+
+
 
 ## Submission checklist
 

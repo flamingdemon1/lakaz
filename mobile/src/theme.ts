@@ -3,27 +3,41 @@
  * Owner: Person 3/4 (Fahim, Zuhayr). The admin page and responder page should copy these values
  * so every screen looks like one product.
  *
- * Design direction (ui-ux-pro-max): minimal / Swiss style, calm when nothing is wrong,
- * loud only when something is. Colours are placeholders — the team will finalise them later.
+ * Design direction ("warm home", chosen from the UI previews): cream paper + dark ink, quiet when
+ * nothing is wrong, loud only when something is. The colour CODE is strict so a glance is enough:
+ *   RED    = danger / emergency only (critical alerts, SOS, 999). Never used for decoration or branding.
+ *   AMBER  = warning, needs attention soon (active alert, low battery).
+ *   BLUE   = someone is handling it (acknowledged).
+ *   GREEN  = safe (at home, resolved, band online).
+ *   INK    = everything else (brand, buttons, links) — neutral so it never competes with a status.
  * Change a colour HERE, never inside a component.
  */
 import { Platform } from 'react-native';
 
 import type { AlertStatus } from '@/types';
 
-/** Base palette. Contrast checked for white text on the status colours (≥ 4.5:1). */
+/** Base palette. Contrast checked for white text on ink and on every status colour (≥ 4.5:1). */
 export const colors = {
-  primary: '#0E7490', // calm teal — brand, links, primary buttons
+  primary: '#23394B', // dark ink-blue — brand, links, primary buttons (deliberately not a status colour)
   onPrimary: '#FFFFFF',
-  background: '#F1F7F9', // very light blue-grey page background
+  background: '#FAF6EF', // warm cream "paper" — less clinical than blue-grey
   card: '#FFFFFF',
-  text: '#0F2A36', // near-black slate: easier on the eyes than pure black
-  textMuted: '#4B6470', // secondary text — still ≥ 4.5:1 on white
-  border: '#D5E3E8',
-  muted: '#E6EFF2',
+  text: '#2A2420', // warm near-black
+  textMuted: '#6A5D52', // warm grey — ≥ 4.5:1 on white and on the cream background
+  border: '#E9E0D4',
+  muted: '#F2EBE1',
   simulated: '#7C3AED', // purple tag used ONLY for "SIMULATED" labels so they are never missed
   offline: '#6B7280',
   white: '#FFFFFF',
+  // Semantic shortcuts — same values as statusStyles, named for what they MEAN.
+  danger: '#B3261E',
+  dangerSoft: '#FCEBEA',
+  warning: '#A85A08',
+  warningSoft: '#FDF1E1',
+  safe: '#1F7A4D',
+  safeSoft: '#E6F3EC',
+  info: '#1D4ED8',
+  infoSoft: '#E8EEFD',
 } as const;
 
 /**
@@ -34,11 +48,17 @@ export const statusStyles: Record<
   AlertStatus,
   { bg: string; fg: string; soft: string; icon: string; label: string }
 > = {
-  Critical: { bg: '#B91C1C', fg: '#FFFFFF', soft: '#FDE8E8', icon: 'alert-circle', label: 'Critical' },
-  Active: { bg: '#B45309', fg: '#FFFFFF', soft: '#FEF3E2', icon: 'warning', label: 'Active' },
-  Acknowledged: { bg: '#1D4ED8', fg: '#FFFFFF', soft: '#E6EEFD', icon: 'person-circle', label: 'Acknowledged' },
-  Resolved: { bg: '#047857', fg: '#FFFFFF', soft: '#E3F5EE', icon: 'checkmark-circle', label: 'Resolved' },
+  Critical: { bg: colors.danger, fg: '#FFFFFF', soft: colors.dangerSoft, icon: 'alert-circle', label: 'Critical' },
+  Active: { bg: colors.warning, fg: '#FFFFFF', soft: colors.warningSoft, icon: 'warning', label: 'Active' },
+  Acknowledged: { bg: colors.info, fg: '#FFFFFF', soft: colors.infoSoft, icon: 'person-circle', label: 'Acknowledged' },
+  Resolved: { bg: colors.safe, fg: '#FFFFFF', soft: colors.safeSoft, icon: 'checkmark-circle', label: 'Resolved' },
 };
+
+/**
+ * Motion timings (ms). One place so every animation feels like the same app.
+ * Enter is slower than exit; nothing loops unless it means "needs attention" or "alive".
+ */
+export const motion = { fast: 150, base: 280, slow: 450, stagger: 70, breathe: 4000, pulse: 1800 } as const;
 
 /** Spacing scale (4-pt grid). Use these instead of random numbers. */
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;
@@ -69,15 +89,20 @@ export const type = {
   label: { fontFamily: fonts.bold, fontSize: 13, lineHeight: 16, letterSpacing: 0.6 },
 } as const;
 
-/** Soft card shadow that looks the same on iOS, Android and web. */
+/**
+ * Card edge: a warm hairline + a very faint shadow. Why not a big soft shadow: floating
+ * "glow cards" everywhere is the generic template look; paper-like edges feel calmer.
+ */
 export const shadow = Platform.select({
-  web: { boxShadow: '0 1px 3px rgba(15,42,54,0.08), 0 4px 12px rgba(15,42,54,0.06)' },
+  web: { boxShadow: '0 1px 2px rgba(42,36,32,0.06)', borderWidth: 1, borderColor: '#E9E0D4' },
   default: {
-    shadowColor: '#0F2A36',
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    shadowColor: '#2A2420',
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E9E0D4',
   },
 }) as object;
 

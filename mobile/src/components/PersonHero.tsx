@@ -1,7 +1,7 @@
 /**
  * PersonHero.tsx — the big status card at the top of Home: who, where (home / left home), since when.
  * Owner: Person 3/4 (Zuhayr).
- * Calm teal when at home, amber/red when not — the caregiver should understand it in one glance.
+ * Calm green when at home, amber/red when not — the caregiver should understand it in one glance.
  */
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';

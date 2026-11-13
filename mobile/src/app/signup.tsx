@@ -105,7 +105,7 @@ export default function SignUp() {
           </AppText>
         </Pressable>
         {show('agree') ? (
-          <AppText variant="small" color="#B91C1C">
+          <AppText variant="small" color={colors.danger}>
             {errs.agree}
           </AppText>
         ) : null}

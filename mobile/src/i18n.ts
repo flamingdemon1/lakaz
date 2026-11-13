@@ -177,6 +177,18 @@ const en = {
   rcReadFrom: "Read from {src} at {time}. The acknowledged time is the server's.",
   rcSampleDb: "the sample database",
   close: "Close",
+  ackByYou: "by you",
+  ackByOther: "by another carer",
+  rcAckBy: "Acknowledged by",
+  whoYou: "You",
+  whoOther: "Another linked carer",
+  linkBand: "Link a band",
+  linkBandBody: "Type the code printed on the band (for example LKZ-7Q4M-2XRA). You will then see its help alerts.",
+  linkCodeLabel: "Code on the band",
+  linkBandBtn: "Link this band",
+  linkedOk: "Linked: {name}. Its help alerts will now appear in Help alerts.",
+  linkSampleHint: "SAMPLE: the code LKZ-DEMO-0001 works.",
+  unnamedBand: "the band",
 };
 
 export type TKey = keyof typeof en;
@@ -342,6 +354,18 @@ const fr: Record<TKey, string> = {
   rcReadFrom: "Lu depuis {src} à {time}. L'heure de prise en charge est celle du serveur.",
   rcSampleDb: "la base d'exemple",
   close: "Fermer",
+  ackByYou: "par vous",
+  ackByOther: "par un autre aidant",
+  rcAckBy: "Pris en charge par",
+  whoYou: "Vous",
+  whoOther: "Un autre aidant lié",
+  linkBand: "Lier un bracelet",
+  linkBandBody: "Tapez le code imprimé sur le bracelet (par exemple LKZ-7Q4M-2XRA). Vous verrez ensuite ses alertes d'aide.",
+  linkCodeLabel: "Code sur le bracelet",
+  linkBandBtn: "Lier ce bracelet",
+  linkedOk: "Lié : {name}. Ses alertes d'aide apparaîtront dans Alertes d'aide.",
+  linkSampleHint: "EXEMPLE : le code LKZ-DEMO-0001 fonctionne.",
+  unnamedBand: "le bracelet",
 };
 
 const mfe: Record<TKey, string> = {
@@ -505,6 +529,18 @@ const mfe: Record<TKey, string> = {
   rcReadFrom: "Lir depi {src} a {time}. Ler pran an sarz se ler server-la.",
   rcSampleDb: "baz egzanp",
   close: "Ferme",
+  ackByYou: "par ou",
+  ackByOther: "par enn lot dimounn",
+  rcAckBy: "Pran an sarz par",
+  whoYou: "Ou",
+  whoOther: "Enn lot dimounn ki lie",
+  linkBand: "Lie enn brasle",
+  linkBandBody: "Tap kod ki ekrir lor brasle-la (par egzanp LKZ-7Q4M-2XRA). Apre ou pou trouv so bann alert sekour.",
+  linkCodeLabel: "Kod lor brasle",
+  linkBandBtn: "Lie sa brasle-la",
+  linkedOk: "Lie: {name}. So bann alert sekour pou paret dan Alert sekour.",
+  linkSampleHint: "EGZANP: kod LKZ-DEMO-0001 marse.",
+  unnamedBand: "brasle-la",
 };
 
 export const STRINGS: Record<Lang, Record<TKey, string>> = { en, fr, mfe };

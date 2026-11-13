@@ -17,9 +17,11 @@ import { AppText, Button, Card, EmptyState, Screen, SimulatedTag } from '@/compo
 import {
   acknowledgeAlert,
   addSampleHelpEvent,
+  fetchBandNames,
   fetchHelpEvents,
   HelpEvent,
   IS_SAMPLE,
+  myCarerId,
   NOT_SIGNED_IN,
   onHelpEventsChanged,
   resetSampleHelpEvents,
@@ -49,6 +51,8 @@ export function HelpAlertList({ asTab = false }: { asTab?: boolean }) {
   const [receiptId, setReceiptId] = useState<string | null>(null);
   const { t } = useAuth(); // follows the language chosen in Profile
   const [loadedAt, setLoadedAt] = useState<number | null>(null);
+  // Friendly band names ({ device_id: "Marie-Claire's band" }); empty until Supabase has devices.label.
+  const [bandNames, setBandNames] = useState<Record<string, string>>({});
   const latestLoad = useRef(0);
 
   /** (Re)loads from the "server". Used on open and by Refresh, to prove the acknowledgement was saved. */
@@ -57,9 +61,11 @@ export function HelpAlertList({ asTab = false }: { asTab?: boolean }) {
     const request = ++latestLoad.current;
     if (!silent) setRefreshing(true);
     try {
-      const rows = await fetchHelpEvents();
+      // Names never throw (they fall back to {}), so a missing devices.label can't break the alert list.
+      const [rows, names] = await Promise.all([fetchHelpEvents(), fetchBandNames()]);
       if (request !== latestLoad.current) return;
       setEvents(rows);
+      setBandNames(names);
       setLoadedAt(Date.now());
       setLoadError(null);
     } catch (e) {
@@ -167,6 +173,7 @@ export function HelpAlertList({ asTab = false }: { asTab?: boolean }) {
               onUpdated={onUpdated}
               onFailUsed={() => setFailNext(false)}
               onViewReceipt={() => setReceiptId(eventKey(e))}
+              bandName={bandNames[e.device_id]}
             />
           ))}
         </>
@@ -188,7 +195,15 @@ export function HelpAlertList({ asTab = false }: { asTab?: boolean }) {
           <Button label="Reset sample" icon="refresh" tone="ghost" onPress={resetSampleHelpEvents} />
         </Card>
       ) : null}
-      <AckReceipt event={receiptEvent} loadedAt={loadedAt} sample={IS_SAMPLE} onClose={() => setReceiptId(null)} />
+      {/* Link another band with the code printed on it (RPC claim_device). Its alerts then appear here. */}
+      <Button label={t('linkBand')} icon="link" tone="ghost" onPress={() => router.push('/link-band')} />
+      <AckReceipt
+        event={receiptEvent}
+        loadedAt={loadedAt}
+        sample={IS_SAMPLE}
+        bandName={receiptEvent ? bandNames[receiptEvent.device_id] : undefined}
+        onClose={() => setReceiptId(null)}
+      />
     </Screen>
   );
 }
@@ -203,8 +218,11 @@ function HelpAlertCard({
   onUpdated,
   onFailUsed,
   onViewReceipt,
+  bandName,
 }: {
   event: HelpEvent;
+  /** The band's friendly name, if Supabase has one (devices.label). */
+  bandName?: string;
   failNext: boolean;
   onUpdated: (row: HelpEvent) => void;
   onFailUsed: () => void;
@@ -249,9 +267,9 @@ function HelpAlertCard({
           </View>
           <View style={styles.flex}>
             <AppText variant="title">{t('helpRequested')}</AppText>
-            {/* Only device_id is in the agreed shape — we don't invent a person name here. */}
+            {/* The band's real name from Supabase if set; otherwise its last 4 characters (never an invented name). */}
             <AppText variant="small" color={colors.textMuted}>
-              {fill(t('fromBand'), { id: event.device_id.slice(-4) })}
+              {bandName ? `${bandName} · …${event.device_id.slice(-4)}` : fill(t('fromBand'), { id: event.device_id.slice(-4) })}
             </AppText>
           </View>
         </View>
@@ -267,6 +285,8 @@ function HelpAlertCard({
             <Ionicons name="person-circle" size={18} color={statusStyles.Acknowledged.bg} />
             <AppText variant="bodyBold" color={statusStyles.Acknowledged.bg}>
               {fill(t('ackedAt'), { time: clock(event.acknowledged_at!), ago: timeAgo(event.acknowledged_at, now) })}
+              {/* Who: only shown once Supabase records acknowledged_by (migration 20261114013000). */}
+              {event.acknowledged_by ? ` · ${event.acknowledged_by === myCarerId() ? t('ackByYou') : t('ackByOther')}` : ''}
             </AppText>
           </View>
         ) : null}

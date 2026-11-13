@@ -8,6 +8,7 @@
  * Data is a labelled SAMPLE until Supabase is ready (see src/data/helpAlert.ts).
  */
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
@@ -82,6 +83,9 @@ export default function HelpAlertScreen() {
           {refreshing ? <ActivityIndicator color={colors.primary} /> : <Ionicons name="refresh" size={22} color={colors.primary} />}
         </Pressable>
       </View>
+
+      {/* Mauritian dataset feature: read-only, separate screen, so it can never break the alert flow below. */}
+      <Button label="Find a health facility" icon="medkit" tone="secondary" onPress={() => router.push('/facilities')} />
 
       {events === null && !loadError ? (
         <View style={styles.center}>

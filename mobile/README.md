@@ -27,6 +27,7 @@ The Alerts tab includes History, resolved emergency Incidents, and Acknowledged 
 ## AI tools used
 - OpenAI Codex: added the safety history filters and acknowledgement display.
 - Claude Code (with the ui-ux-pro-max skill): built the screens, theme, mock data layer and responder page. The owners review every file.
+- Claude Code also built the district health-facility lookup (`src/app/facilities.tsx`, `src/data/facilities.ts`) on Shihad's `public.facilities` table; tested against the live Supabase data.
 
 ## Account screens (SAMPLE auth, branch feat/mobile-auth)
 

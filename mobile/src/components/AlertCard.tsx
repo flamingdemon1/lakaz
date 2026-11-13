@@ -49,6 +49,7 @@ export function AlertCard({ alert, personName = 'Marie-Claire' }: { alert: Alert
         {/* Name on the second line so the alert type is never cut off next to the status pill. */}
         <AppText variant="small" color={colors.textMuted}>
           {personName} · {clock(alert.created_at)} · {timeAgo(alert.created_at, now)} · {fill(t('stepN'), { n: alert.level })}
+          {alert.resolved_at ? ` · ${fill(t('backHomeAt'), { time: clock(alert.resolved_at) })}` : ''}
         </AppText>
       </View>
       <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />

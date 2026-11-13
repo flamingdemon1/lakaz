@@ -147,7 +147,8 @@ function RecentAlert({ alert, index }: { alert: Alert; index: number }) {
   const { t } = useAuth();
   const s = statusStyles[alert.status];
   const title = t(ALERT_KEY[alert.type].title);
-  const label = t(STATUS_KEY[alert.status]);
+  // A left-home alert that closed because the band came back shows WHEN she returned.
+  const label = alert.resolved_at ? fill(t('backHomeAt'), { time: clock(alert.resolved_at) }) : t(STATUS_KEY[alert.status]);
   return (
     <Pressable
       onPress={() => router.push({ pathname: '/alert/[id]', params: { id: alert.alert_id } })}

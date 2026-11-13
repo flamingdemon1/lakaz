@@ -147,6 +147,8 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
     socket.on('status:update', (s: DeviceStatus) => setStatus(s));
+    // Band ping (every 5 s): keeps "Band online" true without re-fetching everything.
+    socket.on('device:update', (d: Device) => { if (d.device_id === DEMO_DEVICE_ID) setDevice(d); });
     socket.on('alert:new', (a: Alert) => {
       setAlerts((l) => upsert(l, a));
       announce(a, false);

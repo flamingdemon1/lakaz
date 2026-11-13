@@ -37,6 +37,8 @@ export interface Alert {
   last_location: LastLocation | null;
   /** true = last fix is less than 60 s old (computed by the backend). */
   location_fresh: boolean;
+  /** Server time the band was heard at home again (unexpected_exit only); null/absent while still away. */
+  resolved_at?: string | null;
 }
 
 /** GET /api/devices/:id/status → { status, person_name, since, level } (section 7.3). */

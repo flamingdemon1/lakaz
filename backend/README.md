@@ -34,3 +34,13 @@ Agree the table and function names, input/output, and fixture IDs together first
 - Run the same flow from the real ESP32 on the demo phone. Record hardware versus sample results separately.
 - Commit small, meaningful checkpoints: docs, database and policies, intake, and integrated verification. Write what was tested in each PR; do not claim checks that have not run.
 - Record Codex and Gemini's actual uses in the main README. Once the surprise card is drawn, update the shared handoff if the interface changes and record how to prove compliance.
+
+## Mauritian healthcare facility lookup
+
+Source: [Open Data Mauritius healthcare facility locations CSV](https://data.govmu.org/dataset/locations-hospitals-clinics-medi-clinics-area-health-centres-and-community-health-centres) (Mauritius Digital Promotion Agency; [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); portal last updated 30 September 2024, checked 13 November 2026).
+
+The [new migration](supabase/migrations/20261113180000_create_facilities.sql) imports 169 facilities across nine districts. It selects facility name, institution type and district, trims whitespace and sorts rows. It omits contact details and coordinates. The dataset does not verify current services or opening hours.
+
+The signed-in app reads `public.facilities` fields `id, name, type, district, source_url` and filters by exact `district`: Black River, Flacq, Grand Port, Moka, Pamplemousses, Plaines Wilhems, Port Louis, Riviere du Rempart, Savanne. Client writes are disabled. This directory does not route alerts to facilities.
+
+After review, apply the new migration once to Lakaz. It leaves the alert tables alone. Local checks matched every seed row to the CSV and found 14 Moka and 32 Plaines Wilhems records. Supabase execution is pending: verify those counts, confirm signed-in read access, and confirm unauthenticated access and client writes are denied.

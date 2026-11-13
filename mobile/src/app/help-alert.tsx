@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
+import { AckReceipt } from '@/components/AckReceipt';
 import { AppText, Button, Card, EmptyState, Screen, SimulatedTag } from '@/components/ui';
 import {
   acknowledgeAlert,
@@ -35,6 +36,11 @@ export default function HelpAlertScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [failNext, setFailNext] = useState(false); // sample-only switch to test the error state
+  // Receipt (surprise card "Prove It Works"): which event's receipt is open, and when the list was last
+  // read from the server. We store the event_id, not the row, so the receipt always shows the NEWEST
+  // server copy — after a refresh it re-reads acknowledged_at from Supabase.
+  const [receiptId, setReceiptId] = useState<string | null>(null);
+  const [loadedAt, setLoadedAt] = useState<number | null>(null);
 
   /** (Re)loads from the "server". Used on open and by Refresh, to prove the acknowledgement was saved. */
   const load = useCallback(async (silent = false) => {
@@ -42,6 +48,7 @@ export default function HelpAlertScreen() {
     if (!silent) setRefreshing(true);
     try {
       setEvents(await fetchHelpEvents());
+      setLoadedAt(Date.now());
       setLoadError(null);
     } catch (e) {
       setLoadError((e as Error).message);
@@ -64,6 +71,7 @@ export default function HelpAlertScreen() {
     setEvents((list) => (list ?? []).map((e) => (e.event_id === row.event_id ? row : e)));
 
   const waiting = (events ?? []).filter((e) => !e.acknowledged_at).length;
+  const receiptEvent = (events ?? []).find((e) => e.event_id === receiptId) ?? null;
 
   return (
     <Screen edges={[]}>
@@ -115,7 +123,14 @@ export default function HelpAlertScreen() {
             {waiting > 0 ? `${waiting} waiting for you` : 'All acknowledged'}
           </AppText>
           {events!.map((e) => (
-            <HelpAlertCard key={e.event_id} event={e} failNext={failNext} onUpdated={onUpdated} onFailUsed={() => setFailNext(false)} />
+            <HelpAlertCard
+              key={e.event_id}
+              event={e}
+              failNext={failNext}
+              onUpdated={onUpdated}
+              onFailUsed={() => setFailNext(false)}
+              onViewReceipt={() => setReceiptId(e.event_id)}
+            />
           ))}
         </>
       )}
@@ -136,6 +151,7 @@ export default function HelpAlertScreen() {
           <Button label="Reset sample" icon="refresh" tone="ghost" onPress={resetSampleHelpEvents} />
         </Card>
       ) : null}
+      <AckReceipt event={receiptEvent} loadedAt={loadedAt} sample={IS_SAMPLE} onClose={() => setReceiptId(null)} />
     </Screen>
   );
 }
@@ -149,11 +165,14 @@ function HelpAlertCard({
   failNext,
   onUpdated,
   onFailUsed,
+  onViewReceipt,
 }: {
   event: HelpEvent;
   failNext: boolean;
   onUpdated: (row: HelpEvent) => void;
   onFailUsed: () => void;
+  /** Opens the acknowledgement receipt for this event (only offered once it is acknowledged). */
+  onViewReceipt: () => void;
 }) {
   const now = useNow();
   const [sending, setSending] = useState(false);
@@ -233,7 +252,16 @@ function HelpAlertCard({
             onPress={onAck}
             accessibilityHint="Tells the other carers you are handling this help request"
           />
-        ) : null}
+        ) : (
+          // Surprise card "Prove It Works": reopenable any time, including after a refresh.
+          <Button
+            label="View acknowledgement receipt"
+            icon="receipt"
+            tone="secondary"
+            onPress={onViewReceipt}
+            accessibilityHint="Shows the alert reference and the saved date and time"
+          />
+        )}
       </View>
     </View>
   );

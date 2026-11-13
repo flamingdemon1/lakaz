@@ -19,6 +19,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AuthProvider } from '@/data/auth';
 import { LakazProvider } from '@/data/store';
 import { colors, fonts } from '@/theme';
 
@@ -38,6 +39,8 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <LakazProvider>
+        {/* AuthProvider sits inside LakazProvider because logging in/out opens/closes the caregiver tabs. */}
+        <AuthProvider>
         <StatusBar style="dark" />
         <Stack
           screenOptions={{
@@ -53,7 +56,15 @@ export default function RootLayout() {
           <Stack.Screen name="responder" options={{ headerShown: false, title: 'LAKAZ community alert' }} />
           {/* Help alert + acknowledge — the checkpoint flow agreed with the backend (docs/handoff.md). */}
           <Stack.Screen name="help-alert" options={{ title: 'Help alerts', headerBackTitle: 'Back' }} />
+          {/* Account screens (SAMPLE auth, src/data/auth.tsx). */}
+          <Stack.Screen name="signup" options={{ title: '', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="verify" options={{ title: '', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="otp" options={{ title: '', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="forgot-password" options={{ title: '', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="security" options={{ title: 'Account security', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="trusted" options={{ title: 'Trusted circle', headerBackTitle: 'Back' }} />
         </Stack>
+        </AuthProvider>
       </LakazProvider>
     </SafeAreaProvider>
   );

@@ -24,3 +24,12 @@ npx expo start --lan       # scan the QR code with Expo Go (same hotspot); press
 
 ## AI tools used
 - Claude Code (with the ui-ux-pro-max skill): built the screens, theme, mock data layer and responder page. The owners review every file.
+
+## Account screens (SAMPLE auth, branch feat/mobile-auth)
+
+Sign up, email + phone verification, one-time code login, forgot password, profile, language (English / Français / Kreol), security and logout, and the trusted circle. All of it is **fake** and lives in `src/data/auth.tsx`: accounts are kept in memory (they reset when the app reloads) and no email or SMS is sent.
+
+- Demo sign-in: the fictional account seeded in `src/data/auth.tsx` (`seedAccounts`). Every SAMPLE code is shown on screen in the purple hint.
+- **"Skip login (temporary)"** on the login screen bypasses auth while we build. **Remove it before the pitch.**
+- French and Kreol text in `src/i18n.ts` is a first draft. A native speaker should check it.
+- Only the functions marked `SWAP FOR SUPABASE` change when real auth arrives.

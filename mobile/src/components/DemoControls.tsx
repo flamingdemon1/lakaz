@@ -22,7 +22,7 @@ export function DemoControls() {
       <View style={styles.head}>
         <SimulatedTag text="DEMO CONTROLS" />
         <AppText variant="small" color={colors.textMuted} style={styles.flex}>
-          Fake band events. Ladder uses demo timers 10 s / 25 s / 45 s.
+          Fake band events. Ladder uses demo timers 10 s / 25 s / 45 s. "Back home" sends a safe-return notification.
         </AppText>
       </View>
       <View style={styles.grid}>
@@ -38,6 +38,16 @@ export function DemoControls() {
         <View style={styles.cell}>
           {/* Fakes the band's help button → the help-alert takeover pops up (sample data). */}
           <Button label="Help button" icon="hand-left" tone="secondary" onPress={addSampleHelpEvent} />
+        </View>
+        {/* Device warnings (section E): banner + alert in the list, no escalation ladder. */}
+        <View style={styles.cell}>
+          <Button label="Low battery" icon="battery-dead" tone="secondary" onPress={sim.lowBattery} />
+        </View>
+        <View style={styles.cell}>
+          <Button label="Disconnect" icon="cloud-offline" tone="secondary" onPress={sim.deviceOffline} />
+        </View>
+        <View style={styles.cell}>
+          <Button label="Band removed?" icon="hand-left" tone="secondary" onPress={sim.possibleRemoval} />
         </View>
         <View style={styles.cell}>
           <Button label="Reset" icon="refresh" tone="ghost" onPress={() => { sim.reset(); resetSampleHelpEvents(); }} />

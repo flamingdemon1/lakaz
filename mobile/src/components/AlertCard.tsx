@@ -18,6 +18,7 @@ const typeIcon: Record<Alert['type'], IconName> = {
   sos: 'megaphone',
   low_battery: 'battery-dead',
   device_offline: 'cloud-offline',
+  possible_removal: 'hand-left',
 };
 
 /** Input: alert. Shows type, status pill, level and age; left edge coloured by status. */

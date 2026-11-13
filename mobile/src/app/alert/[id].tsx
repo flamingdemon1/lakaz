@@ -13,7 +13,7 @@ import { AppText, Button, Card, EmptyState, Screen, SectionTitle, SimulatedTag, 
 import { USE_MOCK } from '@/config';
 import { MOCK_CAREGIVERS } from '@/data/mock';
 import { useLakaz } from '@/data/store';
-import { alertExplainer, alertTitle, clock, timeAgo } from '@/lib/format';
+import { alertAdvice, alertExplainer, alertTitle, clock, ESCALATING, timeAgo } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
 import { colors, radius, space, statusStyles } from '@/theme';
 
@@ -113,10 +113,26 @@ export default function AlertDetail() {
         </Card>
       )}
 
-      <SectionTitle>Escalation</SectionTitle>
-      <Card>
-        <EscalationLadder alert={alert} />
+      <SectionTitle>What to do</SectionTitle>
+      <Card style={styles.advice}>
+        <Ionicons name="bulb" size={20} color={colors.primary} />
+        <AppText style={styles.flex}>{alertAdvice[alert.type]}</AppText>
       </Card>
+      {alert.type === 'possible_removal' ? (
+        <AppText variant="small" color={colors.textMuted}>
+          SAMPLE alert type — not in the shared backend contract yet (needs team approval).
+        </AppText>
+      ) : null}
+
+      {/* Only emergencies climb the ladder; device warnings go to the primary caregiver only. */}
+      {ESCALATING.includes(alert.type) ? (
+        <>
+          <SectionTitle>Escalation</SectionTitle>
+          <Card>
+            <EscalationLadder alert={alert} />
+          </Card>
+        </>
+      ) : null}
 
       {/* Privacy (D10): location shown only for this incident, and history only as "last known". */}
       <LocationCard alert={alert} title={alert.status === 'Resolved' ? 'Last known location (closed)' : 'Location'} mapHeight={240} />
@@ -130,4 +146,6 @@ const styles = StyleSheet.create({
   ackRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   actions: { gap: space.sm },
   resolved: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  advice: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
+  flex: { flex: 1 },
 });

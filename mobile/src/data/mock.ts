@@ -77,7 +77,8 @@ export function mockNewAlert(type: Alert['type'] = 'unexpected_exit'): Alert {
     device_id: 'band-01',
     type,
     // Why SOS jumps straight to Critical: section 9, "any --sos--> Critical, notify everyone now".
-    level: type === 'sos' ? 3 : 0,
+    // Exits start at level 0 (band buzzes). Device warnings go straight to the primary caregiver (level 1).
+    level: type === 'sos' ? 3 : type === 'unexpected_exit' ? 0 : 1,
     status: type === 'sos' ? 'Critical' : 'Active',
     created_at: nowIso(),
     acknowledged_by: null,
@@ -107,6 +108,9 @@ export function mockWalk(a: Alert): Alert {
 export function mockLevelFor(a: Alert, secondsSinceExit: number): Pick<Alert, 'level' | 'status'> {
   if (a.status === 'Acknowledged' || a.status === 'Resolved') return { level: a.level, status: a.status };
   if (a.type === 'sos') return { level: 3, status: 'Critical' };
+  // Why only exits climb the ladder: a low battery or lost signal is a warning for the caregiver,
+  // not a reason to wake up neighbours (section 9 ladder is for the person being missing).
+  if (a.type !== 'unexpected_exit') return { level: a.level, status: a.status };
   if (secondsSinceExit >= DEMO_LADDER_S.l3) return { level: 3, status: 'Critical' };
   if (secondsSinceExit >= DEMO_LADDER_S.l2) return { level: 2, status: 'Active' };
   if (secondsSinceExit >= DEMO_LADDER_S.l1) return { level: 1, status: 'Active' };

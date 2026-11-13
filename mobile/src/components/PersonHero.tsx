@@ -1,6 +1,6 @@
 /**
  * PersonHero.tsx — the top of Home: who, where (home / left home), since when. "Night glow" design.
- * Owner: Person 3/4 (Zuhayr).
+ * Owner: Person 3/4 (Fahim, Zuhayr).
  *
  * A status card (Zuhayr asked to keep the "rectangle" from the earlier design): avatar tile, status label,
  * age · area, then ONE huge word for where she is ("At home" / "Left home") with a pill for how long.
@@ -32,8 +32,12 @@ export function PersonHero({ status }: { status: DeviceStatus | null }) {
   const { band } = useBand();
   const { t } = useAuth();
   const words = homeStatusWords(status?.status);
-  const name = SUPABASE_ENABLED ? (band?.wearer_name ?? 'Wearer details unavailable') : (status?.person_name ?? MOCK_PERSON.name);
-  const first = name.split(' ')[0];
+  const wearerName = SUPABASE_ENABLED ? band?.wearer_name?.trim() : (status?.person_name ?? MOCK_PERSON.name);
+  const name = wearerName || band?.label?.trim() || t('band');
+  // A band label is useful identification, but must never become a person's name in sentences.
+  const first = wearerName ? wearerName.split(' ')[0] : t('heroThem');
+  const age = SUPABASE_ENABLED ? band?.wearer_age : MOCK_PERSON.age;
+  const area = SUPABASE_ENABLED ? band?.wearer_area?.trim() : MOCK_PERSON.area;
 
   // Same rule as the alert itself (statusStyles): Active = amber while the ladder climbs,
   // Critical = red at step 3 (community). Keeps Home and the takeover in agreement.
@@ -62,15 +66,15 @@ export function PersonHero({ status }: { status: DeviceStatus | null }) {
       ? t('heroSubSafe')
       : out
         ? `${status?.level != null ? fill(t('heroStep'), { n: status.level }) + ' ' : ''}${t('heroSubOut')}`
-        : fill(t('heroSubWaiting'), { name: first });
+        : fill(t(wearerName ? 'heroSubWaiting' : 'heroNeutralWaiting'), { name: first });
 
   // Colour code: RED = someone pressed for help, BLUE = a carer is handling it, GREEN = nothing open.
   if (live === 'NEEDS_HELP') {
     tone = { fg: colors.danger, soft: colors.dangerSoft, label: t('heroLabelNeeds'), big: t('heroNeedsHelp'), pill: fill(t('heroWaitingFor'), { t: since }), icon: 'megaphone' as IconName };
-    sub = fill(t('heroSubNeeds'), { name: first });
+    sub = fill(t(wearerName ? 'heroSubNeeds' : 'heroNeutralNeeds'), { name: first });
   } else if (live === 'HELP_COMING') {
     tone = { fg: colors.info, soft: colors.infoSoft, label: t('heroLabelComing'), big: t('heroHelpComing'), pill: fill(t('heroHandledFor'), { t: since }), icon: 'person-circle' as IconName };
-    sub = fill(t('heroSubComing'), { name: first });
+    sub = fill(t(wearerName ? 'heroSubComing' : 'heroNeutralComing'), { name: first });
   } else if (live === 'ALL_CLEAR') {
     tone = { fg: colors.safe, soft: colors.safeSoft, label: t('heroLabelClear'), big: t('heroAllClear'), pill: t('heroPillLive'), icon: 'shield-checkmark' as IconName };
     sub = t('heroSubClear');
@@ -105,9 +109,11 @@ export function PersonHero({ status }: { status: DeviceStatus | null }) {
             {out ? <PulseRings color={tone.fg} size={56} /> : null}
             <Breathe active={live ? live === 'ALL_CLEAR' : words.tone === 'calm'}>
               <View style={styles.avatar}>
-                <AppText variant="heading" color={colors.white}>
-                  {name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2)}
-                </AppText>
+                {wearerName ? (
+                  <AppText variant="heading" color={colors.white}>
+                    {wearerName.split(/\s+/).map((part) => part[0]).join('').slice(0, 2)}
+                  </AppText>
+                ) : <Ionicons name="watch" size={26} color={colors.white} />}
               </View>
             </Breathe>
           </View>
@@ -119,7 +125,7 @@ export function PersonHero({ status }: { status: DeviceStatus | null }) {
               </AppText>
             </View>
             <AppText variant="small" color={colors.textMuted}>
-              {name}{SUPABASE_ENABLED ? (band?.wearer_age != null ? ', ' + band.wearer_age : '') : ', ' + MOCK_PERSON.age} · {SUPABASE_ENABLED ? (band?.wearer_area ?? 'Area unavailable') : MOCK_PERSON.area}
+              {name}{age != null ? ', ' + age : ''}{area ? ' · ' + area : ''}
             </AppText>
           </View>
         </View>

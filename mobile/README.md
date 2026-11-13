@@ -20,9 +20,11 @@ Open the localhost URL Expo prints and add `/signup` (usually `http://localhost:
 
 Create an account with your email, enter the code from your inbox, then log in with your Lakaz password. **Forgot password** sends a separate recovery code. New accounts see band alerts after a project admin links them to a band. See the [backend account setup](../backend/README.md#carer-accounts-and-email).
 
-The Alerts tab reads live help requests. The GPS, safe-zone and device-status demonstrations still use sample data. To try the sample account flow, set both Supabase variables in `.env.example` to empty values in a local `.env`.
+The Alerts tab, Home and Incident read Supabase help requests and their acknowledgement/resolution lifecycle. Wearer details and band online/offline use Supabase when the wearer/heartbeat migration and endpoint are deployed. GPS, safe zones and the escalation demo remain simulated. To try the sample account flow, set `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` to empty strings in a local `.env`, then restart Expo. There is no `USE_MOCK` switch.
 
 ## AI tools used
 - OpenAI Codex: added the safety history filters and acknowledgement display.
 - Claude Code (with the ui-ux-pro-max skill): built the screens, theme, mock data layer and responder page. The owners review every file.
 - Claude Code also built the district health-facility lookup (`src/app/facilities.tsx`, `src/data/facilities.ts`) on Shihad's `public.facilities` table; tested against the live Supabase data.
+
+Wearer fallback uses a linked band label when its wearer name is missing, a watch avatar, and hides absent age/area. Codex implemented this fallback and checked the translation dictionaries. Kreol lines marked `// CHECK` need native-speaker review.

@@ -2,7 +2,7 @@
 
 **Life Powered by Tech · Middlesex University Mauritius · 13–14 November 2026**
 **Theme:** Powered to Protect — trusted-contact alerts and support for people at risk.
-**Status:** Kick-off documentation. App, firmware, dataset integration and demo are not yet verified.
+**Status:** Live Supabase alerts, browser acknowledgement and the district lookup have been tested. The physical ESP32 and phone tests are pending.
 
 ## Problem and user
 
@@ -14,7 +14,7 @@ Press a button on the ESP32 → send an authenticated event → save it in Supab
 
 ## Real Mauritian data
 
-Candidate: [Ministry of Health and Wellness, Family Planning and Demographic Yearbook 2024, Appendix I.4](https://health.govmu.org/health/wp-content/uploads/2026/02/YEARBOOK-2024-1.pdf). Use actual facility names, types and districts to power a district-filtered facility lookup from the alert screen. The carer picks a district; no GPS or medical routing needed. Do not infer current opening hours or availability. Record source page, extraction date, cleaning decisions and reuse terms before publishing extracted data. If terms are unclear, link to the source and confirm a reusable alternative. A live ESP32 event does not replace the requirement for a real local dataset powering an app feature.
+[Open Data Mauritius healthcare facility locations CSV](https://data.govmu.org/dataset/locations-hospitals-clinics-medi-clinics-area-health-centres-and-community-health-centres) (Mauritius Digital Promotion Agency; [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); portal last updated 30 September 2024, checked 13 November 2026). The directory uses 169 records from nine districts. See the [backend README](backend/README.md#mauritian-healthcare-facility-lookup) for the data changes, migration and frontend contract. The migration is live; browser checks returned Moka (14), Plaines Wilhems (32) and Flacq (30).
 
 ## Stack and team
 
@@ -50,9 +50,9 @@ Never commit Wi-Fi credentials, device tokens, privileged Supabase keys, real we
 
 | Tool used | What it was used for |
 |---|---|
-| OpenAI ChatGPT / Codex | Drafted the kick-off README, collaboration instructions, proposed interface and submission checklist. |
+| OpenAI ChatGPT / Codex | Drafted the kick-off README, collaboration instructions, proposed interface and submission checklist. Also converted and checked the facilities CSV for the database migration. |
 | Anthropic Claude | Team tool; specific uses to be recorded by its users. |
-| Google Gemini | Team tool; specific uses to be recorded by its users. |
+| Google Gemini | Team tool; drafted, verified and committed database schema migration with RLS policies, acknowledge_alert and submit_device_event RPCs on feat/backend-db. |
 
 Append actual uses as work happens, including code, UI, data cleaning or pitch assistance. Each teammate should be able to explain and change their own work in Q&A.
 

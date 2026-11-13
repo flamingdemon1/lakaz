@@ -8,6 +8,7 @@
  * Data is a labelled SAMPLE until Supabase is ready (see src/data/helpAlert.ts).
  */
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
@@ -18,9 +19,11 @@ import {
   fetchHelpEvents,
   HelpEvent,
   IS_SAMPLE,
+  NOT_SIGNED_IN,
   onHelpEventsChanged,
   resetSampleHelpEvents,
 } from '@/data/helpAlert';
+import { resetTo } from '@/lib/nav';
 import { usePolling } from '@/lib/usePolling';
 import { clock, timeAgo } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
@@ -67,8 +70,8 @@ export default function HelpAlertScreen() {
       <View style={styles.topRow}>
         {IS_SAMPLE ? <SimulatedTag text="SAMPLE DATA" /> : null}
         <AppText variant="small" color={colors.textMuted} style={styles.flex}>
-          {/* Honest wording: polling isn't built yet, so we don't claim automatic updates. */}
-          {IS_SAMPLE ? 'Supabase not connected yet. Refreshes every 5 s.' : 'Refreshes every 5 s while open.'}
+          {/* Honest wording: we poll every 5 s while open — no background notifications. */}
+          {IS_SAMPLE ? 'Supabase not connected (no key). Refreshes every 5 s.' : 'Live from Supabase · refreshes every 5 s while open.'}
         </AppText>
         <Pressable
           onPress={() => load()}
@@ -81,11 +84,22 @@ export default function HelpAlertScreen() {
         </Pressable>
       </View>
 
+      {/* Mauritian dataset feature: read-only, separate screen, so it can never break the alert flow below. */}
+      <Button label="Find a health facility" icon="medkit" tone="secondary" onPress={() => router.push('/facilities')} />
+
       {events === null && !loadError ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
           <AppText color={colors.textMuted}>Loading alerts…</AppText>
         </View>
+      ) : loadError === NOT_SIGNED_IN ? (
+        // Supabase is on but nobody is signed in: RLS would return nothing, so ask for the carer account.
+        <EmptyState
+          icon="log-in"
+          title="Sign in to see real alerts"
+          body="Use the carer account the backend team created for you."
+          action={<Button label="Go to log in" icon="log-in" onPress={() => resetTo('/login')} />}
+        />
       ) : loadError ? (
         <EmptyState
           icon="cloud-offline"

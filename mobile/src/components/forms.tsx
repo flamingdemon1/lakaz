@@ -120,6 +120,8 @@ export function SampleCodeHint() {
 /** Three-way language switch (English / Français / Kreol). */
 export function LanguagePicker() {
   const { lang, setLang, t } = useAuth();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   return (
     <View style={styles.field}>
       <AppText variant="smallBold">{t('language')}</AppText>
@@ -129,7 +131,18 @@ export function LanguagePicker() {
           return (
             <Pressable
               key={l}
-              onPress={() => setLang(l)}
+              disabled={saving || on}
+              onPress={async () => {
+                setSaving(true);
+                setError(null);
+                try {
+                  await setLang(l);
+                } catch (e) {
+                  setError((e as Error).message);
+                } finally {
+                  setSaving(false);
+                }
+              }}
               accessibilityRole="radio"
               accessibilityState={{ checked: on }}
               aria-checked={on} // web screen readers
@@ -141,6 +154,7 @@ export function LanguagePicker() {
           );
         })}
       </View>
+      <FormError message={error} />
     </View>
   );
 }

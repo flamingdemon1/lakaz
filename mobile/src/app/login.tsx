@@ -98,10 +98,8 @@ export default function Login() {
         <LinkButton label={t('forgotPassword')} onPress={() => router.push('/forgot-password')} />
       </Card>
 
-      {SUPABASE_ENABLED ? (
+      {SUPABASE_ENABLED && (
         <LinkButton label="Send a new verification code" onPress={() => { if (!busy) void onVerifyEmail(); }} />
-      ) : (
-        <Button label={t('useCode')} icon="keypad" tone="secondary" onPress={() => router.push('/otp')} />
       )}
 
       <View style={styles.row}>

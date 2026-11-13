@@ -83,7 +83,6 @@ export default function RootLayout() {
           {/* Account screens (SAMPLE auth, src/data/auth.tsx). */}
           <Stack.Screen name="signup" options={{ title: '', headerBackTitle: 'Back' }} />
           <Stack.Screen name="verify" options={{ title: '', headerBackTitle: 'Back' }} />
-          <Stack.Screen name="otp" options={{ title: '', headerBackTitle: 'Back' }} />
           <Stack.Screen name="forgot-password" options={{ title: '', headerBackTitle: 'Back' }} />
           <Stack.Screen name="security" options={{ title: 'Account security', headerBackTitle: 'Back' }} />
           <Stack.Screen name="trusted" options={{ title: 'Trusted circle', headerBackTitle: 'Back' }} />

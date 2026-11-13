@@ -1,7 +1,7 @@
 /**
  * app/(tabs)/profile.tsx — PROFILE: personal info (edit), verification badges, language,
  * links to trusted family & caregivers and account security, log out.
- * Owner: Person 3/4 (Zuhayr). SAMPLE account data (src/data/auth.tsx).
+ * Owner: Person 3/4 (Zuhayr). Uses the signed-in carer profile in live mode.
  */
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -13,7 +13,7 @@ import { AppText, Button, Card, IconName, Screen, SectionTitle, SimulatedTag } f
 import { SUPABASE_ENABLED } from '@/config';
 import { useAuth } from '@/data/auth';
 import { resetTo } from '@/lib/nav';
-import { checkEmail, checkName, checkPhone } from '@/lib/validate';
+import { checkEmail, checkName, checkPhone, normalisePhone } from '@/lib/validate';
 import { colors, radius, space, statusStyles, TOUCH } from '@/theme';
 
 /** Profile tab. */
@@ -28,10 +28,14 @@ export default function Profile() {
   // Fill the form from the account (and again if the account changes).
   useEffect(() => {
     if (user) setF({ name: user.name, email: user.email, phone: user.phone.replace('+230', '') });
-  }, [user]);
+  }, [user?.id, user?.name, user?.email, user?.phone]);
 
-  const errs = { name: checkName(f.name), email: checkEmail(f.email), phone: checkPhone(f.phone) };
-  const dirty = !!user && (f.name !== user.name || f.email !== user.email || `+230${f.phone.replace(/\D/g, '')}` !== user.phone);
+  const errs = {
+    name: SUPABASE_ENABLED && f.name.trim().length > 100 ? 'Use at most 100 characters.' : checkName(f.name),
+    email: SUPABASE_ENABLED ? null : checkEmail(f.email),
+    phone: SUPABASE_ENABLED && !f.phone.trim() ? null : checkPhone(f.phone),
+  };
+  const dirty = !!user && (f.name !== user.name || f.email !== user.email || (normalisePhone(f.phone) ?? '') !== user.phone);
   const set = (k: keyof typeof f) => (v: string) => {
     setSaved(false);
     setF((s) => ({ ...s, [k]: v }));
@@ -56,7 +60,7 @@ export default function Profile() {
 
   /** Log out and go back to the login screen. */
   const onLogout = () => {
-    logout();
+    void logout();
     resetTo('/login');
   };
 
@@ -82,14 +86,15 @@ export default function Profile() {
       </View>
 
       <SectionTitle>{t('personalInfo')}</SectionTitle>
-      {SUPABASE_ENABLED ? (
-        <Card style={styles.gap}>
-          <AppText>{user?.email}</AppText>
-          <VerifiedBadge ok={!!user?.email_verified} />
-        </Card>
-      ) : <Card style={styles.gap}>
+      <Card style={styles.gap}>
         <TextField label={t('fullName')} value={f.name} onChangeText={set('name')} error={tried ? errs.name : null} />
-        <TextField
+        {SUPABASE_ENABLED ? (
+          <View>
+            <AppText variant="smallBold">{t('email')}</AppText>
+            <AppText>{user?.email}</AppText>
+            <VerifiedBadge ok={!!user?.email_verified} />
+          </View>
+        ) : <TextField
           label={t('email')}
           value={f.email}
           onChangeText={set('email')}
@@ -97,15 +102,15 @@ export default function Profile() {
           autoCapitalize="none"
           error={tried ? errs.email : null}
           right={<VerifiedBadge ok={!!user?.email_verified} />}
-        />
+        />}
         <TextField
           label={t('phone')}
           value={f.phone}
           onChangeText={set('phone')}
           keyboardType="phone-pad"
-          helper="+230 is added for you."
+          helper={SUPABASE_ENABLED ? "Optional contact number. +230 is added for you." : "+230 is added for you."}
           error={tried ? errs.phone : null}
-          right={<VerifiedBadge ok={!!user?.phone_verified} />}
+          right={SUPABASE_ENABLED ? undefined : <VerifiedBadge ok={!!user?.phone_verified} />}
         />
         <FormError message={error} />
         <Button
@@ -115,7 +120,7 @@ export default function Profile() {
           disabled={!dirty && !saved}
           onPress={onSave}
         />
-      </Card>}
+      </Card>
 
       <LanguagePicker />
 

@@ -8,6 +8,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { CallContacts } from '@/components/CallContacts';
 import { EscalationLadder } from '@/components/EscalationLadder';
 import { LocationCard } from '@/components/LocationCard';
 import { AppText, Button, Card, EmptyState, IconName, Screen, SectionTitle, SimulatedTag, StatusPill } from '@/components/ui';
@@ -118,6 +119,14 @@ export default function AlertDetail() {
           <AppText variant="bodyBold">Resolved — Marie-Claire is safe.</AppText>
         </Card>
       )}
+
+      {/* Section F: call emergency contacts (sample numbers never dialled; 999/114 need a 2nd tap). */}
+      {alert.status !== 'Resolved' ? (
+        <>
+          <SectionTitle>Call</SectionTitle>
+          <CallContacts personId={alert.person_id} alertId={alert.alert_id} />
+        </>
+      ) : null}
 
       <SectionTitle>What to do</SectionTitle>
       <Card style={styles.advice}>

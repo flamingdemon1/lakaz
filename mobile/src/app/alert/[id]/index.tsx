@@ -13,7 +13,7 @@ import { EscalationLadder } from '@/components/EscalationLadder';
 import { LocationCard } from '@/components/LocationCard';
 import { AppText, Button, Card, EmptyState, IconName, Screen, SectionTitle, SimulatedTag, StatusPill } from '@/components/ui';
 import { USE_MOCK } from '@/config';
-import { TimelineEntry, useEscalation } from '@/data/escalation';
+import { communityBlockedReason, TimelineEntry, useEscalation } from '@/data/escalation';
 import { MOCK_CAREGIVERS } from '@/data/mock';
 import { useLakaz } from '@/data/store';
 import { alertAdvice, alertExplainer, alertTitle, clock, ESCALATING, timeAgo } from '@/lib/format';
@@ -24,7 +24,7 @@ import { colors, radius, space, statusStyles } from '@/theme';
 export default function AlertDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { alerts, acknowledge, resolve, escalateNow, me } = useLakaz();
-  const { timeline: timelineOf } = useEscalation();
+  const { timeline: timelineOf, settings: escSettings } = useEscalation();
   const now = useNow();
   const [busy, setBusy] = useState<'ack' | 'resolve' | 'escalate' | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -41,8 +41,10 @@ export default function AlertDetail() {
   const s = statusStyles[alert.status];
   const canAck = alert.status === 'Active' || alert.status === 'Critical';
   const canResolve = alert.status !== 'Resolved';
-  // Escalate only open, unacknowledged emergencies that aren't at the top yet.
-  const canEscalate = canAck && alert.level < 3 && USE_MOCK;
+  // Escalate only open, unacknowledged emergencies that aren't at the top yet. The top is step 2 when the
+  // community rules block step 3 — then the button would do nothing, so hide it.
+  const top = communityBlockedReason(alert, escSettings) === null ? 3 : 2;
+  const canEscalate = canAck && alert.level < top && USE_MOCK;
   const timeline = timelineOf(alert.alert_id);
   const ackName = alert.acknowledged_by
     ? alert.acknowledged_by === me?.id

@@ -62,10 +62,11 @@ void buzzTick() {
   if (patIdx % 2 == 0) buzzerOn(); else buzzerOff();
 }
 
-// ---- help request to Supabase: {"event_id": <uuid v4>, "kind": "help_requested"} ----
+// ---- events to Supabase: {"event_id": <uuid v4>, "kind": "help_requested" | "left_home" | "back_home"} ----
 // The function accepts exactly these two keys. A retry reuses the same event_id,
-// so the backend stores one alert per press.
-char pendingHelp[5][37];
+// so the backend stores one row per press / departure / return.
+struct Pending { char id[37]; char kind[16]; };
+Pending pending[5];
 int pendingCount = 0;
 
 void newUuid(char* out) {
@@ -78,7 +79,7 @@ void newUuid(char* out) {
 }
 
 // Returns the HTTP status, or a negative number when the request never reached the server.
-int postHelp(const char* eventId) {
+int postEvent(const char* eventId, const char* kind) {
   if (WiFi.status() != WL_CONNECTED) return -1;
   WiFiClientSecure tls;
   tls.setInsecure();   // shortcut: no certificate check; upgrade: tls.setCACert(<Supabase root CA>)
@@ -88,7 +89,7 @@ int postHelp(const char* eventId) {
   http.addHeader("Authorization", "Bearer " DEVICE_TOKEN);
   http.setTimeout(8000);
   char body[96];
-  snprintf(body, sizeof body, "{\"event_id\":\"%s\",\"kind\":\"help_requested\"}", eventId);
+  snprintf(body, sizeof body, "{\"event_id\":\"%s\",\"kind\":\"%s\"}", eventId, kind);
   Serial.println(body);
   int code = http.POST((uint8_t*)body, strlen(body));
   if (code > 0) Serial.printf("   server replied %d: %s\n", code, http.getString().c_str());   // backend's JSON, never the token
@@ -98,26 +99,33 @@ int postHelp(const char* eventId) {
 }
 
 // true = finished (delivered or permanently rejected); false = try again later
-bool deliverHelp(const char* eventId) {
-  int code = postHelp(eventId);
-  if (code == 200) { Serial.println("   help alert delivered: carer app will show it"); return true; }
+bool deliver(const char* eventId, const char* kind) {
+  int code = postEvent(eventId, kind);
+  if (code == 200) { Serial.printf("   %s delivered: carer app will show it\n", kind); return true; }
   if (code == 401) { Serial.println("   REJECTED 401: check DEVICE_TOKEN in secrets.h"); return true; }
   if (code >= 400 && code < 500) { Serial.printf("   REJECTED %d: request format\n", code); return true; }
   Serial.printf("   not delivered (%d), retrying with the same event_id\n", code);
   return false;
 }
 
-void requestHelp() {
+// Sends one event now; if it can't get through, queues it and retryHelp() resends it (same event_id).
+void sendEvent(const char* kind) {
   char id[37];
   newUuid(id);
-  if (deliverHelp(id)) return;
-  if (pendingCount < 5) strcpy(pendingHelp[pendingCount++], id);
-  else Serial.println("   too many unsent help alerts; this one is dropped");
+  if (deliver(id, kind)) return;
+  if (pendingCount < 5) {
+    strcpy(pending[pendingCount].id, id);
+    strncpy(pending[pendingCount].kind, kind, sizeof pending[0].kind - 1);
+    pending[pendingCount].kind[sizeof pending[0].kind - 1] = '\0';
+    pendingCount++;
+  } else Serial.println("   too many unsent events; this one is dropped");
 }
 
+void requestHelp() { sendEvent("help_requested"); }
+
 void retryHelp() {
-  if (!pendingCount || !deliverHelp(pendingHelp[0])) return;
-  for (int i = 1; i < pendingCount; i++) strcpy(pendingHelp[i - 1], pendingHelp[i]);
+  if (!pendingCount || !deliver(pending[0].id, pending[0].kind)) return;
+  for (int i = 1; i < pendingCount; i++) pending[i - 1] = pending[i];
   pendingCount--;
 }
 
@@ -217,11 +225,13 @@ void loop() {
     if (!home && strongSince && now - strongSince >= HOME_MS) {
       home = true; stopBuzz();
       Serial.println(">>> BACK HOME (buzzer off)");
+      sendEvent("back_home");   // Supabase: app shows "back home"
       tellLaptop("back_home");
     }
     if (home && weakSince && now - weakSince >= AWAY_MS) {
       home = false; buzz(P_AWAY, true);
       Serial.println(">>> LEFT HOME (buzzer on, short press stops it)");
+      sendEvent("left_home");   // Supabase: app shows the "Left home" takeover
       tellLaptop("left_home");
     }
   }
@@ -232,6 +242,6 @@ void loop() {
   if (now - lastPrint >= 2000) {
     lastPrint = now;
     const char* state = !anchorEverSeen ? "WAITING FOR HOME BEACON" : (home ? "AT HOME" : "LEFT HOME");
-    Serial.printf("%s | signal %d%s\n", state, rssi, pendingCount ? " | help alert waiting to send" : "");
+    Serial.printf("%s | signal %d%s\n", state, rssi, pendingCount ? " | unsent events queued" : "");
   }
 }

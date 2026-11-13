@@ -114,7 +114,8 @@ export default function Profile() {
       <LanguagePicker />
 
       <Card style={styles.list}>
-        <Row icon="people" label={t('trustedCircle')} onPress={() => router.push('/trusted')} />
+        {/* Guardians are now managed per person (People tab → person → Guardians). */}
+        <Row icon="people" label={t('people')} onPress={() => router.push('/people')} />
         <Row icon="lock-closed" label={t('security')} onPress={() => router.push('/security')} last />
       </Card>
 

@@ -1,5 +1,5 @@
 ﻿/**
- * app/(tabs)/_layout.tsx — bottom tabs for the caregiver app (Home · Alerts · Band · Profile).
+ * app/(tabs)/_layout.tsx — bottom tabs for the caregiver app (Home · People · Alerts · Profile).
  * Owner: Person 3 (Fahim, Zuhayr).
  * Also mounts <IncomingAlert/>, so a new alert takes over the screen whatever tab you are on.
  * Max 4 tabs on purpose: fewer choices for a stressed caregiver.
@@ -37,6 +37,10 @@ export default function TabsLayout() {
           options={{ title: t('home'), tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color as string} size={size} /> }}
         />
         <Tabs.Screen
+          name="people"
+          options={{ title: t('people'), tabBarIcon: ({ color, size }) => <Ionicons name="people" color={color as string} size={size} /> }}
+        />
+        <Tabs.Screen
           name="alerts"
           options={{
             title: t('alerts'),
@@ -47,7 +51,8 @@ export default function TabsLayout() {
         />
         <Tabs.Screen
           name="device"
-          options={{ title: t('band'), tabBarIcon: ({ color, size }) => <Ionicons name="watch" color={color as string} size={size} /> }}
+          // Hidden from the tab bar: device connection now lives on each person's page. Route still works (/device).
+          options={{ title: t('band'), href: null }}
         />
         <Tabs.Screen
           name="profile"

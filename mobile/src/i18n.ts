@@ -17,6 +17,11 @@ export type Lang = 'en' | 'fr' | 'mfe';
 export const LANG_NAMES: Record<Lang, string> = { en: 'English', fr: 'Français', mfe: 'Kreol' };
 
 const en = {
+  heroThem: 'them',
+  heroNeutralWaiting: 'Waiting for a band update to check on {name}.',
+  heroNeutralNeeds: 'The help button was pressed. Open the alert to help {name}.',
+  heroNeutralComing: 'A caregiver is responding. Check on {name} before closing the alert.',
+
   appTagline: 'When they leave, you know.',
   loginHeadline: 'Notice.\nRespond.\nBring home.',
   login: 'Log in',
@@ -213,6 +218,11 @@ const en = {
 export type TKey = keyof typeof en;
 
 const fr: Record<TKey, string> = {
+  heroThem: 'la personne',
+  heroNeutralWaiting: 'En attente du bracelet pour vérifier la situation de {name}.',
+  heroNeutralNeeds: "Le bouton d’aide a été appuyé. Ouvrez l’alerte pour aider {name}.",
+  heroNeutralComing: "Un aidant intervient. Vérifiez que {name} est en sécurité avant de clôturer l’alerte.",
+
   appTagline: 'Quand ils sortent, vous le savez.',
   loginHeadline: 'Voir.\nAgir.\nRamener.', // to check with a native speaker
   login: 'Se connecter',
@@ -382,8 +392,8 @@ const fr: Record<TKey, string> = {
   heroLabelNeeds: "BOUTON D'AIDE APPUYÉ",
   heroLabelComing: "QUELQU'UN S'EN OCCUPE",
   heroPillLive: "En direct",
-  heroWaitingFor: "Attend depuis {t}",
-  heroHandledFor: "Pris en charge {t}",
+  heroWaitingFor: "En attente depuis {t}",
+  heroHandledFor: "Pris en charge depuis {t}",
   heroSubClear: "Rien ne demande votre attention. Vérifié toutes les 5 s.",
   heroSubNeeds: "{name} a appuyé sur le bouton d'aide. Ouvrez l'alerte ci-dessous.",
   heroSubComing: "Un aidant s'en occupe. Clôturez l'alerte quand {name} est en sécurité.",
@@ -407,6 +417,11 @@ const fr: Record<TKey, string> = {
 };
 
 const mfe: Record<TKey, string> = {
+  heroThem: 'li',
+  heroNeutralWaiting: 'Pe atann enn nouvel depi brasle pou verifye kouma {name} ete.', // CHECK
+  heroNeutralNeeds: 'Kikenn finn apiy bouton sekour. Ouver lalert pou ed {name}.', // CHECK
+  heroNeutralComing: 'Enn dimounn pe vini pou ede. Get si {name} an sekirite avan ferm lalert.', // CHECK
+
   appTagline: 'Kan li sorti, ou kone.',
   loginHeadline: 'Trouve.\nReponn.\nRamenn lakaz.', // to check with a native speaker
   login: 'Konekte',
@@ -573,13 +588,13 @@ const mfe: Record<TKey, string> = {
   heroNeedsHelp: "Bizin sekour",
   heroHelpComing: "Sekour pe vini",
   heroLabelClear: "OKENN DEMANN SEKOUR OUVER",
-  heroLabelNeeds: "BOUTON SEKOUR FINN APE",
+  heroLabelNeeds: "BOUTON SEKOUR FINN APIYE",
   heroLabelComing: "KIKENN PE OKIP LI",
   heroPillLive: "An direk",
   heroWaitingFor: "Pe atann {t}",
-  heroHandledFor: "Pran an sarz {t}",
+  heroHandledFor: "Pe pran an sarz depi {t}",
   heroSubClear: "Nanye pa bizin ou aster-la. Verifie sak 5 s.",
-  heroSubNeeds: "{name} finn ape bouton sekour. Ouver lalert anba-la.",
+  heroSubNeeds: "{name} finn apiy bouton sekour. Ouver lalert anba-la.",
   heroSubComing: "Enn dimounn pe okip li. Ferm lalert kan {name} an sekirite.",
   tlPressed: "Bouton sekour finn ape lor brasle",
   tlAcked: "Pran an sarz par {who}",

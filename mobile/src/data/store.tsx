@@ -22,6 +22,8 @@ import {
   mockStatusHome,
   mockWalk,
 } from '@/data/mock';
+import { communityBlockedReason, useEscalation } from '@/data/escalation';
+import { useNotify } from '@/data/notify';
 import type { Alert, ConnectionMode, Device, DeviceStatus } from '@/types';
 
 interface LakazState {
@@ -44,9 +46,22 @@ interface LakazActions {
   dismissIncoming: () => void;
   login: () => void;
   logout: () => void;
+  /** Push an open incident one level up now (SAMPLE mode only). */
+  escalateNow: (id: string) => Promise<void>;
   /** SIMULATED buttons — only work in mock mode (the real band/simulator page drives live mode). */
-  sim: { leaveHome: () => void; sos: () => void; backHome: () => void; reset: () => void };
+  sim: {
+    leaveHome: () => void;
+    sos: () => void;
+    backHome: () => void;
+    reset: () => void;
+    lowBattery: () => void;
+    deviceOffline: () => void;
+    possibleRemoval: () => void;
+  };
 }
+
+/** Alerts that take over the whole screen (emergencies). Everything else is a banner. */
+export const isTakeover = (a: Alert) => a.type === 'unexpected_exit' || a.type === 'sos';
 
 const Ctx = createContext<(LakazState & LakazActions) | null>(null);
 
@@ -67,6 +82,38 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
   const [incoming, setIncoming] = useState<Alert | null>(null);
   const [me, setMe] = useState<LakazState['me']>(null);
   const socketRef = useRef<Socket | null>(null);
+  // SAMPLE: when true the fake heartbeat stops, so the band really looks disconnected (20 s rule).
+  const heartbeatPaused = useRef(false);
+
+  // Why a ref: the socket listener is created once, but must always call the newest push().
+  const { push } = useNotify();
+  // Escalation settings (timers, community rules), read inside the 1 s tick through a ref.
+  const esc = useEscalation();
+  const escRef = useRef(esc);
+  escRef.current = esc;
+  const pushRef = useRef(push);
+  pushRef.current = push;
+
+  /**
+   * Routes a new alert to the right kind of notification:
+   * SOS / unexpected exit → full-screen takeover (IncomingAlert); everything else → banner.
+   * Why: a low battery is important but not an emergency — it must not take over the screen.
+   */
+  const announce = useCallback((a: Alert, sample: boolean) => {
+    if (isTakeover(a)) {
+      setIncoming(a);
+      return;
+    }
+    const href = { pathname: '/alert/[id]', params: { id: a.alert_id } };
+    const name = 'Marie-Claire';
+    if (a.type === 'low_battery') {
+      pushRef.current({ category: 'low_battery', title: `${name}'s band battery is low`, body: 'Charge it soon so tracking keeps working', href, sample });
+    } else if (a.type === 'device_offline') {
+      pushRef.current({ category: 'device_offline', title: `${name}'s band is disconnected`, body: 'No signal for 20 s — check it is charged and in range', href, sample });
+    } else if (a.type === 'possible_removal') {
+      pushRef.current({ category: 'possible_removal', title: `${name} may have taken the band off`, body: 'No movement for 30 min while away from home (a guess)', href, sample });
+    }
+  }, []);
 
   /** Loads everything from the backend once (LIVE mode). */
   const refresh = useCallback(async () => {
@@ -108,7 +155,7 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
     socket.on('status:update', (s: DeviceStatus) => setStatus(s));
     socket.on('alert:new', (a: Alert) => {
       setAlerts((l) => upsert(l, a));
-      setIncoming(a);
+      announce(a, false);
     });
     socket.on('alert:update', (a: Alert) => {
       setAlerts((l) => {
@@ -121,7 +168,7 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
     return () => {
       socket.disconnect();
     };
-  }, [refresh]);
+  }, [refresh, announce]);
 
   // ---------- MOCK mode: SIMULATED data + fake ladder ----------
   useEffect(() => {
@@ -137,13 +184,15 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
     let tick = 0;
     const id = setInterval(() => {
       tick += 1;
-      // Fake heartbeat every 5 s, like the real band (section 6, Person 1).
-      if (tick % 5 === 0) setDevice((d) => (d ? { ...d, last_seen: new Date().toISOString() } : d));
+      // Fake heartbeat every 5 s, like the real band (section 6, Person 1) — unless "disconnected" is simulated.
+      if (tick % 5 === 0 && !heartbeatPaused.current) setDevice((d) => (d ? { ...d, last_seen: new Date().toISOString() } : d));
       setAlerts((list) =>
         list.map((a) => {
           if (a.status === 'Resolved') return a;
           const secs = (Date.now() - new Date(a.created_at).getTime()) / 1000;
-          const next = mockLevelFor(a, secs);
+          // Timers + community rules come from the caregiver's escalation settings (section F).
+          const esc = escRef.current;
+          const next = mockLevelFor(a, secs, esc.timers, communityBlockedReason(a, esc.settings) === null);
           let updated = a;
           if (next.level !== a.level || next.status !== a.status) {
             updated = { ...a, ...next };
@@ -200,16 +249,69 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
     setIncoming(a);
   }, []);
 
-  /** SIMULATED: band hears the anchor again → every open alert Resolved. */
+  /**
+   * SIMULATED: band hears the anchor again → open exit/SOS alerts Resolved + SAFE RETURN notification
+   * (section 9: "any --back_home--> Resolved + safe-return notification").
+   */
   const backHome = useCallback(() => {
-    setAlerts((l) => l.map((a) => (a.status === 'Resolved' ? a : { ...a, status: 'Resolved' })));
+    setAlerts((l) => {
+      const wasAway = l.some((a) => a.status !== 'Resolved' && isTakeover(a));
+      if (wasAway) {
+        pushRef.current({ category: 'safe_return', title: 'Marie-Claire is back home', body: 'The alert was closed automatically', href: { pathname: '/' }, sample: true });
+      }
+      return l.map((a) => (a.status === 'Resolved' || !isTakeover(a) ? a : { ...a, status: 'Resolved' }));
+    });
     setStatus(mockStatusHome());
     setDevice((d) => (d ? { ...d, gps_fix: false } : d));
     setIncoming(null);
   }, []);
 
+  /** SIMULATED: battery drops to 15 % → low_battery alert (banner, no escalation ladder). */
+  const lowBattery = useCallback(() => {
+    const a = mockNewAlert('low_battery');
+    setAlerts((l) => upsert(l, a));
+    setDevice((d) => (d ? { ...d, battery_pct: 15 } : d));
+    announce(a, true);
+  }, [announce]);
+
+  /** SIMULATED: heartbeat stops → device_offline alert; the band shows "Offline" after 20 s. */
+  const deviceOffline = useCallback(() => {
+    heartbeatPaused.current = true;
+    const a = mockNewAlert('device_offline');
+    setAlerts((l) => upsert(l, a));
+    announce(a, true);
+  }, [announce]);
+
+  /** SIMULATED: no movement for a long time while away → POSSIBLE removal (a guess, no skin sensor). */
+  const possibleRemoval = useCallback(() => {
+    const a = mockNewAlert('possible_removal');
+    setAlerts((l) => upsert(l, a));
+    announce(a, true);
+  }, [announce]);
+
   /** SIMULATED: start the demo again from a calm state. */
+  /**
+   * "Escalate now": a caregiver who can't handle it pushes the incident one level up immediately.
+   * SAMPLE only — on the real backend the server owns the ladder (no endpoint for this in section 7.3 yet).
+   * Level 3 still obeys the community rules.
+   */
+  const escalateNow = useCallback(async (id: string) => {
+    if (!USE_MOCK) throw new Error('Not available yet: the server controls escalation (needs a backend endpoint).');
+    setAlerts((l) =>
+      l.map((a) => {
+        if (a.alert_id !== id || a.status === 'Resolved' || a.status === 'Acknowledged' || a.level >= 3) return a;
+        const allowed = communityBlockedReason(a, escRef.current.settings) === null;
+        const level = Math.min(a.level + 1, allowed ? 3 : 2) as Alert['level'];
+        if (level === a.level) return a;
+        const up = { ...a, level, status: level === 3 ? 'Critical' : a.status } as Alert;
+        setIncoming(up);
+        return up;
+      }),
+    );
+  }, []);
+
   const reset = useCallback(() => {
+    heartbeatPaused.current = false;
     setAlerts(mockHistory());
     setStatus(mockStatusHome());
     setDevice(mockDevice());
@@ -232,9 +334,10 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
       dismissIncoming: () => setIncoming(null),
       login: () => setMe({ id: ME.id, name: ME.name }),
       logout: () => setMe(null),
-      sim: { leaveHome, sos, backHome, reset },
+      escalateNow,
+      sim: { leaveHome, sos, backHome, reset, lowBattery, deviceOffline, possibleRemoval },
     }),
-    [alerts, status, device, mode, loading, error, incoming, me, acknowledge, resolve, refresh, leaveHome, sos, backHome, reset],
+    [alerts, status, device, mode, loading, error, incoming, me, acknowledge, resolve, refresh, escalateNow, leaveHome, sos, backHome, reset, lowBattery, deviceOffline, possibleRemoval],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

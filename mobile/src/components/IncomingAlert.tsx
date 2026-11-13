@@ -9,12 +9,36 @@ import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Modal, StyleSheet, View } from 'react-native';
 
+import { PopIn, SlideToConfirm } from '@/components/motion';
 import { AppText, Button, SimulatedTag } from '@/components/ui';
 import { USE_MOCK } from '@/config';
 import { useLakaz } from '@/data/store';
 import { alertExplainer, alertTitle, ladderSteps } from '@/lib/format';
 import { useAlertFeedback } from '@/lib/useAlertFeedback';
-import { colors, MAX_WIDTH, radius, space, statusStyles } from '@/theme';
+import { colors, MAX_WIDTH, motion, radius, space, statusStyles } from '@/theme';
+
+/**
+ * Four bars = the escalation ladder (0 band, 1 primary, 2 secondary, 3 community).
+ * Reached steps are solid; the current one fills up as it arrives, so you SEE it climbing.
+ */
+function LadderBars({ level, color }: { level: number; color: string }) {
+  const fill = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    fill.setValue(0);
+    Animated.timing(fill, { toValue: 1, duration: motion.slow * 2, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+  }, [level, fill]);
+  const width = fill.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
+  return (
+    <View style={styles.bars} accessibilityLabel={`Escalation step ${level} of 3`}>
+      {[0, 1, 2, 3].map((i) => (
+        <View key={i} style={styles.bar}>
+          {i < level ? <View style={[styles.barFill, { width: '100%', backgroundColor: color }]} /> : null}
+          {i === level ? <Animated.View style={[styles.barFill, { width, backgroundColor: color }]} /> : null}
+        </View>
+      ))}
+    </View>
+  );
+}
 
 /** Mounted once in the root layout; shows itself whenever store.incoming is set. */
 export function IncomingAlert() {
@@ -22,11 +46,15 @@ export function IncomingAlert() {
   const { play } = useAlertFeedback();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // After a successful "I've got it" we show a short green "done" moment before closing.
+  const [doneId, setDoneId] = useState<string | null>(null);
   const pulse = useRef(new Animated.Value(1)).current;
 
   // Use the newest copy from the list (status may have changed since it popped up).
   const alert = incoming ? alerts.find((a) => a.alert_id === incoming.alert_id) ?? incoming : null;
-  const visible = !!alert && alert.status !== 'Acknowledged' && alert.status !== 'Resolved';
+  const showingDone = !!alert && doneId === alert.alert_id;
+  // `busy` keeps it open in the instant between "acknowledged" and the success screen (no flash).
+  const visible = !!alert && (busy || showingDone || (alert.status !== 'Acknowledged' && alert.status !== 'Resolved'));
 
   // Sound + vibrate each time a new alert or a new level arrives.
   useEffect(() => {
@@ -57,7 +85,12 @@ export function IncomingAlert() {
     setErr(null);
     try {
       await acknowledge(alert.alert_id);
-      dismissIncoming();
+      setDoneId(alert.alert_id);
+      // Why 1.6 s: long enough to read "You've got it", short enough not to slow a real response.
+      setTimeout(() => {
+        setDoneId(null);
+        dismissIncoming();
+      }, 1600);
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -73,7 +106,22 @@ export function IncomingAlert() {
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={dismissIncoming}>
-      <View style={[styles.backdrop, { backgroundColor: tone.bg }]}>
+      <View style={[styles.backdrop, { backgroundColor: showingDone ? colors.safe : tone.bg }]}>
+        {showingDone ? (
+          <View style={styles.sheet} accessibilityLiveRegion="polite">
+            <PopIn>
+              <View style={[styles.iconWrap, { backgroundColor: colors.safe }]}>
+                <Ionicons name="checkmark" size={52} color={colors.white} />
+              </View>
+            </PopIn>
+            <AppText variant="hero" style={styles.center}>
+              You've got it.
+            </AppText>
+            <AppText color={colors.textMuted} style={styles.center}>
+              The others won't be alerted. Approach calmly, say your name and offer water.
+            </AppText>
+          </View>
+        ) : (
         <View style={styles.sheet} accessibilityViewIsModal accessibilityLiveRegion="assertive">
           {USE_MOCK ? <SimulatedTag /> : null}
           <Animated.View style={[styles.iconWrap, { backgroundColor: tone.soft, transform: [{ scale: pulse }] }]}>
@@ -88,6 +136,7 @@ export function IncomingAlert() {
           <AppText color={colors.textMuted} style={styles.center}>
             {alertExplainer[alert.type]}
           </AppText>
+          <LadderBars level={alert.level} color={tone.bg} />
           <View style={[styles.stepBox, { backgroundColor: tone.soft }]}>
             <AppText variant="smallBold" color={tone.bg}>
               Now: {step.title} — {step.detail}
@@ -99,18 +148,18 @@ export function IncomingAlert() {
             </AppText>
           ) : null}
           <View style={styles.actions}>
-            <Button
-              label="I've got it"
-              icon="hand-left"
-              tone="danger"
-              size="lg"
+            {/* Slide, not tap: stopping the escalation for everyone must never happen from a pocket tap. */}
+            <SlideToConfirm
+              label="Slide — I've got it"
+              color={tone.bg}
               loading={busy}
-              onPress={onAck}
+              onConfirm={onAck}
               accessibilityHint="Tells the other caregivers you are handling this and stops escalation"
             />
             <Button label="See location & details" icon="map" tone="secondary" onPress={onDetails} />
           </View>
         </View>
+        )}
       </View>
     </Modal>
   );
@@ -131,4 +180,7 @@ const styles = StyleSheet.create({
   center: { textAlign: 'center' },
   stepBox: { borderRadius: radius.md, paddingVertical: space.sm, paddingHorizontal: space.md },
   actions: { alignSelf: 'stretch', gap: space.sm, marginTop: space.sm },
+  bars: { flexDirection: 'row', gap: 6, alignSelf: 'stretch' },
+  bar: { flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.muted, overflow: 'hidden' },
+  barFill: { height: '100%', borderRadius: 3 },
 });

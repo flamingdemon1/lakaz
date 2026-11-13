@@ -22,7 +22,10 @@ npx expo start --lan       # scan the QR code with Expo Go (same hotspot); press
 - Live mode: REST `/api/alerts`, `/api/devices/band-01/status`, `/api/devices`, and Socket.IO `status:update`, `alert:new`, `alert:update`.
 - Theme: `src/theme.ts` (colours are placeholders). Maps: `LocationMap.tsx` (phone) and `LocationMap.web.tsx` (Leaflet).
 
+The Alerts tab includes History, resolved emergency Incidents, and Acknowledged filters. Acknowledgements show the caregiver ID supplied by the alert record.
+
 ## AI tools used
+- OpenAI Codex: added the safety history filters and acknowledgement display.
 - Claude Code (with the ui-ux-pro-max skill): built the screens, theme, mock data layer and responder page. The owners review every file.
 
 ## Account screens (SAMPLE auth, branch feat/mobile-auth)

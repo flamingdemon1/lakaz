@@ -13,6 +13,7 @@ import { Avatar, DeviceConnection, ProfileChip } from '@/components/person';
 import { AppText, Button, Card, EmptyState, InfoRow, Screen, SectionTitle } from '@/components/ui';
 import { usePeople } from '@/data/people';
 import { useTracking } from '@/data/tracking';
+import { useZones } from '@/data/zones';
 import { colors, space, TOUCH } from '@/theme';
 
 /** Person detail screen. */
@@ -22,6 +23,7 @@ export default function PersonPage() {
   const tracking = useTracking();
   const p = get(id);
   const trackingOn = !!tracking.get(id).session;
+  const zones = useZones();
   const [showMedical, setShowMedical] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -75,8 +77,15 @@ export default function PersonPage() {
       <Button
         label={trackingOn ? 'Live tracking is ON — open' : 'Location & live tracking'}
         icon={trackingOn ? 'radio' : 'location'}
-        tone={trackingOn ? 'success' : 'secondary'}
+        tone={trackingOn ? 'primary' : 'secondary'}
         onPress={() => router.push({ pathname: '/person/[id]/location', params: { id: p.id } })}
+      />
+      {/* Section D: safe zones & geofencing. */}
+      <Button
+        label={`Safe zones (${zones.zonesOf(p.id).length})`}
+        icon="map"
+        tone="secondary"
+        onPress={() => router.push({ pathname: '/person/[id]/zones', params: { id: p.id } })}
       />
 
       <SectionTitle>Emergency contact</SectionTitle>

@@ -1,6 +1,6 @@
 /**
  * app/security.tsx — ACCOUNT SECURITY: change password, log out, log out of all devices.
- * Owner: Person 3/4 (Zuhayr). SAMPLE only.
+ * Owner: Person 3/4 (Zuhayr). Uses Supabase Auth in live mode.
  */
 import React, { useState } from 'react';
 import { StyleSheet } from 'react-native';
@@ -20,6 +20,8 @@ export default function Security() {
   const [f, setF] = useState({ current: '', next: '', confirm: '' });
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,20 +53,23 @@ export default function Security() {
     }
   };
 
-  /** Both log-out buttons end the session here; "all devices" is the same in the SAMPLE. */
-  const onLogout = () => {
-    logout();
-    resetTo('/login');
+  const onLogout = async (everywhere = false) => {
+    setSigningOut(true);
+    setLogoutError(null);
+    try {
+      await logout(everywhere);
+      resetTo('/login');
+    } catch (e) {
+      setLogoutError((e as Error).message);
+    } finally {
+      setSigningOut(false);
+    }
   };
 
   return (
     <Screen edges={['bottom']}>
       <SectionTitle>{t('changePassword')}</SectionTitle>
-      {SUPABASE_ENABLED ? (
-        <Card style={styles.gap}>
-          <Button label={t('forgotPassword')} icon="mail" tone="secondary" onPress={() => router.push('/forgot-password')} />
-        </Card>
-      ) : <Card style={styles.gap}>
+      <Card style={styles.gap}>
         <PasswordField label={t('currentPassword')} value={f.current} onChangeText={set('current')} autoComplete="current-password" error={tried ? errs.current : null} />
         <PasswordField
           label={t('newPassword')}
@@ -81,18 +86,15 @@ export default function Security() {
             ✓ {t('saved')}
           </AppText>
         ) : null}
-        <Button label={t('changePassword')} icon="key" loading={busy} onPress={onChange} />
-      </Card>}
+        <Button label={t('changePassword')} icon="key" loading={busy} disabled={signingOut} onPress={onChange} />
+        {SUPABASE_ENABLED && <Button label={t('forgotPassword')} icon="mail" tone="secondary" disabled={busy || signingOut} onPress={() => router.push('/forgot-password')} />}
+      </Card>
 
       <SectionTitle>{t('logout')}</SectionTitle>
       <Card style={styles.gap}>
-        <Button label={t('logout')} icon="log-out" tone="secondary" onPress={onLogout} />
-        {!SUPABASE_ENABLED && <>
-        <Button label={t('logoutAll')} icon="phone-portrait" tone="danger" onPress={onLogout} />
-        <AppText variant="small" color={colors.textMuted}>
-          Use this if you lost your phone. (SAMPLE: same as log out for now.)
-        </AppText>
-        </>}
+        <Button label={t('logout')} icon="log-out" tone="secondary" disabled={busy || signingOut} onPress={() => onLogout()} />
+        {SUPABASE_ENABLED && <Button label={t('logoutAll')} icon="phone-portrait" tone="danger" loading={signingOut} disabled={busy || signingOut} onPress={() => onLogout(true)} />}
+        <FormError message={logoutError} />
       </Card>
     </Screen>
   );

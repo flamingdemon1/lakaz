@@ -50,7 +50,7 @@ Never commit Wi-Fi credentials, device tokens, privileged Supabase keys, real we
 
 | Tool used | What it was used for |
 |---|---|
-| OpenAI ChatGPT / Codex | Drafted the kick-off README, collaboration instructions, proposed interface and submission checklist. Also converted and checked the facilities CSV, integrated email accounts with Supabase Auth, connected the Alerts tab to live help alerts, and set up local runs against the shared project. |
+| OpenAI ChatGPT / Codex | Drafted the kick-off README, collaboration instructions, proposed interface and submission checklist. Also converted and checked the facilities CSV, integrated email accounts with Supabase Auth, connected the Alerts tab to live help alerts, set up local runs against the shared project, and implemented carer profiles and account security. |
 | Anthropic Claude | Team tool; specific uses to be recorded by its users. |
 | Google Gemini | Team tool; drafted, verified and committed database schema migration with RLS policies, acknowledge_alert and submit_device_event RPCs on feat/backend-db. |
 

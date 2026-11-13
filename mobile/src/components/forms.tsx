@@ -162,7 +162,7 @@ export function FormError({ message }: { message: string | null }) {
  * "Send a new code" link that is disabled for 30 s after each send.
  * Why 30 s: stops people hammering the button (and in real life, SMS costs money).
  */
-export function ResendCode({ onResend }: { onResend: () => Promise<void> }) {
+export function ResendCode({ onResend, onError }: { onResend: () => Promise<void>; onError?: (message: string | null) => void }) {
   const { t } = useAuth();
   const [left, setLeft] = useState(30);
   useEffect(() => {
@@ -170,19 +170,28 @@ export function ResendCode({ onResend }: { onResend: () => Promise<void> }) {
     const id = setTimeout(() => setLeft((s) => s - 1), 1000);
     return () => clearTimeout(id);
   }, [left]);
-  const waiting = left > 0;
+  const [sending, setSending] = useState(false);
+  const waiting = left > 0 || sending;
   return (
     <Pressable
       disabled={waiting}
       onPress={async () => {
-        await onResend();
-        setLeft(30);
+        setSending(true);
+        onError?.(null);
+        try {
+          await onResend();
+          setLeft(30);
+        } catch (e) {
+          onError?.((e as Error).message);
+        } finally {
+          setSending(false);
+        }
       }}
       accessibilityRole="button"
       accessibilityState={{ disabled: waiting }}
       style={styles.resend}>
       <AppText variant="smallBold" color={waiting ? colors.textMuted : colors.link}>
-        {waiting ? `${t('resendIn')} ${left} s` : t('resend')}
+        {sending ? 'Sending…' : left > 0 ? `${t('resendIn')} ${left} s` : t('resend')}
       </AppText>
     </Pressable>
   );

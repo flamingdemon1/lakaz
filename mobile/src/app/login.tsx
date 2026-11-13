@@ -1,7 +1,7 @@
 /**
  * app/login.tsx — LOG IN with email/phone + password, plus links to sign-up, one-time code and
  * forgot password, a language picker, and a TEMPORARY "skip login" button for building/rehearsing.
- * Owner: Person 3/4 (Zuhayr). SAMPLE accounts only — see src/data/auth.tsx.
+ * Uses email and password in live mode.
  */
 import { router } from 'expo-router';
 import React, { useState } from 'react';
@@ -10,13 +10,15 @@ import { StyleSheet, View } from 'react-native';
 import { AuthHeader } from '@/components/AuthHeader';
 import { FormError, LanguagePicker, LinkButton, PasswordField, TextField } from '@/components/forms';
 import { AppText, Button, Card, Screen, SimulatedTag } from '@/components/ui';
+import { SUPABASE_ENABLED } from '@/config';
 import { useAuth } from '@/data/auth';
+import { checkEmail } from '@/lib/validate';
 import { resetTo } from '@/lib/nav';
 import { colors, space } from '@/theme';
 
 /** Log in screen. */
 export default function Login() {
-  const { t, login, bypass } = useAuth();
+  const { t, login, bypass, beginEmailVerification } = useAuth();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -25,7 +27,7 @@ export default function Login() {
   /** Checks the fields, then logs in. Unverified accounts are sent to the code screen. */
   const onLogin = async () => {
     if (!identifier.trim() || !password) {
-      setError('Enter your email or phone, and your password.');
+      setError(SUPABASE_ENABLED ? 'Enter your email and password.' : 'Enter your email or phone, and your password.');
       return;
     }
     setBusy(true);
@@ -33,6 +35,24 @@ export default function Login() {
     try {
       const r = await login(identifier, password);
       resetTo(r === 'ok' ? '/' : '/verify');
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onVerifyEmail = async () => {
+    const issue = checkEmail(identifier);
+    if (issue) {
+      setError(issue);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await beginEmailVerification(identifier);
+      resetTo('/verify');
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -53,7 +73,7 @@ export default function Login() {
 
       <Card style={styles.gap}>
         <TextField
-          label={t('emailOrPhone')}
+          label={t(SUPABASE_ENABLED ? 'email' : 'emailOrPhone')}
           value={identifier}
           onChangeText={setIdentifier}
           autoCapitalize="none"
@@ -61,7 +81,7 @@ export default function Login() {
           keyboardType="email-address"
           autoComplete="username"
           textContentType="username"
-          placeholder="name@example.com / 5xxx xxxx"
+          placeholder={SUPABASE_ENABLED ? 'name@example.com' : 'name@example.com / 5xxx xxxx'}
           returnKeyType="next"
         />
         <PasswordField
@@ -78,7 +98,11 @@ export default function Login() {
         <LinkButton label={t('forgotPassword')} onPress={() => router.push('/forgot-password')} />
       </Card>
 
-      <Button label={t('useCode')} icon="keypad" tone="secondary" onPress={() => router.push('/otp')} />
+      {SUPABASE_ENABLED ? (
+        <LinkButton label="Send a new verification code" onPress={() => { if (!busy) void onVerifyEmail(); }} />
+      ) : (
+        <Button label={t('useCode')} icon="keypad" tone="secondary" onPress={() => router.push('/otp')} />
+      )}
 
       <View style={styles.row}>
         <AppText color={colors.textMuted}>{t('noAccount')}</AppText>
@@ -86,14 +110,14 @@ export default function Login() {
       </View>
 
       {/* TEMPORARY — remove before the pitch. Lets the team skip login while building. */}
-      <Card style={styles.temp}>
+      {!SUPABASE_ENABLED && <Card style={styles.temp}>
         <SimulatedTag text="TEMPORARY · DEV ONLY" />
         <Button label={t('bypass')} icon="flash" tone="secondary" onPress={onBypass} />
         <View style={styles.row}>
           <LinkButton label="Help alert (sample)" onPress={() => router.push('/help-alert')} />
           <LinkButton label="Responder page" onPress={() => router.push('/responder')} />
         </View>
-      </Card>
+      </Card>}
     </Screen>
   );
 }

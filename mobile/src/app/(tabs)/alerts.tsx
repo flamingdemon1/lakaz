@@ -5,9 +5,10 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { HelpAlertList } from '@/app/help-alert';
 import { AlertCard } from '@/components/AlertCard';
 import { AppText, EmptyState, Screen } from '@/components/ui';
-import { USE_MOCK } from '@/config';
+import { SUPABASE_ENABLED, USE_MOCK } from '@/config';
 import { isOpen, isTakeover, useLakaz } from '@/data/store';
 import { colors, radius, space, TOUCH } from '@/theme';
 
@@ -16,6 +17,10 @@ type Filter = (typeof filters)[number];
 
 /** Reads the alert store and renders the selected alert list. Takes no props. */
 export default function Alerts() {
+  return SUPABASE_ENABLED ? <HelpAlertList asTab /> : <SampleAlerts />;
+}
+
+function SampleAlerts() {
   const { alerts, error, loading } = useLakaz();
   const [filter, setFilter] = useState<Filter>('Open');
 

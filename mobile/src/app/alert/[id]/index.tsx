@@ -161,7 +161,9 @@ export default function AlertDetail() {
         </>
       ) : null}
 
-      <SectionTitle>Timeline</SectionTitle>
+      <SectionTitle right={<AppText variant="smallBold" color={colors.primary} onPress={() => router.push({ pathname: '/alert/[id]/report', params: { id: alert.alert_id } })}>Report</AppText>}>
+        Timeline
+      </SectionTitle>
       <Card>
         {timeline.length === 0 ? (
           <AppText color={colors.textMuted}>Nothing recorded yet.</AppText>
@@ -179,6 +181,13 @@ export default function AlertDetail() {
           ))
         )}
       </Card>
+
+      <Button
+        label="Incident report"
+        icon="document-text"
+        tone="secondary"
+        onPress={() => router.push({ pathname: '/alert/[id]/report', params: { id: alert.alert_id } })}
+      />
 
       {/* Privacy (D10): location shown only for this incident, and history only as "last known". */}
       <LocationCard alert={alert} title={alert.status === 'Resolved' ? 'Last known location (closed)' : 'Location'} mapHeight={240} />

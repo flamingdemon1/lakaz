@@ -236,12 +236,22 @@ void loop() {
     }
   }
 
+  // Hotspot missing at boot (iPhone hides it until its Personal Hotspot screen is open): keep trying.
+  static unsigned long lastWifiTry = 0;
+  if (WiFi.status() != WL_CONNECTED && now - lastWifiTry >= 10000) {
+    lastWifiTry = now;
+    WiFi.disconnect();
+    WiFi.begin(WIFI_SSID, WIFI_PASS);   // non-blocking
+  }
+
   if (now - lastRetry >= 5000) { lastRetry = now; retryHelp(); }
   // No heartbeat (team decision): the band only sends real events, so "online" is not reported between them.
 
   if (now - lastPrint >= 2000) {
     lastPrint = now;
     const char* state = !anchorEverSeen ? "WAITING FOR HOME BEACON" : (home ? "AT HOME" : "LEFT HOME");
-    Serial.printf("%s | signal %d%s\n", state, rssi, pendingCount ? " | unsent events queued" : "");
+    // wifi code: 1 = hotspot not found, 4 = wrong password / refused, 6 = disconnected (retrying)
+    if (WiFi.status() == WL_CONNECTED) Serial.printf("%s | signal %d | wifi ok%s\n", state, rssi, pendingCount ? " | unsent events queued" : "");
+    else Serial.printf("%s | signal %d | no wifi (code %d)%s\n", state, rssi, WiFi.status(), pendingCount ? " | unsent events queued" : "");
   }
 }

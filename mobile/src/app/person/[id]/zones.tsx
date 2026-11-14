@@ -19,8 +19,7 @@ import { colors, radius, shadow, space, statusStyles, TOUCH } from '@/theme';
 export default function Zones() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { get } = usePeople();
-  const { zonesOf, status, simulateTrip, tripRunning } = useZones();
-  const [clock, setClock] = useState<string | undefined>(undefined);
+  const { zonesOf, status } = useZones();
   const p = get(id);
 
   if (!p) {
@@ -106,48 +105,6 @@ export default function Zones() {
           );
         })}
       </View>
-
-      {zones.length ? (
-        <Card style={styles.tools}>
-          <SimulatedTag text="SAMPLE WALK · DEMO TOOL" />
-          <AppText variant="small" color={colors.textMuted}>
-            Moves a fake position step by step so you can see the notifications. Pretend the time is:
-          </AppText>
-          <View style={styles.chips}>
-            {[undefined, '07:30', '15:15', '22:00'].map((c) => {
-              const on = c === clock;
-              return (
-                <Pressable
-                  key={c ?? 'now'}
-                  onPress={() => setClock(c)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: on }}
-                  aria-checked={on}
-                  style={[styles.chip, on && styles.chipOn]}>
-                  <AppText variant="smallBold" color={on ? colors.white : colors.text}>
-                    {c ?? 'Now'}
-                  </AppText>
-                </Pressable>
-              );
-            })}
-          </View>
-          {zones.map((a) => (
-            <View key={a.id} style={styles.gapSm}>
-              <Button label={`Leave ${a.name} (walk away)`} icon="exit" tone="secondary" disabled={tripRunning} onPress={() => simulateTrip(p.id, a.id, null, clock)} />
-              {zones
-                .filter((b) => b.id !== a.id)
-                .map((b) => (
-                  <Button key={b.id} label={`Walk ${a.name} → ${b.name}`} icon="walk" tone="secondary" disabled={tripRunning} onPress={() => simulateTrip(p.id, a.id, b.id, clock)} />
-                ))}
-            </View>
-          ))}
-          {tripRunning ? (
-            <AppText variant="smallBold" color={colors.simulated}>
-              Walking… watch the map and the notifications.
-            </AppText>
-          ) : null}
-        </Card>
-      ) : null}
     </Screen>
   );
 }

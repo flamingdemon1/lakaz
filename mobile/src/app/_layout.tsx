@@ -6,7 +6,6 @@
  *   /login          demo login
  *   /(tabs)         Home · Alerts · Device   (caregiver app, needs demo login)
  *   /alert/[id]     alert detail (ladder, map, "I've got it")
- *   /responder      community responder page — opened from a QR on the web, no login, no install
  */
 import {
   AtkinsonHyperlegible_400Regular,
@@ -75,7 +74,6 @@ export default function RootLayout() {
           <Stack.Screen name="login" options={{ headerShown: false }} />
           <Stack.Screen name="alert/[id]/index" options={{ title: 'Incident', headerBackTitle: 'Back' }} />
           <Stack.Screen name="alert/[id]/report" options={{ title: 'Incident report', headerBackTitle: 'Back' }} />
-          <Stack.Screen name="responder" options={{ headerShown: false, title: 'LAKAZ community alert' }} />
           {/* Help alert + acknowledge — the checkpoint flow agreed with the backend (docs/handoff.md). */}
           <Stack.Screen name="help-alert" options={{ title: 'Help alerts', headerBackTitle: 'Back' }} />
           {/* Mauritian dataset: district-filtered health facilities (public.facilities, read-only). */}

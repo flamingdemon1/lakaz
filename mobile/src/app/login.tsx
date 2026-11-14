@@ -18,7 +18,7 @@ import { colors, space } from '@/theme';
 
 /** Log in screen. */
 export default function Login() {
-  const { t, login, bypass, beginEmailVerification } = useAuth();
+  const { t, login, beginEmailVerification } = useAuth();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -58,12 +58,6 @@ export default function Login() {
     } finally {
       setBusy(false);
     }
-  };
-
-  /** TEMPORARY: straight into the app as the demo caregiver. */
-  const onBypass = () => {
-    bypass();
-    resetTo('/');
   };
 
   return (
@@ -107,15 +101,6 @@ export default function Login() {
         <LinkButton label={t('createAccount')} onPress={() => router.push('/signup')} />
       </View>
 
-      {/* TEMPORARY — remove before the pitch. Lets the team skip login while building. */}
-      {!SUPABASE_ENABLED && <Card style={styles.temp}>
-        <SimulatedTag text="TEMPORARY · DEV ONLY" />
-        <Button label={t('bypass')} icon="flash" tone="secondary" onPress={onBypass} />
-        <View style={styles.row}>
-          <LinkButton label="Help alert (sample)" onPress={() => router.push('/help-alert')} />
-          <LinkButton label="Responder page" onPress={() => router.push('/responder')} />
-        </View>
-      </Card>}
     </Screen>
   );
 }
@@ -123,5 +108,4 @@ export default function Login() {
 const styles = StyleSheet.create({
   gap: { gap: space.md },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: space.sm },
-  temp: { gap: space.sm, borderWidth: 2, borderColor: colors.simulated, borderStyle: 'dashed' },
 });

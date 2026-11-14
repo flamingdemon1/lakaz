@@ -160,6 +160,52 @@ export async function claimBand(code: string): Promise<{ device_id: string; labe
   return { device_id: SAMPLE_DEVICE, label: sampleBands[SAMPLE_DEVICE] ?? null };
 }
 
+/** The band a carer just got for a new person (RPC claim_device_for_person). */
+export interface AssignedBand {
+  device_id: string;
+  label: string | null;
+  wearer_name: string | null;
+  wearer_age: number | null;
+  wearer_area: string | null;
+}
+
+/**
+ * ADD A PERSON (live): the person is stored as the wearer of the band they get, using the code on the band
+ * (the long claim code or Shihad's short alias, e.g. LKZ-1307). RPC claim_device_for_person links this carer,
+ * starts the band's history afresh (older alerts are hidden, not deleted) and saves the wearer details.
+ * Only shows success after the server confirms. SAMPLE mode: the code LKZ-DEMO-0001 works.
+ */
+export async function assignBandToPerson(
+  code: string,
+  person: { name: string; age: number | null; area: string | null },
+): Promise<AssignedBand> {
+  const clean = code.replace(/\s/g, '').toUpperCase();
+  if (clean.length < 4) throw new Error('Enter the code printed on the band.');
+  if (person.name.trim().length < 2) throw new Error("Enter the person's name.");
+  if (!IS_SAMPLE) {
+    if (!supa.isSignedIn()) throw new Error(NOT_SIGNED_IN);
+    try {
+      const rows = await supa.rpc<AssignedBand[]>('claim_device_for_person', {
+        p_code: clean,
+        p_wearer_name: person.name.trim(),
+        p_wearer_age: person.age,
+        p_wearer_area: person.area?.trim() || null,
+      });
+      notify();
+      return rows[0];
+    } catch (e) {
+      // supabase.ts words "not_found" for alerts; for a band code say what actually happened.
+      if (/no longer exists/i.test((e as Error).message)) throw new Error('No band has that code. Check it and try again.');
+      throw e;
+    }
+  }
+  await wait(600);
+  if (clean !== 'LKZ-DEMO-0001') throw new Error('No band has that code. Check it and try again.');
+  sampleBands = { [SAMPLE_DEVICE]: `${person.name.trim()}'s band` };
+  notify();
+  return { device_id: SAMPLE_DEVICE, label: sampleBands[SAMPLE_DEVICE], wearer_name: person.name.trim(), wearer_age: person.age, wearer_area: person.area };
+}
+
 /** Message shown when Supabase is on but no carer is signed in. */
 export const NOT_SIGNED_IN = 'Sign in with your carer account to see real alerts.';
 

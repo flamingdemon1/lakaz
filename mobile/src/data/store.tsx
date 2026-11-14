@@ -20,6 +20,7 @@ import { getCurrentLang } from '@/i18n-auto';
 import * as supa from '@/data/supabase';
 import {
   ME,
+  MOCK_PERSON,
   mockDevice,
   mockHistory,
   mockLevelFor,
@@ -320,7 +321,7 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
   const leaveHome = useCallback(() => {
     const a = mockNewAlert('unexpected_exit');
     setAlerts((l) => upsert(l, a));
-    setStatus({ status: 'LEFT HOME', person_name: 'Marie-Claire', since: a.created_at, level: 0 });
+    setStatus({ status: 'LEFT HOME', person_name: MOCK_PERSON.name, since: a.created_at, level: 0 });
     setDevice((d) => (d ? { ...d, gps_fix: true } : d));
     setIncoming(a);
   }, []);
@@ -341,7 +342,7 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
     setAlerts((l) => {
       const wasAway = l.some((a) => a.status !== 'Resolved' && isTakeover(a));
       if (wasAway) {
-        pushRef.current({ category: 'safe_return', title: 'Marie-Claire is back home', body: 'The alert was closed automatically', href: { pathname: '/' }, sample: true });
+        pushRef.current({ category: 'safe_return', title: `${MOCK_PERSON.name} is back home`, body: 'The alert was closed automatically', href: { pathname: '/' }, sample: true });
       }
       return l.map((a) => (a.status === 'Resolved' || !isTakeover(a) ? a : { ...a, status: 'Resolved' }));
     });

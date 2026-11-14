@@ -14,7 +14,7 @@ import { LocationCard } from '@/components/LocationCard';
 import { AppText, Button, Card, EmptyState, IconName, Screen, SectionTitle, SimulatedTag, StatusPill } from '@/components/ui';
 import { USE_MOCK } from '@/config';
 import { communityBlockedReason, TimelineEntry, useEscalation } from '@/data/escalation';
-import { MOCK_CAREGIVERS } from '@/data/mock';
+import { MOCK_CAREGIVERS, MOCK_PERSON } from '@/data/mock';
 import { useAuth } from '@/data/auth';
 import { useLakaz } from '@/data/store';
 import { alertAdvice, alertExplainer, alertTitle, clock, ESCALATING, timeAgo } from '@/lib/format';
@@ -56,7 +56,7 @@ export default function AlertDetail() {
   // Real alert from Supabase (help press or the band's left-home event): no ladder, no map, real timeline.
   const live = !!alert.live;
   // The real wearer's name (live) or the sample person.
-  const who = live ? status?.person_name || '' : 'Marie-Claire';
+  const who = live ? status?.person_name || '' : MOCK_PERSON.name;
   const liveExit = live && alert.type === 'unexpected_exit';
   const ackName = alert.acknowledged_by
     ? live

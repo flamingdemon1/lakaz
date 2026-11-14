@@ -12,6 +12,7 @@
  * The screens are identical in both modes.
  */
 import { SUPABASE_ENABLED } from '@/config';
+import { MOCK_PERSON } from '@/data/mock';
 import * as supa from '@/data/supabase';
 
 
@@ -59,7 +60,7 @@ function initialSample(): HelpEvent[] {
 }
 
 /** Sample band names (the live ones come from public.devices.label). */
-let sampleBands: Record<string, string> = { [SAMPLE_DEVICE]: "Marie-Claire's band" };
+let sampleBands: Record<string, string> = { [SAMPLE_DEVICE]: `${MOCK_PERSON.name}'s band` };
 
 // Pretend database. Kept at module level so the acknowledgement survives leaving and
 // re-opening the screen — like the real "verify after refreshing" check in the handoff.
@@ -119,7 +120,7 @@ let hasAckBy = true;
 export const myCarerId = (): string | null => (IS_SAMPLE ? SAMPLE_ME : supa.currentUser()?.id ?? null);
 
 /**
- * Friendly band names for the bands this carer is linked to: { device_id: "Marie-Claire's band" }.
+ * Friendly band names for the bands this carer is linked to: { device_id: "<wearer>'s band" }.
  * LIVE: public.devices (id, label) — RLS returns only linked bands. Returns {} if the migration isn't
  * applied yet or a band has no name; the screens then fall back to "band …1307". Never throws.
  */
@@ -255,6 +256,6 @@ export function addSampleHelpEvent(): void {
 /** SAMPLE ONLY: back to the starting state for rehearsals. */
 export function resetSampleHelpEvents(): void {
   sampleDb = initialSample();
-  sampleBands = { [SAMPLE_DEVICE]: "Marie-Claire's band" };
+  sampleBands = { [SAMPLE_DEVICE]: `${MOCK_PERSON.name}'s band` };
   notify();
 }

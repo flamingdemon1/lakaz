@@ -62,7 +62,7 @@ export interface ZoneEvent {
   note?: string;
 }
 
-/** SAMPLE place presets (fictional points around Rose-Hill — move them on the map). */
+/** SAMPLE place presets (fictional points near the sample home — move them on the map). */
 export const PLACE_PRESETS: Record<Exclude<ZoneType, 'other'>, LatLng> = {
   home: MOCK_HOME,
   school: { lat: -20.2442, lng: 57.4736 },

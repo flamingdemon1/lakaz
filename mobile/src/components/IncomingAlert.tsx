@@ -14,6 +14,7 @@ import { Glow } from '@/components/Glow';
 import { AppText, Button, SimulatedTag } from '@/components/ui';
 import { USE_MOCK } from '@/config';
 import { useAuth } from '@/data/auth';
+import { MOCK_PERSON } from '@/data/mock';
 import { useLakaz } from '@/data/store';
 import { ALERT_KEY, fill, LADDER_KEY } from '@/i18n';
 import { useAlertFeedback } from '@/lib/useAlertFeedback';
@@ -136,8 +137,11 @@ export function IncomingAlert() {
             {t(critical ? 'tkCritical' : 'tkAlert')} · {fill(t('tkLevel'), { n: alert.level })}
           </AppText>
           <AppText variant="display" style={styles.center}>
-            {/* Real wearer's name in live mode (sample: Marie-Claire). */}
-            {(status?.person_name || (alert.live ? '' : 'Marie-Claire')) ? `${status?.person_name || 'Marie-Claire'} · ` : ''}
+            {/* Live: the wearer's name from the backend (omitted if unknown). Sample: the mock person. */}
+            {(() => {
+              const who = status?.person_name || (alert.live ? '' : MOCK_PERSON.name);
+              return who ? `${who} · ` : '';
+            })()}
             {t(ALERT_KEY[alert.type].title)}
           </AppText>
           <AppText color={colors.textMuted} style={styles.center}>

@@ -10,6 +10,9 @@
  */
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
+import { USE_MOCK } from '@/config';
+import { useBand } from '@/data/bands';
+import { MOCK_PERSON } from '@/data/mock';
 import { normalisePhone } from '@/lib/validate';
 
 /** The three safety profiles. Only Elderly is the real hardware demo (D1); the others are simulation. */
@@ -84,8 +87,8 @@ let devices: WearableDevice[] = [
 let people: CaredPerson[] = [
   {
     id: 'p-01',
-    name: 'Marie-Claire',
-    age: 74,
+    name: MOCK_PERSON.name, // the one fictional sample person, defined in data/mock.ts
+    age: MOCK_PERSON.age,
     profile: 'elderly',
     avatarColor: AVATAR_COLORS[0],
     emergency: { name: 'Demo Caregiver', phone: '+23057000001', relationship: 'Daughter' },
@@ -143,6 +146,12 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
   // A version number that bumps after every change so screens re-render from the module data.
   const [version, setVersion] = useState(0);
   const bump = () => setVersion((v) => v + 1);
+  // LIVE: the person's name and age come from the backend (devices.wearer_*, set when a carer adds the
+  // person with the band code). Applied to the first person, whose screens (Location, Escalation, person
+  // page, zones) are reached from Home. Contacts / medical notes stay sample (no backend table yet).
+  const { band } = useBand();
+  const wearerName = !USE_MOCK ? band?.wearer_name?.trim() || null : null;
+  const wearerAge = !USE_MOCK ? band?.wearer_age ?? null : null;
 
   // SAMPLE heartbeat: band-01 "reports" every 5 s like the real band (section 6, Person 1),
   // unless a sample tool switched it off. Without this the band would look offline after 20 s.
@@ -170,12 +179,22 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
       people = people.map((p) => (p.device_id === deviceId && p.id !== exceptId ? { ...p, device_id: null } : p));
     };
 
+    /** LIVE: show the backend wearer instead of the sample name (age 0 = unknown, screens hide it). */
+    const live = (p: CaredPerson): CaredPerson =>
+      wearerName && p.id === people[0]?.id ? { ...p, name: wearerName, age: wearerAge ?? 0 } : p;
+
     return {
-      people,
+      people: people.map(live),
       devices,
-      get: (id) => people.find((p) => p.id === id),
+      get: (id) => {
+        const p = people.find((x) => x.id === id);
+        return p ? live(p) : undefined;
+      },
       deviceOf: (p) => devices.find((d) => d.device_id === p.device_id),
-      ownerOf: (deviceId) => people.find((p) => p.device_id === deviceId),
+      ownerOf: (deviceId) => {
+        const p = people.find((x) => x.device_id === deviceId);
+        return p ? live(p) : undefined;
+      },
 
       // SWAP FOR SUPABASE: insert person + link the signed-in caregiver as primary guardian
       addPerson: async (input, me) => {
@@ -252,7 +271,7 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
     };
     // `version` is the trigger: module-level arrays changed, so rebuild the value.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [version]);
+  }, [version, wearerName, wearerAge]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

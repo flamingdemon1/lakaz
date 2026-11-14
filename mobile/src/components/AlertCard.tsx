@@ -10,6 +10,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { PulseRings } from '@/components/motion';
 import { AppText, IconName, StatusPill } from '@/components/ui';
 import { useAuth } from '@/data/auth';
+import { useLakaz } from '@/data/store';
 import { ALERT_KEY, fill } from '@/i18n';
 import { clock, timeAgo } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
@@ -24,8 +25,11 @@ const typeIcon: Record<Alert['type'], IconName> = {
 };
 
 /** Input: alert. Shows type, status pill, level and age; left edge coloured by status. */
-export function AlertCard({ alert, personName = 'Marie-Claire' }: { alert: Alert; personName?: string }) {
+export function AlertCard({ alert, personName }: { alert: Alert; personName?: string }) {
+  // Real wearer from the store (live) — falls back to the sample person's name only in sample mode.
   const now = useNow(5000);
+  const { status } = useLakaz();
+  personName = personName ?? (status?.person_name || (alert.live ? '' : 'Marie-Claire'));
   const s = statusStyles[alert.status];
   const { t } = useAuth();
   const title = t(ALERT_KEY[alert.type].title);
@@ -49,7 +53,7 @@ export function AlertCard({ alert, personName = 'Marie-Claire' }: { alert: Alert
         </View>
         {/* Name on the second line so the alert type is never cut off next to the status pill. */}
         <AppText variant="small" color={colors.textMuted}>
-          {personName} · {clock(alert.created_at)} · {timeAgo(alert.created_at, now)}
+          {personName ? `${personName} · ` : ''}{clock(alert.created_at)} · {timeAgo(alert.created_at, now)}
           {/* Real help alerts have no ladder step (the backend has no escalation yet). */}
           {alert.live ? '' : ` · ${fill(t('stepN'), { n: alert.level })}`}
           {/* Left-home alerts closed by the band coming back show WHEN she returned (Kavish, #29). Never on help

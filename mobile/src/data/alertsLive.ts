@@ -84,8 +84,10 @@ export async function fetchLiveAlerts(): Promise<Alert[]> {
 
 /** Where the band says she is right now (devices.home_state / home_since, from the band's anchor). */
 export interface HomeState {
-  state: 'home' | 'away';
+  state: 'home' | 'away' | null;
   since: string | null;
+  /** The band's wearer (devices.wearer_name), e.g. the person a judge just added. null if not set. */
+  wearer: string | null;
 }
 
 let hasHomeState = true;
@@ -97,11 +99,13 @@ let hasHomeState = true;
 export async function fetchHomeState(deviceId?: string): Promise<HomeState | null> {
   if (!hasHomeState || !supa.isSignedIn()) return null;
   try {
-    const rows = await supa.select<{ id: string; home_state: 'home' | 'away' | null; home_since: string | null }[]>(
-      'devices?select=id,home_state,home_since',
-    );
-    const row = (deviceId ? rows.find((r) => r.id === deviceId) : undefined) ?? rows.find((r) => r.home_state) ?? null;
-    return row?.home_state ? { state: row.home_state, since: row.home_since } : null;
+    const rows = await supa.select<
+      { id: string; home_state: 'home' | 'away' | null; home_since: string | null; wearer_name: string | null }[]
+    >('devices?select=id,home_state,home_since,wearer_name');
+    // The band of the newest alert, else a band with a named wearer, else any linked band.
+    const row =
+      (deviceId ? rows.find((r) => r.id === deviceId) : undefined) ?? rows.find((r) => r.wearer_name) ?? rows[0] ?? null;
+    return row ? { state: row.home_state, since: row.home_since, wearer: row.wearer_name } : null;
   } catch (e) {
     // Missing columns = migration not applied yet: stop asking (one failed request, not one every 5 s).
     if (/home_state|home_since/i.test((e as Error).message)) hasHomeState = false;

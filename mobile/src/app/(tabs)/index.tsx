@@ -161,7 +161,10 @@ function NoBandCard() {
           {t('noBandTitle')}
         </AppText>
         <AppText color={colors.textMuted}>{t('noBandBody')}</AppText>
-        <Button label={t('linkBand')} icon="link" onPress={() => router.push('/link-band')} />
+        {/* Main path for a new carer: add the person together with the code on their band. */}
+        <Button label={t('addPerson')} icon="person-add" onPress={() => router.push('/person/new')} />
+        {/* Joining a band someone else already set up (e.g. a second family member). */}
+        <Button label={t('linkBand')} icon="link" tone="ghost" onPress={() => router.push('/link-band')} />
       </Card>
     </View>
   );

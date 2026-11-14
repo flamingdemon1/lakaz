@@ -234,4 +234,9 @@ export const AUTO_STRINGS: Record<string, { fr: string; mfe: string }> = {
   "Area unavailable": { fr: "Zone indisponible", mfe: "Landrwa pa disponib" },
   "Marie-Claire is back home": { fr: "Marie-Claire est de retour à la maison", mfe: "Marie-Claire finn retourn lakaz" },
   "The band heard the home beacon again. The alert closed by itself.": { fr: "Le bracelet capte à nouveau la balise de la maison. L'alerte s'est fermée toute seule.", mfe: "Brasle-la finn tann balis lakaz ankor. Lalert finn ferme tousel." },
+  "Help alerts and receipts": { fr: "Alertes d'aide et reçus", mfe: "Alert sekour ek resi" },
+  "No open alerts": { fr: "Aucune alerte en cours", mfe: "Okenn alert ouver" },
+  "No matching alerts available": { fr: "Aucune alerte correspondante", mfe: "Okenn alert ki koresponn" },
+  "You will hear a sound and see a full-screen alert if anything happens.": { fr: "Vous entendrez un son et verrez une alerte plein écran en cas de problème.", mfe: "Ou pou tann enn son ek trouv enn alert lor tou lekran si kiksoz arive." },
+  "Unable to refresh alerts.": { fr: "Impossible d'actualiser les alertes.", mfe: "Pa kapav rafresi bann alert." },
 };

@@ -15,6 +15,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { POLL_MS, USE_MOCK } from '@/config';
 import { acknowledgeLive, fetchCarerNames, fetchHomeState, fetchLiveAlerts, HomeState, resolveLive } from '@/data/alertsLive';
 import { NOT_SIGNED_IN, onHelpEventsChanged } from '@/data/helpAlert';
+import { fill, STRINGS } from '@/i18n';
+import { getCurrentLang } from '@/i18n-auto';
 import * as supa from '@/data/supabase';
 import {
   ME,
@@ -79,7 +81,8 @@ const Ctx = createContext<(LakazState & LakazActions) | null>(null);
  *  ALL_CLEAR   = nothing open and the band hasn't reported home/away (migration not applied yet)
  */
 function liveStatus(list: Alert[], home: HomeState | null): DeviceStatus {
-  const name = 'Marie-Claire';
+  // The band's real wearer (set when a carer adds the person); '' if unknown — screens then omit the name.
+  const name = home?.wearer ?? '';
   const waiting = list.filter((a) => a.status === 'Critical');
   const away = list.filter((a) => a.type === 'unexpected_exit' && a.status === 'Active');
   const handling = list.filter((a) => a.status === 'Acknowledged');
@@ -121,6 +124,9 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
   alertsRef.current = alerts;
   // LIVE: the band's last reported home/away state (for the Home card after acknowledge / resolve).
   const homeRef = useRef<HomeState | null>(null);
+  // Latest Home status (for the wearer's name in banners, without re-creating callbacks).
+  const statusRef = useRef<DeviceStatus | null>(null);
+  statusRef.current = status;
   // LIVE: exit alerts already shown as a takeover, and exits that were open on the previous refresh.
   // null = first load (open exits are shown once, older closed ones are never announced).
   const announcedRef = useRef<Set<string> | null>(null);
@@ -148,7 +154,7 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     const href = { pathname: '/alert/[id]', params: { id: a.alert_id } };
-    const name = 'Marie-Claire';
+    const name = statusRef.current?.person_name || '';
     if (a.type === 'device_offline') {
       pushRef.current({ category: 'device_offline', title: `${name}'s band is disconnected`, body: 'No signal for 20 s — check it is charged and in range', href, sample });
     }
@@ -176,8 +182,9 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
         if (openExitsRef.current.has(a.alert_id) && a.status === 'Resolved' && !a.resolved_by) {
           pushRef.current({
             category: 'safe_return',
-            title: 'Marie-Claire is back home',
-            body: 'The band heard the home beacon again. The alert closed by itself.',
+            // Translated here (the store has no hook): "<name> is back home" in the carer's language.
+            title: fill(STRINGS[getCurrentLang()].backHomeTitle, { name: homeRef.current?.wearer || STRINGS[getCurrentLang()].heroThem }),
+            body: STRINGS[getCurrentLang()].backHomeBody,
             href: { pathname: '/alert/[id]', params: { id: a.alert_id } },
             sample: false,
           });
@@ -396,7 +403,14 @@ export function LakazProvider({ children }: { children: React.ReactNode }) {
       refresh,
       dismissIncoming: () => setIncoming(null),
       // Sample login only: in live mode `me` is the signed-in Supabase carer (set by refresh()).
-      login: () => (USE_MOCK ? setMe({ id: ME.id, name: ME.name }) : void refresh()),
+      // LIVE: set `me` NOW from the Supabase session, then load data. Why: the tab layout redirects to /login
+      // while `me` is empty, so waiting for refresh() made every first login bounce back ("log in twice" bug).
+      login: () => {
+        if (USE_MOCK) return setMe({ id: ME.id, name: ME.name });
+        const user = supa.currentUser();
+        if (user) setMe({ id: user.id, name: user.user_metadata?.name ?? user.email ?? 'You' });
+        void refresh();
+      },
       logout: () => {
         setMe(null);
         if (!USE_MOCK) {

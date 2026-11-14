@@ -12,7 +12,6 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { AlertCard } from '@/components/AlertCard';
 import { BandStatus } from '@/components/BandStatus';
 import { ConnectionBanner } from '@/components/ConnectionBanner';
-import { DemoControls } from '@/components/DemoControls';
 import { LocationCard } from '@/components/LocationCard';
 import { FadeIn } from '@/components/motion';
 import { PersonHero } from '@/components/PersonHero';
@@ -135,7 +134,6 @@ export default function Home() {
             </FadeIn>
           ) : null}
 
-          <DemoControls />
         </>
       )}
     </Screen>

@@ -16,7 +16,6 @@ import { AckReceipt } from '@/components/AckReceipt';
 import { AppText, Button, Card, EmptyState, Screen, SimulatedTag } from '@/components/ui';
 import {
   acknowledgeAlert,
-  addSampleHelpEvent,
   fetchBandNames,
   fetchHelpEvents,
   HelpEvent,
@@ -24,7 +23,6 @@ import {
   myCarerId,
   NOT_SIGNED_IN,
   onHelpEventsChanged,
-  resetSampleHelpEvents,
 } from '@/data/helpAlert';
 import { useAuth } from '@/data/auth';
 import { fill } from '@/i18n';
@@ -179,22 +177,6 @@ export function HelpAlertList({ asTab = false }: { asTab?: boolean }) {
         </>
       )}
 
-      {IS_SAMPLE ? (
-        <Card style={styles.tools}>
-          <SimulatedTag text="SAMPLE TOOLS" />
-          <AppText variant="small" color={colors.textMuted}>
-            For building and rehearsing only. Hidden once Supabase is connected.
-          </AppText>
-          <Button label="Add a help request" icon="add-circle" tone="secondary" onPress={addSampleHelpEvent} />
-          <Button
-            label={failNext ? 'Next acknowledge will FAIL (on)' : 'Make next acknowledge fail'}
-            icon="bug"
-            tone="secondary"
-            onPress={() => setFailNext((v) => !v)}
-          />
-          <Button label="Reset sample" icon="refresh" tone="ghost" onPress={resetSampleHelpEvents} />
-        </Card>
-      ) : null}
       {/* Link another band with the code printed on it (RPC claim_device). Its alerts then appear here. */}
       <Button label={t('linkBand')} icon="link" tone="ghost" onPress={() => router.push('/link-band')} />
       <AckReceipt

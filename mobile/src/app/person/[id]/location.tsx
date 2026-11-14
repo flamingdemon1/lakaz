@@ -187,7 +187,6 @@ export default function PersonLocation() {
         )}
       </Card>
 
-      {device ? <SampleTools personId={p.id} deviceId={device.device_id} /> : null}
     </Screen>
   );
 }
@@ -410,33 +409,6 @@ function Choice({
         );
       })}
     </View>
-  );
-}
-
-/** SAMPLE tools to show the honest "not live" states during rehearsal. */
-function SampleTools({ personId, deviceId }: { personId: string; deviceId: string }) {
-  const tracking = useTracking();
-  const [offline, setOffline] = useState(isSimulatedOffline(deviceId));
-  const noFix = tracking.isNoFix(personId);
-  return (
-    <Card style={styles.tools}>
-      <SimulatedTag text="SAMPLE TOOLS" />
-      <Button
-        label={noFix ? 'GPS fix: blocked (indoors) — tap to restore' : 'Simulate no GPS fix (indoors)'}
-        icon="business"
-        tone="secondary"
-        onPress={() => tracking.simulateNoFix(personId, !noFix)}
-      />
-      <Button
-        label={offline ? 'Band offline — tap to bring back' : 'Simulate band offline'}
-        icon="cloud-offline"
-        tone="secondary"
-        onPress={() => {
-          simulateDeviceOffline(deviceId, !offline);
-          setOffline(!offline);
-        }}
-      />
-    </Card>
   );
 }
 

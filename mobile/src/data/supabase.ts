@@ -47,6 +47,8 @@ let session: Session | null = null;
 /** Is a carer signed in to Supabase right now? */
 export const isSignedIn = () => !!session;
 export const currentUser = () => session?.user ?? null;
+/** Signed-in carer's access token (for the phone-GPS server to check who is asking), or null. */
+export const accessToken = () => session?.access_token ?? null;
 
 /**
  * Turns Supabase / Postgres errors into plain words a carer understands.

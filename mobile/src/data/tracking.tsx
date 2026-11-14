@@ -14,6 +14,8 @@
  */
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
+import { API_URL } from '@/config';
+import { accessToken } from '@/data/supabase';
 import { MOCK_HOME } from '@/data/mock';
 
 export type GpsStatus = 'idle' | 'searching' | 'fix';
@@ -94,6 +96,23 @@ interface TrackingCtx {
 
 const Ctx = createContext<TrackingCtx | null>(null);
 
+// Demo stand-in (team decision, 14 Nov): the band has no GPS, so a phone carried with it supplies the position.
+// That phone runs simulator/phone-gps.js's page; the laptop keeps its latest fix and this app reads it from API_URL.
+// If the laptop can't be reached, the SAMPLE walk below is used, labelled as sample.
+let phoneFix: LocationFix | null = null;
+function startPhoneGps() {
+  const token = accessToken();
+  if (!token) return; // only a signed-in carer may read the position
+  // ngrok's free tunnel shows a warning page to browser requests unless this header is set.
+  fetch(`${API_URL}/api/phone-location`, { headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '1' } })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => {
+      if (j && typeof j.lat === 'number' && typeof j.lng === 'number') phoneFix = { lat: j.lat, lng: j.lng, at: j.at };
+    })
+    .catch(() => {}); // laptop unreachable: keep the last fix (it ages to "Last known") or the SAMPLE walk
+}
+/** true once the phone has given a real position (screen shows "PHONE GPS" instead of "SAMPLE GPS"). */
+export const usingPhoneGps = () => phoneFix !== null;
 /** Provider. A 5 s tick moves the fake person, flips GPS status and auto-stops expired sessions. */
 export function TrackingProvider({ children }: { children: React.ReactNode }) {
   const [version, setVersion] = useState(0);
@@ -119,9 +138,10 @@ export function TrackingProvider({ children }: { children: React.ReactNode }) {
         // Why 4 s: a cold GPS needs a moment after waking; this mimics "searching" → "fix".
         if (r.gps === 'searching' && now - new Date(s.startedAt).getTime() < 4000) return;
         r.gps = 'fix';
+        startPhoneGps();
         const prev = r.lastFix ?? { ...MOCK_HOME, at: new Date().toISOString() };
-        // SAMPLE walk: a few metres each tick.
-        r.lastFix = { lat: prev.lat + 0.00015, lng: prev.lng + 0.0001, at: new Date().toISOString() };
+        // Phone position when available; otherwise SAMPLE walk: a few metres each tick.
+        r.lastFix = phoneFix ?? { lat: prev.lat + 0.00015, lng: prev.lng + 0.0001, at: new Date().toISOString() };
       });
       bump();
     }, 5000);

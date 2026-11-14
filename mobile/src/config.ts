@@ -13,7 +13,9 @@
  * Run `ipconfig` on the laptop, look for "IPv4 Address" under the hotspot Wi-Fi adapter.
  * Never use "localhost" here — on the phone, localhost means the phone itself.
  */
-export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.43.20:3000';
+// Default = the team's fixed ngrok link to the laptop's phone-GPS server (simulator/phone-gps.js), so the APK
+// works without extra build settings. Override with EXPO_PUBLIC_API_URL if the link changes.
+export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://premium-steam-unsent.ngrok-free.dev';
 
 /** The one band in the demo (section 7.5). */
 export const DEMO_DEVICE_ID = 'band-01';

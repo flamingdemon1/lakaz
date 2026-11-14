@@ -49,7 +49,7 @@ export function AddPersonLive({ onDone }: { onDone: (band: AssignedBand) => void
       <AppText color={colors.textMuted}>{t('addPersonBody')}</AppText>
 
       <Card style={styles.gap}>
-        <TextField label={t('apName')} value={name} onChangeText={setName} autoCapitalize="words" placeholder="Marie-Claire" />
+        <TextField label={t('apName')} value={name} onChangeText={setName} autoCapitalize="words" placeholder={t('apNamePh')} />
         <TextField
           label={t('apAge')}
           value={age}
@@ -58,7 +58,7 @@ export function AddPersonLive({ onDone }: { onDone: (band: AssignedBand) => void
           maxLength={3}
           placeholder="74"
         />
-        <TextField label={t('apArea')} value={area} onChangeText={setArea} autoCapitalize="words" placeholder="Rose-Hill" />
+        <TextField label={t('apArea')} value={area} onChangeText={setArea} autoCapitalize="words" placeholder={t('apAreaPh')} />
       </Card>
 
       <Card style={styles.gap}>

@@ -32,7 +32,7 @@ function typeIcon(type: string): IconName {
   return 'medical';
 }
 
-/** Screen. Default district = Plaines Wilhems (Rose-Hill, where the demo person lives). */
+/** Screen. Default district = Plaines Wilhems (the sample person's district). */
 export default function FacilitiesScreen() {
   const [district, setDistrict] = useState<District>('Plaines Wilhems');
   const [rows, setRows] = useState<Facility[] | null>(null);

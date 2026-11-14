@@ -69,7 +69,7 @@ export default function PersonPage() {
         <Avatar name={p.name} color={p.avatarColor} size={72} />
         <View style={[styles.flex, styles.gapSm]}>
           <AppText variant="title">{p.name}</AppText>
-          <AppText color={colors.textMuted}>{p.age} years old</AppText>
+          {p.age ? <AppText color={colors.textMuted}>{p.age} years old</AppText> : null}
           <ProfileChip profile={p.profile} />
         </View>
       </View>

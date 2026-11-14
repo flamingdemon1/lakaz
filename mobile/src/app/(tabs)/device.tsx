@@ -9,6 +9,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText, Card, InfoRow, Screen, SectionTitle, SimulatedTag } from '@/components/ui';
 import { USE_MOCK } from '@/config';
+import { useBand } from '@/data/bands';
+import { MOCK_PERSON } from '@/data/mock';
 import { isOpen, useLakaz } from '@/data/store';
 import { homeStatusWords, isOnline } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
@@ -16,6 +18,8 @@ import { colors, space, statusStyles } from '@/theme';
 
 /** Band tab. */
 export default function DeviceScreen() {
+  // Live: the band and wearer from the backend; sample: the mock person.
+  const { band } = useBand();
   const { device, status, alerts } = useLakaz();
   const now = useNow();
   const online = isOnline(device, now);
@@ -39,7 +43,7 @@ export default function DeviceScreen() {
           <Ionicons name="watch" size={40} color={online ? colors.link : colors.offline} />
         </View>
         <AppText variant="heading">{online ? 'Online' : 'Offline'}</AppText>
-        <AppText color={colors.textMuted}>band-01 · worn by Marie-Claire</AppText>
+        <AppText color={colors.textMuted}>{band ? `…${band.id.slice(-4)} · ${band.wearer_name ?? ''}` : USE_MOCK ? `band-01 · ${MOCK_PERSON.name}` : ''}</AppText>
       </Card>
 
       <SectionTitle>Details</SectionTitle>

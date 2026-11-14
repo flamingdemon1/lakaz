@@ -10,6 +10,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { PulseRings } from '@/components/motion';
 import { AppText, IconName, StatusPill } from '@/components/ui';
 import { useAuth } from '@/data/auth';
+import { MOCK_PERSON } from '@/data/mock';
 import { useLakaz } from '@/data/store';
 import { ALERT_KEY, fill } from '@/i18n';
 import { clock, timeAgo } from '@/lib/format';
@@ -29,7 +30,7 @@ export function AlertCard({ alert, personName }: { alert: Alert; personName?: st
   // Real wearer from the store (live) — falls back to the sample person's name only in sample mode.
   const now = useNow(5000);
   const { status } = useLakaz();
-  personName = personName ?? (status?.person_name || (alert.live ? '' : 'Marie-Claire'));
+  personName = personName ?? (status?.person_name || (alert.live ? '' : MOCK_PERSON.name));
   const s = statusStyles[alert.status];
   const { t } = useAuth();
   const title = t(ALERT_KEY[alert.type].title);

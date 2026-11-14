@@ -62,7 +62,7 @@ const noFix = new Set<string>();
 function rec(personId: string): PersonTracking {
   let r = state.get(personId);
   if (!r) {
-    // Seed: Marie-Claire has an old fix from earlier today, so "last known location" has something to show.
+    // Seed: the sample person has an old fix from earlier today, so "last known location" has something to show.
     const old = new Date(Date.now() - 42 * 60_000).toISOString();
     r = {
       session: null,

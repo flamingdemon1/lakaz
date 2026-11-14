@@ -197,7 +197,6 @@ export const AUTO_STRINGS: Record<string, { fr: string; mfe: string }> = {
   "Incident report": { fr: "Rapport d'incident", mfe: "Rapor insidan" },
   "Share report": { fr: "Partager le rapport", mfe: "Partaz rapor" },
   "This report includes a location. Only share it with people involved in this incident (family, coordinator, police).": { fr: "Ce rapport contient une position. Ne le partagez qu'avec les personnes concernées (famille, coordinateur, police).", mfe: "Sa rapor-la ena enn pozision. Partaz li zis avek dimounn ki konserne (fami, koordinater, lapolis)." },
-  "Resolved — Marie-Claire is safe.": { fr: "Résolue — Marie-Claire est en sécurité.", mfe: "Rezoud — Marie-Claire an sekirite." },
   "Not acknowledged": { fr: "Pas pris en charge", mfe: "Pa pran an sarz" },
   "acknowledged this alert": { fr: "a pris en charge cette alerte", mfe: "finn pran sa alert-la an sarz" },
   "Band lost the home signal — band vibrates and plays the Kreol voice warning": { fr: "Le bracelet a perdu le signal de la maison — il vibre et joue l'avertissement vocal en kreol", mfe: "Brasle finn perdi siyal lakaz — li vibre ek zoue avertisman vokal an kreol" },
@@ -232,7 +231,6 @@ export const AUTO_STRINGS: Record<string, { fr: string; mfe: string }> = {
   // CHECK: Kreol wearer terminology should be confirmed by a native speaker.
   "Wearer details unavailable": { fr: "Infos du porteur indisponibles", mfe: "Detay dimounn pa disponib" },
   "Area unavailable": { fr: "Zone indisponible", mfe: "Landrwa pa disponib" },
-  "Marie-Claire is back home": { fr: "Marie-Claire est de retour à la maison", mfe: "Marie-Claire finn retourn lakaz" },
   "The band heard the home beacon again. The alert closed by itself.": { fr: "Le bracelet capte à nouveau la balise de la maison. L'alerte s'est fermée toute seule.", mfe: "Brasle-la finn tann balis lakaz ankor. Lalert finn ferme tousel." },
   "Help alerts and receipts": { fr: "Alertes d'aide et reçus", mfe: "Alert sekour ek resi" },
   "No open alerts": { fr: "Aucune alerte en cours", mfe: "Okenn alert ouver" },

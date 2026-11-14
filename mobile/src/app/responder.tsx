@@ -13,6 +13,7 @@ import { StyleSheet, View } from 'react-native';
 import { LocationMap } from '@/components/LocationMap';
 import { AppText, Button, Card, Screen, SimulatedTag } from '@/components/ui';
 import { USE_MOCK } from '@/config';
+import { useBand } from '@/data/bands';
 import { MOCK_PERSON } from '@/data/mock';
 import { useLakaz } from '@/data/store';
 import { clock, timeAgo } from '@/lib/format';
@@ -23,6 +24,11 @@ import type { LastLocation } from '@/types';
 
 /** Responder page. Shows only alerts that reached level 3 (community) and are not closed. */
 export default function Responder() {
+  // Live: the wearer from the backend band; sample: the fictional mock person.
+  const { band } = useBand();
+  const person = !USE_MOCK && band?.wearer_name
+    ? { name: band.wearer_name, age: band.wearer_age, area: band.wearer_area }
+    : { name: MOCK_PERSON.name, age: MOCK_PERSON.age, area: MOCK_PERSON.area };
   const { alerts, sim } = useLakaz();
   const { play, needsTap, unlock } = useAlertFeedback();
   const now = useNow();
@@ -55,7 +61,7 @@ export default function Responder() {
         <View style={styles.flex}>
           <AppText variant="heading">LAKAZ community alert</AppText>
           <AppText variant="small" color={colors.textMuted}>
-            Verified volunteers near Rose-Hill
+            Verified volunteers near {person.area ?? 'the person'}
           </AppText>
         </View>
         {USE_MOCK ? <SimulatedTag /> : null}
@@ -79,7 +85,7 @@ export default function Responder() {
               PLEASE HELP · {clock(community.created_at)}
             </AppText>
             <AppText variant="hero" color={colors.white}>
-              Have you seen Marie-Claire?
+              Have you seen {person.name}?
             </AppText>
           </View>
 
@@ -94,8 +100,8 @@ export default function Responder() {
               </AppText>
             </View>
             <View style={styles.flex}>
-              <AppText variant="title">{MOCK_PERSON.name}</AppText>
-              <AppText>{MOCK_PERSON.age} years old</AppText>
+              <AppText variant="title">{person.name}</AppText>
+              {person.age ? <AppText>{person.age} years old</AppText> : null}
               <AppText variant="small" color={colors.textMuted}>
                 May be confused. Speak calmly, in Kreol.
               </AppText>

@@ -51,7 +51,7 @@ export function HelpAlertList({ asTab = false }: { asTab?: boolean }) {
   const [receiptId, setReceiptId] = useState<string | null>(null);
   const { t } = useAuth(); // follows the language chosen in Profile
   const [loadedAt, setLoadedAt] = useState<number | null>(null);
-  // Friendly band names ({ device_id: "Marie-Claire's band" }); empty until Supabase has devices.label.
+  // Friendly band names ({ device_id: "<wearer>'s band" }); empty until Supabase has devices.label.
   const [bandNames, setBandNames] = useState<Record<string, string>>({});
   const latestLoad = useRef(0);
 

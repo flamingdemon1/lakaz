@@ -17,7 +17,7 @@ let last = null; // { lat, lng, at }
 // Reading the position needs a signed-in Lakaz carer: Supabase must accept the app's access token.
 // Public project values (the same ones the app ships with); override with env vars if the project changes.
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vzujmdgfybhjytppcmcc.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_mzSQT1alDmGT9_OiyQILQA';
+const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_mzSQT1alDmGT9_OiyQILQA_NE7YXvvV'; // full publishable key (same as mobile/src/config.ts); the cut-short one made every login check return 401
 const okTokens = new Map(); // token -> time it was confirmed (cached 60 s to avoid a Supabase call every 5 s)
 async function isSignedInCarer(authHeader) {
   const token = /^Bearer (.+)$/.exec(authHeader || '')?.[1];

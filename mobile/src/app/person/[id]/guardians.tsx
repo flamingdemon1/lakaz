@@ -1,22 +1,96 @@
 /**
  * app/person/[id]/guardians.tsx — AUTHORISED GUARDIANS & CAREGIVERS for one person, in alert order.
  * Owner: Person 3/4 (Fahim, Zuhayr). Exactly one PRIMARY (first alert, level 1); the rest SECONDARY (level 2).
- * SAMPLE: nobody is invited or messaged. Fictional people only.
+ * Live mode reads linked carer names from Supabase. Sample mode retains fictional guardian editing.
  */
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { FormError, TextField } from '@/components/forms';
 import { AppText, Button, Card, EmptyState, Screen, SimulatedTag } from '@/components/ui';
+import { USE_MOCK } from '@/config';
+import { fetchBands } from '@/data/bands';
+import { currentUser, rpc } from '@/data/supabase';
 import { useAuth } from '@/data/auth';
 import { Guardian, usePeople } from '@/data/people';
 import { checkName, checkPhone } from '@/lib/validate';
 import { colors, radius, space, statusStyles } from '@/theme';
 
-/** Guardians screen: list in alert order + add form. */
+/** Chooses real band membership or the unchanged sample guardian editor. */
 export default function Guardians() {
+  return USE_MOCK ? <SampleGuardians /> : <LinkedCarers />;
+}
+
+interface LinkedCarer {
+  carer_id: string;
+  name: string | null;
+}
+
+/** Reads names for the first linked band without implying an escalation order or exposing contacts. */
+function LinkedCarers() {
+  const { user, t } = useAuth();
+  const [carers, setCarers] = useState<LinkedCarer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [hasBand, setHasBand] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const accountId = currentUser()?.id;
+
+  useEffect(() => {
+    let cancelled = false;
+    /** Loads band membership and ignores replies after navigation or an account change. */
+    async function load() {
+      setLoading(true);
+      setFailed(false);
+      setCarers([]);
+      setHasBand(false);
+      try {
+        const bands = await fetchBands();
+        const band = bands[0];
+        const names = band
+          ? await rpc<LinkedCarer[]>('linked_carer_names', { p_device_id: band.id })
+          : [];
+        // A late response must never display the previous account's linked carers.
+        if (cancelled || currentUser()?.id !== accountId) return;
+        setHasBand(!!band);
+        setCarers(names);
+      } catch {
+        if (!cancelled && currentUser()?.id === accountId) setFailed(true);
+      } finally {
+        if (!cancelled && currentUser()?.id === accountId) setLoading(false);
+      }
+    }
+    void load();
+    return () => { cancelled = true; };
+  }, [user?.id, accountId, attempt]);
+
+  return (
+    <Screen edges={['bottom']}>
+      <AppText color={colors.textMuted}>{t('linkedCarersJoin')}</AppText>
+      {loading ? <AppText>{t('linkedCarersLoading')}</AppText> : failed ? (
+        <Card style={styles.gap}>
+          <AppText>{t('linkedCarersError')}</AppText>
+          <Button label={t('linkedCarersRetry')} onPress={() => setAttempt((value) => value + 1)} />
+        </Card>
+      ) : !hasBand ? (
+        <EmptyState icon="watch" title={t('bandNotLinked')} />
+      ) : carers.length === 0 ? (
+        <EmptyState icon="people" title={t('linkedCarersEmpty')} />
+      ) : carers.map((carer) => (
+        <Card key={carer.carer_id}>
+          <AppText variant="bodyBold">
+            {carer.carer_id === accountId ? t('linkedCarersYou') : carer.name?.trim() || t('linkedCarersUnnamed')}
+          </AppText>
+        </Card>
+      ))}
+    </Screen>
+  );
+}
+
+/** Sample guardians screen retains alert order and the local add form. */
+function SampleGuardians() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { get, addGuardian } = usePeople();
   const p = get(id);

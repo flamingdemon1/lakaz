@@ -17,6 +17,14 @@ export type Lang = 'en' | 'fr' | 'mfe';
 export const LANG_NAMES: Record<Lang, string> = { en: 'English', fr: 'Français', mfe: 'Kreol' };
 
 const en = {
+  linkedCarersJoin: "Carers join by entering the band code in Link a band.",
+  linkedCarersLoading: "Loading linked carers…",
+  linkedCarersError: "Unable to load linked carers. Please try again.",
+  linkedCarersRetry: "Try again",
+  linkedCarersEmpty: "No linked carers found",
+  linkedCarersYou: "You",
+  linkedCarersUnnamed: "A carer",
+
   bandChecking: "Checking band…",
   bandReportError: "Unable to load band reports",
   bandNotLinked: "No linked band",
@@ -235,6 +243,14 @@ const en = {
 export type TKey = keyof typeof en;
 
 const fr: Record<TKey, string> = {
+  linkedCarersJoin: "Les aidants rejoignent le groupe en saisissant le code du bracelet dans Lier un bracelet.",
+  linkedCarersLoading: "Chargement des aidants liés…",
+  linkedCarersError: "Impossible de charger les aidants liés. Veuillez réessayer.",
+  linkedCarersRetry: "Réessayer",
+  linkedCarersEmpty: "Aucun aidant lié trouvé",
+  linkedCarersYou: "Vous",
+  linkedCarersUnnamed: "Un aidant",
+
   bandChecking: "Vérification du bracelet…",
   bandReportError: "Impossible de charger les informations du bracelet",
   bandNotLinked: "Aucun bracelet lié",
@@ -451,6 +467,14 @@ const fr: Record<TKey, string> = {
 };
 
 const mfe: Record<TKey, string> = {
+  linkedCarersJoin: "Bann dimounn ki pran swin zwenn kan zot met kod brasle dan Lien enn brasle.",
+  linkedCarersLoading: "Pe sarz bann dimounn ki lie…",
+  linkedCarersError: "Pa kapav sarz bann dimounn ki lie. Eseye ankor.",
+  linkedCarersRetry: "Eseye ankor",
+  linkedCarersEmpty: "Pena dimounn ki lie",
+  linkedCarersYou: "Ou",
+  linkedCarersUnnamed: "Enn dimounn ki pran swin",
+
   bandChecking: "Pe verifye brasle…",
   bandReportError: "Pa kapav sarz bann nouvel brasle",
   bandNotLinked: "Pena brasle lie",

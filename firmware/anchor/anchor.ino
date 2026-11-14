@@ -63,13 +63,27 @@ void setup() {
   Serial.begin(115200);
   pinMode(LED_PIN, OUTPUT);
   startBeacon();
-  if (strlen(STATUS_URL)) {
+  // Wi-Fi joins at boot whenever an SSID is set (team request), not only when STATUS_URL is set.
+  if (strlen(WIFI_SSID)) {
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASS);
+    while (WiFi.status() != WL_CONNECTED && millis() < 15000) delay(250);   // beacon is already on meanwhile
+    Serial.println(WiFi.status() == WL_CONNECTED ? "WiFi: connected" : "WiFi: not connected (retrying every 10 s)");
   }
 }
 
 void loop() {
+  // Hotspot missing or dropped: keep trying, and say so once per change.
+  static unsigned long lastWifiTry = 0;
+  static bool wasConnected = WiFi.status() == WL_CONNECTED;
+  bool connected = WiFi.status() == WL_CONNECTED;
+  if (connected != wasConnected) { wasConnected = connected; Serial.println(connected ? "WiFi: connected" : "WiFi: lost"); }
+  if (strlen(WIFI_SSID) && !connected && millis() - lastWifiTry >= 10000) {
+    lastWifiTry = millis();
+    WiFi.disconnect();
+    WiFi.begin(WIFI_SSID, WIFI_PASS);   // non-blocking
+  }
+
   if (millis() - lastPoll >= POLL_MS) { lastPoll = millis(); pollStatus(); }
   updateLed();
 }

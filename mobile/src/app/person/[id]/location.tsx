@@ -18,7 +18,7 @@ import { FRESH_MS } from '@/config';
 import { useAuth } from '@/data/auth';
 import { MOCK_HOME } from '@/data/mock';
 import { isSimulatedOffline, simulateDeviceOffline, usePeople } from '@/data/people';
-import { TrackReason, useTracking } from '@/data/tracking';
+import { TrackReason, usingPhoneGps, useTracking } from '@/data/tracking';
 import { ageMs, clock, isOnline, timeAgo } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
 import { colors, radius, space, statusStyles, TOUCH } from '@/theme';
@@ -58,7 +58,8 @@ export default function PersonLocation() {
       </Screen>
     );
   }
-  const isGuardian = p.guardians.some((g) => g.phone === me.phone);
+  // Demo: any signed-in carer may start tracking (the sample guardian list holds fictional phone numbers).
+  const isGuardian = !!user || p.guardians.some((g) => g.phone === me.phone);
   const device = deviceOf(p);
   const online = device
     ? isOnline({ device_id: device.device_id, battery_pct: device.battery_pct, last_seen: device.last_seen, gps_fix: null }, now)
@@ -72,7 +73,7 @@ export default function PersonLocation() {
         <AppText variant="title" style={styles.flex}>
           {p.name}
         </AppText>
-        <SimulatedTag text="SAMPLE GPS" />
+        <SimulatedTag text={usingPhoneGps() ? 'PHONE GPS (stand-in)' : 'SAMPLE GPS'} />
       </View>
 
       <StatusBanner

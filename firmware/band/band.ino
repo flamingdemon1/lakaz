@@ -13,6 +13,10 @@
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 #include "secrets.h"
+#ifndef WIFI2_SSID                 // older secrets.h without a second network still builds
+#define WIFI2_SSID ""
+#define WIFI2_PASS ""
+#endif
 
 #define ANCHOR_NAME "LAKAZ-ANCHOR"
 #define RSSI_HOME   -70        // stronger than this for HOME_MS = home
@@ -65,7 +69,7 @@ void buzzTick() {
 // ---- events to Supabase: {"event_id": <uuid v4>, "kind": "help_requested" | "left_home" | "back_home"} ----
 // The function accepts exactly these two keys. A retry reuses the same event_id,
 // so the backend stores one row per press / departure / return.
-struct Pending { char id[37]; char kind[16]; };
+struct Pending { char id[37]; char kind[16]; unsigned long queuedAt; };
 Pending pending[5];
 int pendingCount = 0;
 
@@ -117,6 +121,7 @@ void sendEvent(const char* kind) {
     strcpy(pending[pendingCount].id, id);
     strncpy(pending[pendingCount].kind, kind, sizeof pending[0].kind - 1);
     pending[pendingCount].kind[sizeof pending[0].kind - 1] = '\0';
+    pending[pendingCount].queuedAt = millis();
     pendingCount++;
   } else Serial.println("   too many unsent events; this one is dropped");
 }
@@ -125,6 +130,7 @@ void requestHelp() { sendEvent("help_requested"); }
 
 void retryHelp() {
   if (!pendingCount || !deliver(pending[0].id, pending[0].kind)) return;
+  Serial.printf("   %s delivered after %lu s\n", pending[0].kind, (millis() - pending[0].queuedAt) / 1000);
   for (int i = 1; i < pendingCount; i++) pending[i - 1] = pending[i];
   pendingCount--;
 }
@@ -147,6 +153,30 @@ void tellLaptop(const char* type) {
   http.setTimeout(2000);
   http.POST(body);
   http.end();
+}
+
+// ---- Wi-Fi: home network + the phone carried with the band ----
+// Leaving home also leaves the home Wi-Fi, so the band falls back to the travelling phone's hotspot.
+// Not WiFiMulti: its run() does a blocking scan (~2-3 s) that would freeze the buzzer and button.
+// WiFi.begin() returns at once, so trying the networks in turn keeps loop() responsive.
+const char* const NETS[][2] = {{WIFI_SSID, WIFI_PASS}, {WIFI2_SSID, WIFI2_PASS}};
+const int NET_COUNT = strlen(WIFI2_SSID) ? 2 : 1;
+int netIdx = 0;
+
+void joinNet(int i) {
+  netIdx = i;
+  WiFi.disconnect();
+  WiFi.begin(NETS[i][0], NETS[i][1]);
+  WiFi.setTxPower(WIFI_POWER_15dBm);   // longer range than 8.5 dBm; drop back if the band reboots
+  Serial.printf("wifi: trying %s\n", NETS[i][0]);
+}
+
+// Called every loop: while offline, try the next network every 6 s (a hotspot join takes 2-5 s).
+void wifiTick(unsigned long now) {
+  static unsigned long lastTry = 0;
+  if (WiFi.status() == WL_CONNECTED || now - lastTry < 6000) return;
+  lastTry = now;
+  joinNet((netIdx + 1) % NET_COUNT);
 }
 
 // ---- button: single click = I'M OK (stops buzzer), double click = SOS ----
@@ -193,10 +223,14 @@ void setup() {
 
   WiFi.persistent(false);               // no flash writes (safe with brownout reset off)
   WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  WiFi.setTxPower(WIFI_POWER_8_5dBm);   // lower current spikes; hotspot is close by
-  while (WiFi.status() != WL_CONNECTED && millis() < 15000) delay(250);
-  Serial.println(WiFi.status() == WL_CONNECTED ? "WiFi: connected" : "WiFi: not connected (help alerts will retry)");
+  // At boot, give each network up to 8 s (the band may be switched on away from home).
+  for (int i = 0; i < NET_COUNT && WiFi.status() != WL_CONNECTED; i++) {
+    joinNet(i);
+    unsigned long t0 = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - t0 < 8000) delay(250);
+  }
+  if (WiFi.status() == WL_CONNECTED) Serial.printf("WiFi: connected to %s\n", WiFi.SSID().c_str());
+  else Serial.println("WiFi: not connected (will keep trying; alerts are queued)");
 
   NimBLEDevice::init("");
   scan = NimBLEDevice::getScan();
@@ -216,6 +250,7 @@ void loop() {
   static bool home = true;
   static unsigned long strongSince = 0, weakSince = 0, lastRetry = 0, lastPrint = 0;
   unsigned long now = millis();
+  wifiTick(now);
   int rssi = currentRssi();
 
   // Home/away is only judged once the anchor has been heard: an unpowered anchor must not make the band scream.
@@ -242,6 +277,9 @@ void loop() {
   if (now - lastPrint >= 2000) {
     lastPrint = now;
     const char* state = !anchorEverSeen ? "WAITING FOR HOME BEACON" : (home ? "AT HOME" : "LEFT HOME");
-    Serial.printf("%s | signal %d%s\n", state, rssi, pendingCount ? " | unsent events queued" : "");
+    char wifi[48];
+    if (WiFi.status() == WL_CONNECTED) snprintf(wifi, sizeof wifi, "%s (%d dBm)", WiFi.SSID().c_str(), (int)WiFi.RSSI());
+    else snprintf(wifi, sizeof wifi, "none");
+    Serial.printf("%s | signal %d | wifi: %s | %d queued\n", state, rssi, wifi, pendingCount);   // never the password
   }
 }

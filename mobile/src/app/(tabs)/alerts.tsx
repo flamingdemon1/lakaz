@@ -1,15 +1,19 @@
 /**
  * app/(tabs)/alerts.tsx — open alerts and caregiver safety history.
  * Owner: Person 3 (Fahim, Zuhayr).
+ * One list for both modes: the store holds the REAL alerts in live mode (help presses AND the band's left-home
+ * events, data/alertsLive.ts) and sample alerts otherwise. (Before, live mode showed help presses only, so a
+ * "Left home" never appeared here.) Receipts stay one tap away on the Help alerts screen.
  */
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { HelpAlertList } from '@/app/help-alert';
 import { AlertCard } from '@/components/AlertCard';
-import { AppText, EmptyState, Screen } from '@/components/ui';
-import { SUPABASE_ENABLED, USE_MOCK } from '@/config';
+import { AppText, Button, EmptyState, Screen } from '@/components/ui';
+import { USE_MOCK } from '@/config';
 import { isOpen, isTakeover, useLakaz } from '@/data/store';
+import { useCarerName } from '@/lib/useAlertTimeline';
 import { colors, radius, space, TOUCH } from '@/theme';
 
 const filters = ['Open', 'Resolved', 'History', 'Incidents', 'Acknowledged'] as const;
@@ -17,11 +21,8 @@ type Filter = (typeof filters)[number];
 
 /** Reads the alert store and renders the selected alert list. Takes no props. */
 export default function Alerts() {
-  return SUPABASE_ENABLED ? <HelpAlertList asTab /> : <SampleAlerts />;
-}
-
-function SampleAlerts() {
   const { alerts, error, loading } = useLakaz();
+  const nameOf = useCarerName(); // "You" / the carer's name / "a carer" — never a raw user id
   const [filter, setFilter] = useState<Filter>('Open');
 
   // Resolved alerts may still retain the caregiver who acknowledged them.
@@ -42,8 +43,9 @@ function SampleAlerts() {
       </AppText>
 
       {USE_MOCK && <AppText variant="smallBold">SIMULATED</AppText>}
-      {filter !== 'Open' && !USE_MOCK && (
-        <AppText variant="small">Showing alerts available from the server.</AppText>
+      {/* Live: acknowledgement receipts (surprise card) live on the Help alerts screen. */}
+      {!USE_MOCK && (
+        <Button label="Help alerts and receipts" icon="receipt" tone="secondary" onPress={() => router.push('/help-alert')} />
       )}
       <View style={styles.chips} accessibilityRole="tablist">
         {filters.map((f) => {
@@ -78,7 +80,7 @@ function SampleAlerts() {
             {filter !== 'Open' && (
               <AppText variant="small" color={colors.textMuted}>
                 Alert opened {new Date(alert.created_at).toLocaleDateString()}
-                {alert.acknowledged_by ? ` · Acknowledged by ${alert.acknowledged_by}` : ''}
+                {alert.acknowledged_by ? ` · Acknowledged by ${alert.live ? nameOf(alert.acknowledged_by) : alert.acknowledged_by}` : ''}
               </AppText>
             )}
             <AlertCard alert={alert} />

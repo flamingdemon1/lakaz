@@ -44,7 +44,7 @@ function LadderBars({ level, color }: { level: number; color: string }) {
 
 /** Mounted once in the root layout; shows itself whenever store.incoming is set. */
 export function IncomingAlert() {
-  const { incoming, dismissIncoming, acknowledge, alerts } = useLakaz();
+  const { incoming, dismissIncoming, acknowledge, alerts, status } = useLakaz();
   const { play } = useAlertFeedback();
   const { t } = useAuth(); // the takeover speaks the carer's chosen language
   const [busy, setBusy] = useState(false);
@@ -136,7 +136,9 @@ export function IncomingAlert() {
             {t(critical ? 'tkCritical' : 'tkAlert')} · {fill(t('tkLevel'), { n: alert.level })}
           </AppText>
           <AppText variant="display" style={styles.center}>
-            Marie-Claire · {t(ALERT_KEY[alert.type].title)}
+            {/* Real wearer's name in live mode (sample: Marie-Claire). */}
+            {(status?.person_name || (alert.live ? '' : 'Marie-Claire')) ? `${status?.person_name || 'Marie-Claire'} · ` : ''}
+            {t(ALERT_KEY[alert.type].title)}
           </AppText>
           <AppText color={colors.textMuted} style={styles.center}>
             {/* Live exits come from the band's home beacon — there is no GPS, so never say "GPS is now on". */}

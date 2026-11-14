@@ -18,7 +18,7 @@ import { MOCK_CAREGIVERS } from '@/data/mock';
 import { useAuth } from '@/data/auth';
 import { useLakaz } from '@/data/store';
 import { alertAdvice, alertExplainer, alertTitle, clock, ESCALATING, timeAgo } from '@/lib/format';
-import { fill } from '@/i18n';
+import { ALERT_KEY, fill } from '@/i18n';
 import { useAlertTimeline, useCarerName } from '@/lib/useAlertTimeline';
 import { useNow } from '@/lib/useNow';
 import { colors, radius, space, statusStyles } from '@/theme';
@@ -26,7 +26,7 @@ import { colors, radius, space, statusStyles } from '@/theme';
 /** Detail screen for one alert, chosen by the `id` in the URL. */
 export default function AlertDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { alerts, acknowledge, resolve, escalateNow, me } = useLakaz();
+  const { alerts, acknowledge, resolve, escalateNow, me, status } = useLakaz();
   const { settings: escSettings } = useEscalation();
   const now = useNow();
   const [busy, setBusy] = useState<'ack' | 'resolve' | 'escalate' | null>(null);
@@ -55,6 +55,8 @@ export default function AlertDetail() {
   // Real help alerts: the name comes from Supabase (linked_carer_names) or "You"; sample: the demo carers.
   // Real alert from Supabase (help press or the band's left-home event): no ladder, no map, real timeline.
   const live = !!alert.live;
+  // The real wearer's name (live) or the sample person.
+  const who = live ? status?.person_name || '' : 'Marie-Claire';
   const liveExit = live && alert.type === 'unexpected_exit';
   const ackName = alert.acknowledged_by
     ? live
@@ -84,7 +86,10 @@ export default function AlertDetail() {
           <StatusPill status={alert.status} large />
           {USE_MOCK ? <SimulatedTag /> : null}
         </View>
-        <AppText variant="title">Marie-Claire · {alertTitle[alert.type]}</AppText>
+        <AppText variant="title">
+          {who ? `${who} · ` : ''}
+          {t(ALERT_KEY[alert.type].title)}
+        </AppText>
         <AppText color={colors.text}>{liveExit ? t('explain_left_home_live') : alertExplainer[alert.type]}</AppText>
         <AppText variant="small" color={colors.textMuted}>
           Started {clock(alert.created_at)} ({timeAgo(alert.created_at, now)}) · {alert.alert_id}
@@ -130,7 +135,7 @@ export default function AlertDetail() {
       ) : (
         <Card style={styles.resolved}>
           <Ionicons name="checkmark-circle" size={26} color={statusStyles.Resolved.bg} />
-          <AppText variant="bodyBold">Resolved — Marie-Claire is safe.</AppText>
+          <AppText variant="bodyBold">{fill(t('resolvedSafe'), { name: who || t('heroThem') })}</AppText>
         </Card>
       )}
 

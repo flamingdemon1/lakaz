@@ -14,6 +14,25 @@
 #include "soc/rtc_cntl_reg.h"
 #include "secrets.h"
 
+// Second Wi-Fi (optional): a phone hotspot carried WITH the band, so it stays online away from home.
+// Why: the home hotspot stays at home, so leaving home also meant losing Wi-Fi and every left_home / SOS
+// waited in the queue until the band came back. Older secrets.h files without these still compile.
+#ifndef WIFI2_SSID
+#define WIFI2_SSID ""
+#define WIFI2_PASS ""
+#endif
+
+// Which network the band tries next: 0 = WIFI_SSID (home), 1 = WIFI2_SSID (travelling phone hotspot).
+int wifiNet = 0;
+bool hasWifi2() { return strlen(WIFI2_SSID) > 0; }
+
+// Starts joining one network (non-blocking). The loop switches network if it doesn't connect.
+void wifiJoin(int net) {
+  WiFi.disconnect();
+  if (net == 1 && hasWifi2()) WiFi.begin(WIFI2_SSID, WIFI2_PASS);
+  else WiFi.begin(WIFI_SSID, WIFI_PASS);
+}
+
 #define ANCHOR_NAME "LAKAZ-ANCHOR"
 #define RSSI_HOME   -70        // stronger than this for HOME_MS = home
 #define RSSI_AWAY   -80        // weaker than this (or not heard) for AWAY_MS = away
@@ -193,10 +212,17 @@ void setup() {
 
   WiFi.persistent(false);               // no flash writes (safe with brownout reset off)
   WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  wifiJoin(0);
   WiFi.setTxPower(WIFI_POWER_8_5dBm);   // lower current spikes; hotspot is close by
-  while (WiFi.status() != WL_CONNECTED && millis() < 15000) delay(250);
-  Serial.println(WiFi.status() == WL_CONNECTED ? "WiFi: connected" : "WiFi: not connected (help alerts will retry)");
+  while (WiFi.status() != WL_CONNECTED && millis() < 10000) delay(250);
+  // Home Wi-Fi not there at boot (e.g. switched on outside): try the travelling hotspot.
+  if (WiFi.status() != WL_CONNECTED && hasWifi2()) {
+    wifiNet = 1; wifiJoin(1);
+    unsigned long t0 = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - t0 < 8000) delay(250);
+  }
+  if (WiFi.status() == WL_CONNECTED) Serial.printf("WiFi: connected to %s\n", WiFi.SSID().c_str());
+  else Serial.println("WiFi: not connected (events will queue and retry)");
 
   NimBLEDevice::init("");
   scan = NimBLEDevice::getScan();
@@ -236,12 +262,15 @@ void loop() {
     }
   }
 
-  // Hotspot missing at boot (iPhone hides it until its Personal Hotspot screen is open): keep trying.
+  // No Wi-Fi (left home, or the iPhone hides its hotspot until the Personal Hotspot screen is open): keep
+  // trying, alternating home Wi-Fi and the travelling hotspot every 6 s until one connects. Non-blocking,
+  // so the buzzer and the button keep working. Queued events go out by themselves once connected.
   static unsigned long lastWifiTry = 0;
-  if (WiFi.status() != WL_CONNECTED && now - lastWifiTry >= 10000) {
+  if (WiFi.status() != WL_CONNECTED && now - lastWifiTry >= 6000) {
     lastWifiTry = now;
-    WiFi.disconnect();
-    WiFi.begin(WIFI_SSID, WIFI_PASS);   // non-blocking
+    if (hasWifi2()) wifiNet = 1 - wifiNet;
+    wifiJoin(wifiNet);
+    Serial.printf("   trying wifi: %s\n", wifiNet == 1 && hasWifi2() ? WIFI2_SSID : WIFI_SSID);
   }
 
   if (now - lastRetry >= 5000) { lastRetry = now; retryHelp(); }
@@ -251,7 +280,7 @@ void loop() {
     lastPrint = now;
     const char* state = !anchorEverSeen ? "WAITING FOR HOME BEACON" : (home ? "AT HOME" : "LEFT HOME");
     // wifi code: 1 = hotspot not found, 4 = wrong password / refused, 6 = disconnected (retrying)
-    if (WiFi.status() == WL_CONNECTED) Serial.printf("%s | signal %d | wifi ok%s\n", state, rssi, pendingCount ? " | unsent events queued" : "");
+    if (WiFi.status() == WL_CONNECTED) Serial.printf("%s | signal %d | wifi ok (%s)%s\n", state, rssi, WiFi.SSID().c_str(), pendingCount ? " | unsent events queued" : "");
     else Serial.printf("%s | signal %d | no wifi (code %d)%s\n", state, rssi, WiFi.status(), pendingCount ? " | unsent events queued" : "");
   }
 }

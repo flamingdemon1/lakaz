@@ -5,6 +5,12 @@
 #define WIFI_SSID     "your-hotspot"     // 2.4 GHz hotspot
 #define WIFI_PASS     "your-password"
 
+// Optional second network: a phone hotspot carried WITH the band, so alerts still go out away from home.
+// iPhone: Settings > Personal Hotspot > Allow Others to Join + Maximise Compatibility (2.4 GHz), keep that
+// screen open. Android: 2.4 GHz hotspot. Leave both "" to use only WIFI_SSID.
+#define WIFI2_SSID    ""
+#define WIFI2_PASS    ""
+
 // Supabase device-event function (backend/supabase/functions/device-event).
 // Project URL from Shihad; device token issued by the backend team, never shared in chat or Git.
 #define HELP_URL      "https://<project-ref>.supabase.co/functions/v1/device-event"

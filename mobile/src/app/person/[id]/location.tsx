@@ -31,7 +31,13 @@ export default function PersonLocation() {
   const { user } = useAuth();
   const now = useNow();
   const p = getPerson(id);
-  const me = { name: user?.name ?? 'Demo Caregiver', phone: user?.phone ?? '+23057000001' };
+  // Who I am for the tracking rules (who started it, who may see it). Phone number when the account has one,
+  // otherwise the account id. Why not `phone ?? …`: accounts without a phone have phone '' (not null), so every
+  // signed-in carer without a phone got the SAME empty identity and was told to "ask" themselves.
+  const me = {
+    name: user?.name || user?.email || 'Demo Caregiver',
+    phone: user?.phone || (user?.id ? `id:${user.id}` : '+23057000001'),
+  };
 
   const t = tracking.get(id);
   const s = t.session;
